@@ -11,15 +11,32 @@
 
 #include <rte_ethdev.h>
 #include <rte_ether.h>
+#include <rte_esp.h>
+#include <rte_udp.h>
 #define RX_RING_SIZE 1024
 #define TX_RING_SIZE 1024
 
 #define NUM_MBUFS 8191
 #define MBUF_CACHE_SIZE 250
 #define BURST_SIZE 32
+#define IPSEC_NAT_T_PORT 4500
+
+/*
+    ESP packet:
+    |                  |               |            |             |        |
+    |  Ethernet Header |  IPV4 Header  | UDP Header | ESP Header  |  Data  | ESP Trailer
+    |                  |               |            |             |        |
+    |                  |               |            |             |        |
+*/
+
+
+static const int IPV4_OFFSET = sizeof(struct rte_ether_hdr);
+static const int UDP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr);
+static const int ESP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr);
 
 static int rte_mbuf_dynfield_offset = -1;
 static uint16_t count = 0;
+
 static uint16_t
 read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
 		struct rte_mbuf **pkts, uint16_t nb_pkts,
@@ -29,14 +46,14 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
 	uint64_t now = rte_rdtsc();
 
 	for (i = 0; i < nb_pkts; i++){
-        void *data;
-        uint32_t x = rte_pktmbuf_data_len(pkts[i]);
-        struct rte_ipv4_hdr *hdr;
-        hdr = rte_pktmbuf_mtod_offset(pkts[i],struct rte_ipv4_hdr *,sizeof(struct rte_ether_hdr));
-        uint8_t* sad = (uint8_t*) data;
         count++;
+        uint32_t x = rte_pktmbuf_data_len(pkts[i]); //get size of entire packet
+        struct rte_ipv4_hdr *hdr;
+        hdr = rte_pktmbuf_mtod_offset(pkts[i],struct rte_ipv4_hdr *, IPV4_OFFSET); //get ipv4 header
         printf("Packet %u:\n",count);
         printf("Size %u\n",x);
+
+        //get src and dst ip addresses in x.x.x.x form
         int src_bit4 = hdr->src_addr >> 24 & 0xFF;
         int src_bit3 = hdr->src_addr >> 16 & 0xFF;
         int src_bit2 = hdr->src_addr >> 8 & 0xFF;
@@ -48,8 +65,38 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
         int dst_bit1 = hdr->dst_addr & 0xFF;
         printf("Src IP: %u.%u.%u.%u\n",src_bit1,src_bit2,src_bit3,src_bit4);
         printf("Dst IP: %u.%u.%u.%u\n",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
-        if(hdr->next_proto_id == IPPROTO_ICMP){
-            printf("Protocol: ICMP\n\n");
+
+        /* check protocol (ICMP, UDP, TCP etc)
+            Due to UDP encapsulation, esp packet shld be within a udp packet with dst/src port 4500
+        */       
+        if(hdr->next_proto_id == IPPROTO_UDP){
+            printf("Protocol: UDP\n");
+            struct rte_ipv4_hdr *inner_header;
+            struct rte_udp_hdr *udp_hdr;
+            udp_hdr = rte_pktmbuf_mtod_offset(pkts[i],struct rte_udp_hdr *,UDP_OFFSET); //get udp header
+            
+            //get src/dst ports and convert to big endian to log them
+            int dst_port = rte_cpu_to_be_16(udp_hdr->dst_port);
+            int src_port = rte_cpu_to_be_16(udp_hdr->src_port);
+            printf("Src port: %u\n",dst_port);
+            printf("Dst port: %u\n",src_port);
+
+            if(dst_port == IPSEC_NAT_T_PORT || src_port == IPSEC_NAT_T_PORT){
+                //esp packet
+                struct rte_esp_hdr *esp_header;
+                esp_header = rte_pktmbuf_mtod_offset(pkts[i],struct rte_esp_hdr *,ESP_OFFSET); // get esp headers
+                //log spi
+                printf("%04x\n",rte_be_to_cpu_32(esp_header->spi));
+                printf("yayyyyyy\n\n");
+            }
+            else{ 
+               //not esp packet
+                printf("UDP but not esp\n\n");
+            }   
+        }
+        else{
+            //TODO: should log protocol xD
+            printf("Not UDP\n\n");
         }
     }
        

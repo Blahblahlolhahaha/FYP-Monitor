@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "rte_ethdev.h": "c",
+        "rte_ether.h": "c",
+        "rte_esp.h": "c",
+        "rte_udp.h": "c"
+    }
+}
