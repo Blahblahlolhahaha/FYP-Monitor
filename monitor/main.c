@@ -13,6 +13,7 @@
 #include <rte_ether.h>
 #include <rte_esp.h>
 #include <rte_udp.h>
+
 #define RX_RING_SIZE 1024
 #define TX_RING_SIZE 1024
 
@@ -36,7 +37,9 @@ static const int ESP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_et
 
 static int rte_mbuf_dynfield_offset = -1;
 static uint16_t count = 0;
-
+struct ISAKMP_TEST{
+    uint32_t value;
+};
 static uint16_t
 read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
 		struct rte_mbuf **pkts, uint16_t nb_pkts,
@@ -44,7 +47,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
 {
 	unsigned i;
 	uint64_t now = rte_rdtsc();
-
+    uint32_t * addr = malloc(4);
 	for (i = 0; i < nb_pkts; i++){
         count++;
         uint32_t x = rte_pktmbuf_data_len(pkts[i]); //get size of entire packet
@@ -82,12 +85,21 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
             printf("Dst port: %u\n",src_port);
 
             if(dst_port == IPSEC_NAT_T_PORT || src_port == IPSEC_NAT_T_PORT){
-                //esp packet
-                struct rte_esp_hdr *esp_header;
-                esp_header = rte_pktmbuf_mtod_offset(pkts[i],struct rte_esp_hdr *,ESP_OFFSET); // get esp headers
-                //log spi
-                printf("%04x\n",rte_be_to_cpu_32(esp_header->spi));
-                printf("yayyyyyy\n\n");
+                struct ISAKMP_TEST *test = rte_pktmbuf_mtod_offset(pkts[i],struct ISAKMP_TEST *,ESP_OFFSET);
+                //1st 4 bytes is 0
+                if(test->value == 0){
+                    printf("ISAKMP\n\n");
+                }
+                else{
+                    //esp packet
+                    struct rte_esp_hdr *esp_header;
+                
+                    esp_header = rte_pktmbuf_mtod_offset(pkts[i],struct rte_esp_hdr *,ESP_OFFSET); // get esp headers
+                    //log spi
+                    printf("%04x\n",rte_be_to_cpu_32(esp_header->spi));
+                    printf("%04x\n",rte_be_to_cpu_32(esp_header->seq));
+                    printf("ESP Packet\n\n");
+                }
             }
             else{ 
                //not esp packet

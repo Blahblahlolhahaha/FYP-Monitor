@@ -18,7 +18,6 @@ Soooooooo for now, can just flag out any traffic thats not using udp port 4500
 Log SPI pair for each remote ip client sad :(
 Log other ip protocols like tcp/icmp
 
-
 ## Some plans:
 Use SPI and sequence numebers to find out sus packets
 
