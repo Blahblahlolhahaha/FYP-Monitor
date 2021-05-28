@@ -14,12 +14,15 @@
 #include <rte_esp.h>
 #include <rte_udp.h>
 
+#include "include/ike.h"
+
 #define RX_RING_SIZE 1024
 #define TX_RING_SIZE 1024
 
 #define NUM_MBUFS 8191
 #define MBUF_CACHE_SIZE 250
 #define BURST_SIZE 32
+#define ISAKMP_PORT 500
 #define IPSEC_NAT_T_PORT 4500
 
 /*
@@ -30,16 +33,18 @@
     |                  |               |            |             |        |
 */
 
+struct ISAKMP_TEST{
+    uint32_t test_octet;
+};
 
 static const int IPV4_OFFSET = sizeof(struct rte_ether_hdr);
 static const int UDP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr);
 static const int ESP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr);
+static const int ISAKMP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr) + 4;
 
 static int rte_mbuf_dynfield_offset = -1;
 static uint16_t count = 0;
-struct ISAKMP_TEST{
-    uint32_t value;
-};
+
 static uint16_t
 read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
 		struct rte_mbuf **pkts, uint16_t nb_pkts,
@@ -47,12 +52,13 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
 {
 	unsigned i;
 	uint64_t now = rte_rdtsc();
-    uint32_t * addr = malloc(4);
+
 	for (i = 0; i < nb_pkts; i++){
         count++;
         uint32_t x = rte_pktmbuf_data_len(pkts[i]); //get size of entire packet
+        struct rte_mbuf *pkt = pkts[i];
         struct rte_ipv4_hdr *hdr;
-        hdr = rte_pktmbuf_mtod_offset(pkts[i],struct rte_ipv4_hdr *, IPV4_OFFSET); //get ipv4 header
+        hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_ipv4_hdr *, IPV4_OFFSET); //get ipv4 header
         printf("Packet %u:\n",count);
         printf("Size %u\n",x);
 
@@ -76,8 +82,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
             printf("Protocol: UDP\n");
             struct rte_ipv4_hdr *inner_header;
             struct rte_udp_hdr *udp_hdr;
-            udp_hdr = rte_pktmbuf_mtod_offset(pkts[i],struct rte_udp_hdr *,UDP_OFFSET); //get udp header
-            
+            udp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_udp_hdr *,UDP_OFFSET); //get udp header
             //get src/dst ports and convert to big endian to log them
             int dst_port = rte_cpu_to_be_16(udp_hdr->dst_port);
             int src_port = rte_cpu_to_be_16(udp_hdr->src_port);
@@ -85,21 +90,78 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
             printf("Dst port: %u\n",src_port);
 
             if(dst_port == IPSEC_NAT_T_PORT || src_port == IPSEC_NAT_T_PORT){
-                struct ISAKMP_TEST *test = rte_pktmbuf_mtod_offset(pkts[i],struct ISAKMP_TEST *,ESP_OFFSET);
-                //1st 4 bytes is 0
-                if(test->value == 0){
-                    printf("ISAKMP\n\n");
+                struct ISAKMP_TEST *test;
+                test = rte_pktmbuf_mtod_offset(pkt,struct ISAKMP_TEST*,ESP_OFFSET);
+                if(test->test_octet == 0){
+                    struct rte_isakmp_hdr *isakmp_hdr;
+                    isakmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_isakmp_hdr*,ISAKMP_OFFSET);
+                    printf("Initiator SPI: %lx\n", rte_be_to_cpu_64(isakmp_hdr->initiator_spi));
+                    printf("Responder SPI: %lx\n", rte_be_to_cpu_64(isakmp_hdr->responder_spi));
+                    char *exchange_type;
+                    switch (isakmp_hdr->exchange_type){
+
+                        case IKE_SA_INIT:
+                            exchange_type = "IKE_SA_INIT";
+                            break;
+
+                        case IKE_AUTH:
+                            exchange_type = "IKE_AUTH";
+                            break;
+                        
+                        case CREATE_CHILD_SA:
+                            exchange_type = "CREATE_CHILD_SA";
+                            break;
+                        
+                        case INFORMATIONAL:
+                            exchange_type = "INFORMATIONAL";
+                            break;
+                        
+                        default:
+                            break;
+                    }
+                    printf("Exchange Type: %s\n", exchange_type);
+                    printf("Message ID: %04x\n\n",rte_be_to_cpu_32(isakmp_hdr->message_id));
                 }
                 else{
                     //esp packet
                     struct rte_esp_hdr *esp_header;
-                
-                    esp_header = rte_pktmbuf_mtod_offset(pkts[i],struct rte_esp_hdr *,ESP_OFFSET); // get esp headers
+                    esp_header = rte_pktmbuf_mtod_offset(pkt,struct rte_esp_hdr *,ESP_OFFSET); // get esp headers
                     //log spi
-                    printf("%04x\n",rte_be_to_cpu_32(esp_header->spi));
-                    printf("%04x\n",rte_be_to_cpu_32(esp_header->seq));
-                    printf("ESP Packet\n\n");
+                    printf("SPI: %04x\n",rte_be_to_cpu_32(esp_header->spi));
+                    printf("Seq: %ux\n",rte_be_to_cpu_32(esp_header->seq));
+                    printf("yayyyyyy\n\n");
                 }
+               
+            }
+            else if(dst_port == ISAKMP_PORT || src_port == ISAKMP_PORT){
+                struct rte_isakmp_hdr *isakmp_hdr;
+                isakmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_isakmp_hdr*,ESP_OFFSET);
+                printf("Initiator SPI: %lx\n", rte_be_to_cpu_64(isakmp_hdr->initiator_spi));
+                printf("Responder SPI: %lx\n", rte_be_to_cpu_64(isakmp_hdr->responder_spi));
+                char *exchange_type;
+                switch (isakmp_hdr->exchange_type){
+
+                    case IKE_SA_INIT:
+                        exchange_type = "IKE_SA_INIT";
+                        break;
+
+                    case IKE_AUTH:
+                        exchange_type = "IKE_AUTH";
+                        break;
+                    
+                    case CREATE_CHILD_SA:
+                        exchange_type = "CREATE_CHILD_SA";
+                        break;
+                    
+                    case INFORMATIONAL:
+                        exchange_type = "INFORMATIONAL";
+                        break;
+                    
+                    default:
+                        break;
+                }
+                printf("Exchange Type: %s\n", exchange_type);
+                printf("Message ID: %04x\n\n",rte_be_to_cpu_32(isakmp_hdr->message_id));
             }
             else{ 
                //not esp packet
