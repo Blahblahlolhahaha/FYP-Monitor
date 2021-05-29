@@ -1,9 +1,11 @@
 #ifndef IKE_H
 #define IKE_H
 
+#include <stdio.h>
 #include <stdint.h>
 #include <inttypes.h>
 #include <getopt.h>
+#include <rte_byteorder.h>
 
 struct rte_isakmp_hdr{
     rte_be64_t initiator_spi;
@@ -23,24 +25,42 @@ enum EXCHANGE_TYPE{
     INFORMATIONAL = 37
 };
 
+enum NEXT_PAYLOAD{
+    NO = 0,
+    SA = 33,
+    KE = 34,
+    IDI = 35, 
+    IDR = 36,
+    CERT = 37,
+    CERTREQ = 38,
+    AUTH = 39,
+    NONCE = 40,
+    N = 41,
+    D = 42,
+    V = 43,
+    TSI = 44,
+    TSR = 45,
+    SK = 46,
+    CP = 47,
+    EAP = 48,
+    SKF = 53 
+};
+
 /*flags in hdr:
 RESPONSE
 VERSION
 INITIATOR
 */
-int get_response_flag(struct rte_isakmp_hdr *hdr){
-    //if 1, this packet is used to respond
-    return (hdr->flags >> 5) & 1;
-}
+int get_response_flag(struct rte_isakmp_hdr *hdr);
 
-int get_version_flag(struct rte_isakmp_hdr *hdr){
-    //if 1, responder can use higher version
-    return (hdr->flags >> 4) & 1;
-}
+int get_version_flag(struct rte_isakmp_hdr *hdr);
 
-int get_initiator_flag(struct rte_isakmp_hdr *hdr){
-    //if 1, this packet is used to init
-    return (hdr->flags >> 3) & 1;
-}
+int get_initiator_flag(struct rte_isakmp_hdr *hdr);
+
+char *get_exchange_type (struct rte_isakmp_hdr *hdr);
+
+char *get_payload_type(struct rte_isakmp_hdr *hdr);
+
+void print_isakmp_headers_info(struct rte_isakmp_hdr *isakmp_hdr);
 
 #endif

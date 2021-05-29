@@ -95,32 +95,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                 if(test->test_octet == 0){
                     struct rte_isakmp_hdr *isakmp_hdr;
                     isakmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_isakmp_hdr*,ISAKMP_OFFSET);
-                    printf("Initiator SPI: %lx\n", rte_be_to_cpu_64(isakmp_hdr->initiator_spi));
-                    printf("Responder SPI: %lx\n", rte_be_to_cpu_64(isakmp_hdr->responder_spi));
-                    char *exchange_type;
-                    switch (isakmp_hdr->exchange_type){
-
-                        case IKE_SA_INIT:
-                            exchange_type = "IKE_SA_INIT";
-                            break;
-
-                        case IKE_AUTH:
-                            exchange_type = "IKE_AUTH";
-                            break;
-                        
-                        case CREATE_CHILD_SA:
-                            exchange_type = "CREATE_CHILD_SA";
-                            break;
-                        
-                        case INFORMATIONAL:
-                            exchange_type = "INFORMATIONAL";
-                            break;
-                        
-                        default:
-                            break;
-                    }
-                    printf("Exchange Type: %s\n", exchange_type);
-                    printf("Message ID: %04x\n\n",rte_be_to_cpu_32(isakmp_hdr->message_id));
+                    print_isakmp_headers_info(isakmp_hdr);
                 }
                 else{
                     //esp packet
@@ -128,7 +103,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                     esp_header = rte_pktmbuf_mtod_offset(pkt,struct rte_esp_hdr *,ESP_OFFSET); // get esp headers
                     //log spi
                     printf("SPI: %04x\n",rte_be_to_cpu_32(esp_header->spi));
-                    printf("Seq: %ux\n",rte_be_to_cpu_32(esp_header->seq));
+                    printf("Seq: %u\n",rte_be_to_cpu_32(esp_header->seq));
                     printf("yayyyyyy\n\n");
                 }
                
@@ -136,32 +111,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
             else if(dst_port == ISAKMP_PORT || src_port == ISAKMP_PORT){
                 struct rte_isakmp_hdr *isakmp_hdr;
                 isakmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_isakmp_hdr*,ESP_OFFSET);
-                printf("Initiator SPI: %lx\n", rte_be_to_cpu_64(isakmp_hdr->initiator_spi));
-                printf("Responder SPI: %lx\n", rte_be_to_cpu_64(isakmp_hdr->responder_spi));
-                char *exchange_type;
-                switch (isakmp_hdr->exchange_type){
-
-                    case IKE_SA_INIT:
-                        exchange_type = "IKE_SA_INIT";
-                        break;
-
-                    case IKE_AUTH:
-                        exchange_type = "IKE_AUTH";
-                        break;
-                    
-                    case CREATE_CHILD_SA:
-                        exchange_type = "CREATE_CHILD_SA";
-                        break;
-                    
-                    case INFORMATIONAL:
-                        exchange_type = "INFORMATIONAL";
-                        break;
-                    
-                    default:
-                        break;
-                }
-                printf("Exchange Type: %s\n", exchange_type);
-                printf("Message ID: %04x\n\n",rte_be_to_cpu_32(isakmp_hdr->message_id));
+                print_isakmp_headers_info(isakmp_hdr);
             }
             else{ 
                //not esp packet
