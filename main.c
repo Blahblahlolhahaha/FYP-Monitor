@@ -89,12 +89,12 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
         struct rte_ether_hdr *ether_hdr;
 
         ether_hdr = rte_pktmbuf_mtod(pkt,struct rte_ether_hdr *);
-
-        if(ether_hdr->ether_type == RTE_ETHER_TYPE_ARP){
+        uint16_t ether_type = rte_cpu_to_be_16(ether_hdr->ether_type);
+        if(ether_type == RTE_ETHER_TYPE_ARP){
             printf("ARP Packet\n\n");
         }
 
-        else if(ether_hdr->ether_type == RTE_ETHER_TYPE_IPV4){
+        else if(ether_type == RTE_ETHER_TYPE_IPV4){
             struct rte_ipv4_hdr *hdr;
             hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_ipv4_hdr *, IPV4_OFFSET); //get ipv4 header
             // printf("Packet %u:\n",count);
@@ -194,17 +194,27 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                     print_isakmp_headers_info(isakmp_hdr);
                 }
                 else{ 
-                //not esp packet
-                    // printf("UDP but not esp\n\n");
+                    //not esp packet
+                    printf("\n\n===================\nNon IPSec UDP packet detected\n===================");
+                    printf("\n| packet's source ip: %u.%u.%u.%u\n",src_bit1,src_bit2,src_bit3,src_bit4);
+                    printf("\n| packet's destination ip: %u.%u.%u.%u\n",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
+                    printf("\n===================\n\n");
                 }   
             }
-            else{
+            else if(hdr->next_proto_id == IPPROTO_TCP){
                 //TODO: should log protocol xD
                 // printf("Not UDP\n\n");
+                struct rte_tcp_hdr *tcp_hdr;
+                tcp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_udp_hdr *,UDP_OFFSET);
+                printf("\n\n===================\nTCP packet detected\n===================");
+                printf("\n| packet's source ip: %u.%u.%u.%u\n",src_bit1,src_bit2,src_bit3,src_bit4);
+                printf("\n| packet's destination ip: %u.%u.%u.%u\n",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
+                printf("\n| packet's source port: %u\n",rte_cpu_to_be_16(tcp_hdr->src_port));
+                printf("\n| packet's destination port: %u\n",rte_cpu_to_be_16(tcp_hdr->dst_port));
+                printf("\n===================\n\n");
             }
-                total_processed++;
-
-                printf("\rTotal packets processed: %d",total_processed);
+            total_processed++;
+            printf("\rTotal packets processed: %d",total_processed);
         }
         
     }
