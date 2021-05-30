@@ -194,7 +194,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
             }
             else{ 
                //not esp packet
-                printf("\n\n===================\nNon IPSec packet detected\n===================");
+                printf("\n\n===================\nNon IPSec UDP packet detected\n===================");
                 printf("\n| packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
                 printf("\n| packet's destination ip: %u.%u.%u.%u\n",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
                 printf("\n===================\n\n");
