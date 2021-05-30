@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <getopt.h>
-#include <omp.h>
 
 #include <rte_eal.h>
 #include <rte_mbuf.h>
@@ -23,7 +22,7 @@
 
 #define NUM_MBUFS 8191
 #define MBUF_CACHE_SIZE 250
-#define BURST_SIZE 32
+#define BURST_SIZE 1
 #define ISAKMP_PORT 500
 #define IPSEC_NAT_T_PORT 4500
 #include "include/array.h"
@@ -96,7 +95,6 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
             hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_ipv4_hdr *, IPV4_OFFSET); //get ipv4 header
             // printf("Packet %u:\n",count);
             // printf("Size %u\n",x);
-
             //get src and dst ip addresses in x.x.x.x form
             int src_bit4 = hdr->src_addr >> 24 & 0xFF;
             int src_bit3 = hdr->src_addr >> 16 & 0xFF;
@@ -161,22 +159,22 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                         }else{
                             for (uint32_t i = 1; i <= tunnels->size; i++){
                                 struct tunnel* check = ((struct tunnel*) tunnels->array[i]);
-                                if (check-> src == src_addr_int && check->dst == dst_addr_int){
+                                if (check-> src == src_addr_int){
                                     tunnel_exists = true;
                                     //Lets check if there are any sus packets
-                                    if(check->seq + 1 == rte_be_to_cpu_32(esp_header->seq) &&check->spi == rte_be_to_cpu_32(esp_header->spi)) {
+                                    if(check->seq + tolerance >= rte_be_to_cpu_32(esp_header->seq) && check->seq < rte_be_to_cpu_32(esp_header->seq) && check->spi == rte_be_to_cpu_32(esp_header->spi) && check->dst == dst_addr_int) {
                                         check-> seq = rte_be_to_cpu_32(esp_header->seq);
                                         legit_pkts++;
                                     }else{
                                         FILE * fp;
-
                                         fp = fopen ("log.txt", "a+");
                                         fprintf(fp, "\n\n===================\nTampered packet detected\n===================");
+                                        fprintf(fp, "\n| Suspicious packet's source ip: %u.%u.%u.%u\n",src_bit1,src_bit2,src_bit3,src_bit4);
                                         fprintf(fp, "\n| Suspicious packet's seq: %u",rte_be_to_cpu_32(esp_header->seq));
                                         fprintf(fp, "\n| Expected seq: %u",check-> seq + 1);
                                         fprintf(fp, "\n| Suspicious packet's spi: %u",rte_be_to_cpu_32(esp_header->spi));
                                         fprintf(fp, "\n| Expected spi: %u",check-> spi);
-                                        fprintf(fp, "\n| Suspicious packet's destination ip: %u",dst_addr_int);
+                                        fprintf(fp, "\n| Suspicious packet's destination ip: %u.%u.%u.%u\n",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
                                         fprintf(fp, "\n| Expected ip: %u",check-> dst);
                                         fprintf(fp, "\n===================\n\n");
                                         fclose(fp);
@@ -186,10 +184,10 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                 }
                             }
                             if(!tunnel_exists){
-                                    push(tunnels, &tunnel_to_chk);
-                                    // printf("\nNew tunnel from: %u.%u.%u.%u\n",src_bit1,src_bit2,src_bit3,src_bit4);
-                                    legit_pkts++;
-                                    break;
+                                push(tunnels, &tunnel_to_chk);
+                                // printf("\nNew tunnel from: %u.%u.%u.%u\n",src_bit1,src_bit2,src_bit3,src_bit4);
+                                legit_pkts++;
+                                break;
                             }
                         }                
                 }
