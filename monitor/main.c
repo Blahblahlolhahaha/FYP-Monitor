@@ -56,7 +56,6 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
 	unsigned i;
 	uint64_t now = rte_rdtsc();
     
-    #pragma omp parallel for
 	for (i = 0; i < nb_pkts; i++){
         count++;
         uint32_t x = rte_pktmbuf_data_len(pkts[i]); //get size of entire packet
