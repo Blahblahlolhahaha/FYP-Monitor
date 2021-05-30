@@ -153,10 +153,10 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                     bool tunnel_exists = FALSE;
                     for (uint32_t i = 1; i <= tunnels->size; i++){
                         struct tunnel* check = ((struct tunnel*) tunnels->array[i]);
-                        if (check-> src == src_addr_int){
+                        if (check-> src == src_addr_int && check->dst == dst_addr_int){
                             tunnel_exists = TRUE;
                             //Lets check if there are any sus packets
-                            if(check->seq + 1 == rte_be_to_cpu_32(esp_header->seq) && check->dst == dst_addr_int && check->spi == rte_be_to_cpu_32(esp_header->spi)) {
+                            if(check->seq + 1 == rte_be_to_cpu_32(esp_header->seq) && check->spi == rte_be_to_cpu_32(esp_header->spi)) {
                                 check-> seq = rte_be_to_cpu_32(esp_header->seq);
                             }else{
                                 printf("\n\n===================\nTampered packet detected\n===================");
@@ -165,7 +165,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                 printf("\n| Suspicious packet's spi: %u",rte_be_to_cpu_32(esp_header->spi));
                                 printf("\n| Expected spi: %u",check-> spi);
                                 printf("\n| Suspicious packet's destination ip: %u",dst_addr_int);
-                                printf("\n| Expected ip: %u",check-> dst + 1);
+                                printf("\n| Expected ip: %u",check-> dst);
                                 printf("\n===================\n\n");
                             }
                             break;
@@ -194,7 +194,10 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
             }
             else{ 
                //not esp packet
-                // printf("UDP but not esp\n\n");
+                printf("\n\n===================\nNon IPSec packet detected\n===================");
+                printf("\n| packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
+                printf("\n| packet's destination ip: %u.%u.%u.%u\n",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
+                printf("\n===================\n\n");
             }   
         }
         else{
