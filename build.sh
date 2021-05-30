@@ -1,5 +1,5 @@
 #reserve memory for packets
-echo 1024 > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages // reserve memory 
+bash -p echo 1024 > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages // reserve memory 
 if [ -d build ]
 then
     # clean up to rebuild file if needed

@@ -56,7 +56,7 @@ struct Array *tunnels;
 void * object[]= {0};
 
 //Adjust sequence number tolerance
-uint32_t tolerance = 2;
+uint32_t tolerance = 1;
 
 static const int IPV4_OFFSET = sizeof(struct rte_ether_hdr);
 static const int UDP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr);
@@ -122,7 +122,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                 if(test->test_octet == 0){
                     struct rte_isakmp_hdr *isakmp_hdr;
                     isakmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_isakmp_hdr*,ISAKMP_OFFSET);
-                    print_isakmp_headers_info(isakmp_hdr);
+                    // print_isakmp_headers_info(isakmp_hdr);
                 }
                 else{
                     //esp packet
@@ -146,7 +146,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                             printf("\nNew tunnel from: %u.%u.%u.%u\n",src_bit1,src_bit2,src_bit3,src_bit4);
                     }else{
                     bool tunnel_exists = FALSE;
-                    for (i = 1; i <= tunnels->size; i++){
+                    for (uint32_t i = 1; i <= tunnels->size; i++){
                         if (((struct tunnel*) tunnels->array[i])-> src == src_addr_int){
                             tunnel_exists = TRUE;
 
@@ -198,10 +198,8 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
             // printf("Not UDP\n\n");
         }
         total_processed++;
-        if (total_processed % 1000000000 == 0){
-            counter_pkts ++;
-            printf("Total packets processed (billion): %d",counter_pkts);
-            total_processed = 0;
+        if (total_processed % 5 == 0){
+            printf("\rTotal packets processed: %d",total_processed);
         }
     }
        
@@ -292,7 +290,6 @@ lcore_main(void){
 }
 
 int main(int argc, char **argv){
-    
     struct rte_mempool *mbuf_pool;
     uint16_t nb_ports;
     uint16_t portid;
