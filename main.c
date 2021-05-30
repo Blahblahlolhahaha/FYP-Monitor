@@ -28,7 +28,6 @@
 #define ISAKMP_PORT 500
 #define IPSEC_NAT_T_PORT 4500
 #include "include/array.h"
-#include "assert.h"
 #include <string.h>
 
 
@@ -67,6 +66,12 @@ static int rte_mbuf_dynfield_offset = -1;
 static uint16_t count = 0;
 int total_processed = 0;
 int counter_pkts = 0;
+
+void* count_packets(){
+    printf("\rTotal packets processed: %d",total_processed);
+
+    
+}
 
 static uint16_t
 read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
@@ -147,21 +152,20 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                     }else{
                     bool tunnel_exists = FALSE;
                     for (uint32_t i = 1; i <= tunnels->size; i++){
-                        if (((struct tunnel*) tunnels->array[i])-> src == src_addr_int){
+                        struct tunnel* check = ((struct tunnel*) tunnels->array[i]);
+                        if (check-> src == src_addr_int){
                             tunnel_exists = TRUE;
-
-
                             //Lets check if there are any sus packets
-                            if (rte_be_to_cpu_32(esp_header->seq) <= ((struct tunnel*) tunnels->array[i])-> seq + tolerance && rte_be_to_cpu_32(esp_header->seq) >= ((struct tunnel*) tunnels->array[i])-> seq - tolerance && rte_be_to_cpu_32(esp_header->spi) == ((struct tunnel*) tunnels->array[i])-> spi && dst_addr_int == ((struct tunnel*) tunnels->array[i])-> dst) {
-                                ((struct tunnel*) tunnels->array[i])-> seq = rte_be_to_cpu_32(esp_header->seq);
+                            if(check->seq + 1 == rte_be_to_cpu_32(esp_header->seq) && check->dst == dst_addr_int && check->spi == rte_be_to_cpu_32(esp_header->spi)) {
+                                check-> seq = rte_be_to_cpu_32(esp_header->seq);
                             }else{
                                 printf("\n\n===================\nTampered packet detected\n===================");
                                 printf("\n| Suspicious packet's seq: %u",rte_be_to_cpu_32(esp_header->seq));
-                                printf("\n| Expected seq: %u",((struct tunnel*) tunnels->array[i])-> seq + 1);
+                                printf("\n| Expected seq: %u",check-> seq + 1);
                                 printf("\n| Suspicious packet's spi: %u",rte_be_to_cpu_32(esp_header->spi));
-                                printf("\n| Expected spi: %u",((struct tunnel*) tunnels->array[i])-> spi);
+                                printf("\n| Expected spi: %u",check-> spi);
                                 printf("\n| Suspicious packet's destination ip: %u",dst_addr_int);
-                                printf("\n| Expected ip: %u",((struct tunnel*) tunnels->array[i])-> dst + 1);
+                                printf("\n| Expected ip: %u",check-> dst + 1);
                                 printf("\n===================\n\n");
                             }
                             break;
@@ -198,9 +202,8 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
             // printf("Not UDP\n\n");
         }
         total_processed++;
-        if (total_processed % 5 == 0){
-            printf("\rTotal packets processed: %d",total_processed);
-        }
+
+        printf("\rTotal packets processed: %d",total_processed);
     }
        
 	return nb_pkts;
