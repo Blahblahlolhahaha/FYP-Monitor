@@ -55,7 +55,7 @@ struct Array *tunnels;
 void * object[]= {0};
 
 //Adjust sequence number tolerance
-uint32_t tolerance = 1;
+uint32_t tolerance = 2;
 
 static const int IPV4_OFFSET = sizeof(struct rte_ether_hdr);
 static const int UDP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr);
@@ -161,18 +161,22 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                         if (check-> src == src_addr_int && check->dst == dst_addr_int){
                             tunnel_exists = TRUE;
                             //Lets check if there are any sus packets
-                            if(check->seq + 1 == rte_be_to_cpu_32(esp_header->seq) && check->spi == rte_be_to_cpu_32(esp_header->spi)) {
+                            if(check->seq + tolerance >= rte_be_to_cpu_32(esp_header->seq) && check->seq < rte_be_to_cpu_32(esp_header->seq) &&check->spi == rte_be_to_cpu_32(esp_header->spi)) {
                                 check-> seq = rte_be_to_cpu_32(esp_header->seq);
                                 legit_pkts++;
                             }else{
-                                printf("\n\n===================\nTampered packet detected\n===================");
-                                printf("\n| Suspicious packet's seq: %u",rte_be_to_cpu_32(esp_header->seq));
-                                printf("\n| Expected seq: %u",check-> seq + 1);
-                                printf("\n| Suspicious packet's spi: %u",rte_be_to_cpu_32(esp_header->spi));
-                                printf("\n| Expected spi: %u",check-> spi);
-                                printf("\n| Suspicious packet's destination ip: %u",dst_addr_int);
-                                printf("\n| Expected ip: %u",check-> dst);
-                                printf("\n===================\n\n");
+                                FILE * fp;
+
+                                fp = fopen ("log.txt", "a+");
+                                fprintf(fp, "\n\n===================\nTampered packet detected\n===================");
+                                fprintf(fp, "\n| Suspicious packet's seq: %u",rte_be_to_cpu_32(esp_header->seq));
+                                fprintf(fp, "\n| Expected seq: %u",check-> seq + 1);
+                                fprintf(fp, "\n| Suspicious packet's spi: %u",rte_be_to_cpu_32(esp_header->spi));
+                                fprintf(fp, "\n| Expected spi: %u",check-> spi);
+                                fprintf(fp, "\n| Suspicious packet's destination ip: %u",dst_addr_int);
+                                fprintf(fp, "\n| Expected ip: %u",check-> dst);
+                                fprintf(fp, "\n===================\n\n");
+                                fclose(fp);
                                 tampered_pkts++;
                             }
                             break;
