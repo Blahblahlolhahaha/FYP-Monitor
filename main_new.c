@@ -24,10 +24,11 @@
 
 #define NUM_MBUFS 8191
 #define MBUF_CACHE_SIZE 250
-#define BURST_SIZE 1
+#define BURST_SIZE 32
 #define ISAKMP_PORT 500
 #define IPSEC_NAT_T_PORT 4500
 #include "include/array.h"
+#include "assert.h"
 #include <string.h>
 
 
@@ -54,9 +55,6 @@ struct tunnel{
 struct Array *tunnels;
 void * object[]= {0};
 
-//Adjust sequence number tolerance
-uint32_t tolerance = 2;
-
 static const int IPV4_OFFSET = sizeof(struct rte_ether_hdr);
 static const int UDP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr);
 static const int ESP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr);
@@ -64,17 +62,6 @@ static const int ISAKMP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte
 
 static int rte_mbuf_dynfield_offset = -1;
 static uint16_t count = 0;
-int total_processed = 0;
-int non_ipsec = 0;
-int tampered_pkts = 0;
-int legit_pkts = 0;
-int isakmp_pkts = 0;
-
-void* count_packets(){
-    printf("\rTotal packets processed: %d",total_processed);
-
-    
-}
 
 static uint16_t
 read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
@@ -83,13 +70,12 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
 {
 	unsigned i;
 	uint64_t now = rte_rdtsc();
-    
 
 	for (i = 0; i < nb_pkts; i++){
+        count++;
         uint32_t x = rte_pktmbuf_data_len(pkts[i]); //get size of entire packet
-        struct rte_mbuf *pkt = pkts[i];
         struct rte_ipv4_hdr *hdr;
-        hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_ipv4_hdr *, IPV4_OFFSET); //get ipv4 header
+        hdr = rte_pktmbuf_mtod_offset(pkts[i],struct rte_ipv4_hdr *, IPV4_OFFSET); //get ipv4 header
         // printf("Packet %u:\n",count);
         // printf("Size %u\n",x);
 
@@ -113,152 +99,74 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
             // printf("Protocol: UDP\n");
             struct rte_ipv4_hdr *inner_header;
             struct rte_udp_hdr *udp_hdr;
-
-            udp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_udp_hdr *,UDP_OFFSET); //get udp header
+            udp_hdr = rte_pktmbuf_mtod_offset(pkts[i],struct rte_udp_hdr *,UDP_OFFSET); //get udp header
+            
             //get src/dst ports and convert to big endian to log them
             int dst_port = rte_cpu_to_be_16(udp_hdr->dst_port);
             int src_port = rte_cpu_to_be_16(udp_hdr->src_port);
-            int src_addr_int = rte_cpu_to_be_32(hdr->src_addr);
-            int dst_addr_int = rte_cpu_to_be_32(hdr->dst_addr);
             // printf("Src port: %u\n",dst_port);
             // printf("Dst port: %u\n",src_port);
+            int src_addr_int = rte_cpu_to_be_32(hdr->src_addr);
+            int dst_addr_int = rte_cpu_to_be_32(hdr->dst_addr);
 
             if(dst_port == IPSEC_NAT_T_PORT || src_port == IPSEC_NAT_T_PORT){
-                struct ISAKMP_TEST *test;
-                test = rte_pktmbuf_mtod_offset(pkt,struct ISAKMP_TEST*,ESP_OFFSET);
-                if(test->test_octet == 0){
-                    struct rte_isakmp_hdr *isakmp_hdr;
-                    isakmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_isakmp_hdr*,ISAKMP_OFFSET);
-                    // print_isakmp_headers_info(isakmp_hdr);
-                    isakmp_pkts++;
-                }
-                else{
-                    //esp packet
-                    struct rte_esp_hdr *esp_header;
-                    esp_header = rte_pktmbuf_mtod_offset(pkt,struct rte_esp_hdr *,ESP_OFFSET); // get esp headers
-                    //log spi
-                    // printf("SPI: %04x\n",rte_be_to_cpu_32(esp_header->spi));
-                    // printf("Seq: %u\n",rte_be_to_cpu_32(esp_header->seq));
-                    // printf("yayyyyyy\n\n");
-                    struct tunnel tunnel_to_chk = {
-                        .src = src_addr_int,
-                        .dst = dst_addr_int,
-                        .seq = rte_be_to_cpu_32(esp_header->seq),
-                        .spi = rte_be_to_cpu_32(esp_header->spi)
-                    };
+                //esp packet
+                struct rte_esp_hdr *esp_header;
+                esp_header = rte_pktmbuf_mtod_offset(pkts[i],struct rte_esp_hdr *,ESP_OFFSET); // get esp headers
+                //log spi
+                printf("SPI: %04x\n",rte_be_to_cpu_32(esp_header->spi));
+                printf("Seq: %u\n",rte_be_to_cpu_32(esp_header->seq));
+                // printf("yayyyyyy\n\n");
 
-                    bool tunnel_exists = FALSE;
-                    //Lets check for new tunnels
-                    if (tunnels->size == 0){
-                            push(tunnels, &tunnel_to_chk);
-                            // printf("\nNew tunnel from: %u.%u.%u.%u\n",src_bit1,src_bit2,src_bit3,src_bit4);
-                            // legit_pkts++;
-                            tunnel_exists = TRUE;
-                    }else{
-                    
-                    for (uint32_t i = 1; i <= tunnels->size; i++){
-                        struct tunnel* check = ((struct tunnel*) tunnels->array[i]);
-                        if (check-> src == src_addr_int && check->dst == dst_addr_int){
-                            tunnel_exists = TRUE;
-                            //Lets check if there are any sus packets
-                            if(check->seq + tolerance >= rte_be_to_cpu_32(esp_header->seq) && check->seq < rte_be_to_cpu_32(esp_header->seq) &&check->spi == rte_be_to_cpu_32(esp_header->spi)) {
-                                check-> seq = rte_be_to_cpu_32(esp_header->seq);
-                                legit_pkts++;
-                            }else{
-                                FILE * fp;
+                struct tunnel tunnel_to_chk = {
+                    .src = src_addr_int,
+                    .dst = dst_addr_int,
+                    .seq = rte_be_to_cpu_32(esp_header->seq),
+                    .spi = rte_be_to_cpu_32(esp_header->spi)
+                };
 
-                                fp = fopen ("log.txt", "a+");
-                                fprintf(fp, "\n\n===================\nTampered packet detected\n===================");
-                                fprintf(fp, "\n| Suspicious packet's seq: %u",rte_be_to_cpu_32(esp_header->seq));
-                                fprintf(fp, "\n| Expected seq: %u",check-> seq + 1);
-                                fprintf(fp, "\n| Suspicious packet's spi: %u",rte_be_to_cpu_32(esp_header->spi));
-                                fprintf(fp, "\n| Expected spi: %u",check-> spi);
-                                fprintf(fp, "\n| Suspicious packet's destination ip: %u",dst_addr_int);
-                                fprintf(fp, "\n| Expected ip: %u",check-> dst);
-                                fprintf(fp, "\n===================\n\n");
-                                fclose(fp);
-                                tampered_pkts++;
-                            }
-                            break;
-                        }
 
-                    }
-                    if(!tunnel_exists){
-                            push(tunnels, &tunnel_to_chk);
-                            // printf("\nNew tunnel from: %u.%u.%u.%u\n",src_bit1,src_bit2,src_bit3,src_bit4);
-                            legit_pkts++;
-                            break;
-                        }
+                //Lets check for new tunnels
+                if (tunnels->size == 0){
+                        push(tunnels, &tunnel_to_chk);
+                        printf("\nNew tunnel from: %u.%u.%u.%u\n",src_bit1,src_bit2,src_bit3,src_bit4);
+                }else{
+                bool tunnel_exists = FALSE;
+                for (i = 1; i <= tunnels->size; i++){
+                    if (((struct tunnel*) tunnels->array[i])-> src == src_addr_int){
+                        tunnel_exists = TRUE;
+
+
+                        // //Lets check if there are any sus packets
+                        // if (rte_be_to_cpu_32(esp_header->seq) == ((struct tunnel*) tunnels->array[i])-> seq + 1) {
+                        //     printf("\nThis packet is not sus\n");
+                        //     ((struct tunnel*) tunnels->array[i])-> seq += 1;
+                        // }else{
+                        //     printf("\nSUS PACKET\n");
+                        //     printf("\nThis packet's seq: %u\n",rte_be_to_cpu_32(esp_header->seq));
+                        //     printf("\nExpected seq: %u\n",((struct tunnel*) tunnels->array[i])-> seq + 1);
+                        // }
+                        break;
                     }
 
-
-
-
-
-
                 }
-               
-            }
-            else if(dst_port == ISAKMP_PORT || src_port == ISAKMP_PORT){
-                struct rte_isakmp_hdr *isakmp_hdr;
-                isakmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_isakmp_hdr*,ESP_OFFSET);
-                print_isakmp_headers_info(isakmp_hdr);
-                isakmp_pkts++;
+                if(!tunnel_exists){
+                        push(tunnels, &tunnel_to_chk);
+                        printf("\nNew tunnel from: %u.%u.%u.%u\n",src_bit1,src_bit2,src_bit3,src_bit4);
+                        break;
+                    }
+                }
+                
             }
             else{ 
                //not esp packet
-                // printf("\n\n===================\nNon IPSec UDP packet detected\n===================");
-                // printf("\n| packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
-                // printf("\n| packet's destination ip: %u.%u.%u.%u\n",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
-                // printf("\n===================\n\n");
-                non_ipsec++;
-
+                // printf("UDP but not esp\n\n");
             }   
         }
         else{
             //TODO: should log protocol xD
             // printf("Not UDP\n\n");
-            non_ipsec++;
         }
-        total_processed++;
-
-        if(total_processed % 10 == 0) {
-            printf("\e[1;1H\e[2J");
-            printf("================================\n          Tunnels\n================================\n");
-            for (uint32_t i = 1; i <= tunnels->size; i++){
-                struct tunnel* check = ((struct tunnel*) tunnels->array[i]);
-                //get src and dst ip addresses in x.x.x.x form
-                int srcip_bit4 = check->src >> 24 & 0xFF;
-                int srcip_bit3 = check->src >> 16 & 0xFF;
-                int srcip_bit2 = check->src >> 8 & 0xFF;
-                int srcip_bit1 = check->src & 0xFF;
-                
-                int dstip_bit4 = check->dst >> 24 & 0xFF;
-                int dstip_bit3 = check->dst >> 16 & 0xFF;
-                int dstip_bit2 = check->dst >> 8 & 0xFF;
-                int dstip_bit1 = check->dst & 0xFF;
-
-
-
-
-                printf("--------------------------------\n| tunnel %d\n",i);
-                printf("| Src IP: %u.%u.%u.%u\n",srcip_bit4,srcip_bit3,srcip_bit2,srcip_bit1);
-                printf("| Dst IP: %u.%u.%u.%u\n",dstip_bit4,dstip_bit3,dstip_bit2,dstip_bit1);
-            }
-            printf("================================");
-            printf("\n| Non IPSec packets: %d", non_ipsec);
-            printf("\n| Tampered IPSec packets: %d",tampered_pkts);
-            printf("\n| Legitimate IPSec packets: %d",legit_pkts + isakmp_pkts);
-            printf("\n| Total packets processed: %d\n",total_processed);
-            printf("================================\n");
-            if(total_processed - non_ipsec - tampered_pkts - legit_pkts - isakmp_pkts == 0){
-                printf("| All traffic accounted for\n");
-            }else{
-                printf("| %d packets unaccounted for. \n| Please check network logs.\n", total_processed - non_ipsec - tampered_pkts - legit_pkts - isakmp_pkts);
-            }
-            printf("================================\n");
-        }
-
     }
        
 	return nb_pkts;
@@ -364,6 +272,7 @@ int main(int argc, char **argv){
         rte_exit(EXIT_FAILURE,"Error with EAL initialisation\n");
     }
 
+    printf("sad\n");
     //count number of avaliable ports
     nb_ports = rte_eth_dev_count_avail();
 
@@ -392,16 +301,13 @@ int main(int argc, char **argv){
             rte_exit(EXIT_FAILURE,"Failed to initialise port %u\n",portid);
         }
     }
+
     tunnels = malloc(sizeof(struct Array));
-    printf("\n\n\n\n\n\n\n\n\n\n\n\n=====================\nNow monitoring...\n=====================\n\n");
     if (tunnels) {
         initArray(tunnels,0,object,false,sizeof(struct tunnel));
         lcore_main();
         rte_eal_cleanup();
     }
-
-    
-
 
     return 0;
 }   

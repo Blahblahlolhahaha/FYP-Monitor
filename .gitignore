@@ -1,3 +1,4 @@
-main_new.c
-main_old.c
-logfile.txt
+build/
+.vscode/
+log.txt
+index.html
