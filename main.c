@@ -168,14 +168,13 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                 FILE * fp;
 
                                 fp = fopen ("log.txt", "a+");
-                                fprintf(fp, "\n\n===================\nTampered packet detected\n===================");
+                                fprintf(fp, "\n===================\nTampered packet detected\n===================");
                                 fprintf(fp, "\n| Suspicious packet's seq: %u",rte_be_to_cpu_32(esp_header->seq));
                                 fprintf(fp, "\n| Expected seq: %u",check-> seq + 1);
                                 fprintf(fp, "\n| Suspicious packet's spi: %u",rte_be_to_cpu_32(esp_header->spi));
                                 fprintf(fp, "\n| Expected spi: %u",check-> spi);
-                                fprintf(fp, "\n| Suspicious packet's destination ip: %u",dst_addr_int);
-                                fprintf(fp, "\n| Expected ip: %u",check-> dst);
-                                fprintf(fp, "\n===================\n\n");
+                                fprintf(fp, "\n| Suspicious packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
+                                fprintf(fp, "\n| Suspicious packet's destination ip: %u.%u.%u.%u",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
                                 fclose(fp);
                                 tampered_pkts++;
                             }
