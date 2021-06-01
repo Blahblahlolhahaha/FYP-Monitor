@@ -11,10 +11,7 @@
 #include <rte_lcore.h>
 #include <rte_per_lcore.h>
 
-#include <rte_ethdev.h>
-#include <rte_ether.h>
-#include <rte_esp.h>
-#include <rte_udp.h>
+
 
 #include "include/ike.h"
 #include <glib-2.0/gmodule.h>
@@ -27,7 +24,6 @@
 #define BURST_SIZE 1
 #define ISAKMP_PORT 500
 #define IPSEC_NAT_T_PORT 4500
-#include "include/array.h"
 #include <string.h>
 
 
@@ -109,6 +105,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
         /* check protocol (ICMP, UDP, TCP etc)
             Due to UDP encapsulation, esp packet shld be within a udp packet with dst/src port 4500
         */       
+        int counted = 0;
         if(hdr->next_proto_id == IPPROTO_UDP){
             // printf("Protocol: UDP\n");
             struct rte_ipv4_hdr *inner_header;
@@ -131,6 +128,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                     isakmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_isakmp_hdr*,ISAKMP_OFFSET);
                     // print_isakmp_headers_info(isakmp_hdr);
                     isakmp_pkts++;
+                    counted++;
                 }
                 else{
                     //esp packet
@@ -164,6 +162,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                             if(check->seq + tolerance >= rte_be_to_cpu_32(esp_header->seq) && check->seq < rte_be_to_cpu_32(esp_header->seq) &&check->spi == rte_be_to_cpu_32(esp_header->spi)) {
                                 check-> seq = rte_be_to_cpu_32(esp_header->seq);
                                 legit_pkts++;
+                                counted++;
                             }else{
                                 FILE * fp;
 
@@ -177,6 +176,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                 fprintf(fp, "\n| Suspicious packet's destination ip: %u.%u.%u.%u",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
                                 fclose(fp);
                                 tampered_pkts++;
+                                counted++;
                             }
                             break;
                         }
@@ -185,15 +185,11 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                     if(!tunnel_exists){
                             push(tunnels, &tunnel_to_chk);
                             // printf("\nNew tunnel from: %u.%u.%u.%u\n",src_bit1,src_bit2,src_bit3,src_bit4);
-                            legit_pkts++;
+                            isakmp_pkts++;
+                            counted++;
                             break;
                         }
                     }
-
-
-
-
-
 
                 }
                
@@ -203,6 +199,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                 isakmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_isakmp_hdr*,ESP_OFFSET);
                 print_isakmp_headers_info(isakmp_hdr);
                 isakmp_pkts++;
+                counted++;
             }
             else{ 
                //not esp packet
@@ -211,6 +208,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                 // printf("\n| packet's destination ip: %u.%u.%u.%u\n",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
                 // printf("\n===================\n\n");
                 non_ipsec++;
+                counted++;
 
             }   
         }
@@ -218,9 +216,31 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
             //TODO: should log protocol xD
             // printf("Not UDP\n\n");
             non_ipsec++;
+            counted++;
         }
         total_processed++;
-
+        if(counted > 1){
+            printf("packet counted more than once!");
+            FILE * fp;
+            fp = fopen ("log.txt", "a+");
+            fprintf(fp, "\n===================\nExtra packet detected\n===================");
+            fprintf(fp, "\n| Packet Num: %u",total_processed);
+            fprintf(fp, "\n| Suspicious packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
+            fprintf(fp, "\n| Suspicious packet's destination ip: %u.%u.%u.%u\n",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
+            printf("================================\n");
+            fclose(fp);
+        }
+        else if(counted == 0){
+            printf("packet gon");
+            FILE * fp;
+            fp = fopen ("log.txt", "a+");
+            fprintf(fp, "\n===================\nLost packet detected\n===================");
+            fprintf(fp, "\n| Packet Num: %u",total_processed);
+            fprintf(fp, "\n| Suspicious packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
+            fprintf(fp, "\n| Suspicious packet's destination ip: %u.%u.%u.%u\n",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
+            printf("================================\n");
+            fclose(fp);
+        }
         if(total_processed % 10 == 0) {
             printf("\e[1;1H\e[2J");
             printf("================================\n          Tunnels\n================================\n");

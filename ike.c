@@ -1,5 +1,9 @@
 #include "include/ike.h"
 
+static const int ESP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr);
+static const int ISAKMP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr) + 4;
+
+
 int get_response_flag(struct rte_isakmp_hdr *hdr){
     //if 1, this packet is used to respond
     return (hdr->flags >> 5) & 1;
@@ -105,21 +109,42 @@ char *get_payload_type(struct rte_isakmp_hdr *hdr){
 void print_isakmp_headers_info(struct rte_isakmp_hdr *isakmp_hdr){
     printf("Initiator SPI: %lx\n", rte_be_to_cpu_64(isakmp_hdr->initiator_spi));
     printf("Responder SPI: %lx\n", rte_be_to_cpu_64(isakmp_hdr->responder_spi));
-    char *nxt_payload = get_payload_type(isakmp_hdr);
-    if(nxt_payload){
-        printf("Paylaod Type: %s\n", nxt_payload);
-    }
-    else{
-        printf("Packet has invalid exchange type!\n");
-    }
-    char *exchange_type = get_exchange_type(isakmp_hdr);
-    if(exchange_type){
-        printf("Exchange Type: %s\n", exchange_type);
-    }
-    else{
-        printf("Invalid Exchange Type!");
-    }
     printf("%d",get_initiator_flag(isakmp_hdr));
     printf("%d",get_response_flag(isakmp_hdr));
     printf("Message ID: %04x\n\n",rte_be_to_cpu_32(isakmp_hdr->message_id));
+}
+
+void analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *hdr,struct rte_ipv4_hdr *ipv4_hdr){
+    char* exchange_type = get_exchange_type(hdr);
+    if(strcmp(exchange_type,"IKE_SA_INIT") == 0){
+        if(get_initiator_flag(hdr) == 1){
+            int srcip_bit4 = ipv4_hdr->src_addr >> 24 & 0xFF;
+            int srcip_bit3 = ipv4_hdr->src_addr >> 16 & 0xFF;
+            int srcip_bit2 = ipv4_hdr->src_addr >> 8 & 0xFF;
+            int srcip_bit1 = ipv4_hdr->src_addr & 0xFF;
+            
+            int dstip_bit4 = ipv4_hdr->dst_addr >> 24 & 0xFF;
+            int dstip_bit3 = ipv4_hdr->dst_addr >> 16 & 0xFF;
+            int dstip_bit2 = ipv4_hdr->dst_addr >> 8 & 0xFF;
+            int dstip_bit1 = ipv4_hdr->dst_addr & 0xFF;
+
+
+            printf("%u.%u.%u.%u is trying to initiate IKE exchange with %u.%u.%u.%u", srcip_bit4,srcip_bit3,srcip_bit2,srcip_bit1,dstip_bit4,dstip_bit3,dstip_bit2,dstip_bit1);
+        }
+        else{
+            switch(hdr->nxt_payload){
+            case SA:
+                struct SA_payload *payload = malloc(sizeof(struct SA_payload));
+                if(payload){
+                    payload->hdr = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr *, ESP_OFFSET);
+                    payload->payloads = malloc(sizeof(struct Array));
+                    if(payload->payloads){
+                        
+                    }
+                }
+            }   
+        }
+        
+    }
+
 }
