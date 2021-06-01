@@ -119,5 +119,7 @@ void print_isakmp_headers_info(struct rte_isakmp_hdr *isakmp_hdr){
     else{
         printf("Invalid Exchange Type!");
     }
+    printf("%d",get_initiator_flag(isakmp_hdr));
+    printf("%d",get_response_flag(isakmp_hdr));
     printf("Message ID: %04x\n\n",rte_be_to_cpu_32(isakmp_hdr->message_id));
 }
