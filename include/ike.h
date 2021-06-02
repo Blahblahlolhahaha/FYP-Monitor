@@ -14,6 +14,10 @@
 #include <rte_esp.h>
 #include <rte_udp.h>
 
+static const int ESP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr);
+static const int ISAKMP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr) + 4;
+static const int first_payload_hdr_offset = ESP_OFFSET + 28;
+
 enum EXCHANGE_TYPE{
     IKE_SA_INIT = 34,
     IKE_AUTH = 35,
@@ -59,12 +63,12 @@ enum TRANSFORM_TYPE{
 enum ENCR{
     DES_IV64 = 1,
     DES = 2,
-    3DES = 3,
+    _3DES = 3,
     RC5 = 4,
     IDEA = 5,
     CAST = 6,
     BLOWFISH = 7,
-    3IDEA = 8,
+    _3IDEA = 8,
     DES_IV32 = 9,
     NONE = 11,
     AES_CBC = 12,
@@ -105,7 +109,7 @@ enum PRF{
 };
 
 enum INTEG{
-    NONE = 0,
+    INTEG_NONE = 0,
     HMAC_MD5_96 = 1,
     HMAC_SHA1_96 = 2,
     DES_MAC = 3,
@@ -123,7 +127,7 @@ enum INTEG{
 };
 
 enum D_H{
-    NONE = 0,
+    DH_NONE = 0,
     MODP_768 = 1,
     MODP_1024 = 2,
     MODP_1536 = 5,
@@ -161,7 +165,7 @@ enum NOTIFY_MSG_TYPE{
     INVALID_SELECTORS = 39,
     TEMPORARY_FAILURE = 43,
     CHILD_SA_NOT_FOUND = 44
-}
+};
 
 
 struct rte_isakmp_hdr{
@@ -179,42 +183,49 @@ struct rte_isakmp_hdr{
 struct isakmp_payload_hdr{
     int8_t nxt_payload; //What  comes after the payload
     int8_t crit; //Critical bit
-    uint32_t length;//length of packet
+    uint16_t length;//length of packet
 };
 
 
 struct SA_payload{
     struct isakmp_payload_hdr *hdr;
-    struct Array *payloads;
+    struct Array *proposals;
 };
 
-
-struct proposal_struc{
+struct proposal_hdr{
     int8_t nxt_payload; //whether if this is last proposal
     int8_t reserved; // must be 0
-    rte_be16_t len; // length of proposal
+    uint16_t len; // length of proposal
     int8_t proposal_num; //proposal no.
     int8_t proto_id; //protocol used in proposal ie. IKE,AH,ESP
     int8_t spi_size; //size of spi
     int8_t num_transforms; //number of transformations
+};
+
+struct proposal_struc{
+    struct proposal_hdr *hdr;
     void* SPI; //Sender's SPI
     struct Array *transformations;
 };
 
-
-struct transform_struc{
+struct transform_hdr{
     int8_t nxt_payload; //whether if this is last transformations
     int8_t reserved; //must be 0
     rte_be16_t len; // length of payload
     int8_t type; //transform type
-    rte_be16_t transform_ID; //Insatnce of transform type propsed
-    struct attr attribute;
+    int8_t reserved2; // must be 0
+    rte_be16_t transform_ID; //Instance of transform type propsed
+};
+
+struct transform_struc{
+    struct transform_hdr *hdr;
+    struct attr *attribute;
 };
 
 
 struct attr{
-    rte_be16_t type; //attribute type
-    rte_be16_t value; //attribute value
+    int8_t type; //attribute type
+    int8_t value; //attribute value
 };
 
 
@@ -222,7 +233,6 @@ struct key_exchange{
     struct isakmp_payload_hdr hdr;
     rte_be16_t DH_GRP_NUM;
     int16_t reserved;
-
 };
 
 struct certificate{
@@ -270,7 +280,7 @@ char *get_payload_type(struct rte_isakmp_hdr *hdr);
 
 void print_isakmp_headers_info(struct rte_isakmp_hdr *isakmp_hdr);
 
-void analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr);
+void analyse_isakmp_payload(struct rte_mbuf *pkt,int nxt_payload,uint16_t offset);
 
 #endif
 

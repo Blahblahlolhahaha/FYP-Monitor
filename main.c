@@ -55,8 +55,6 @@ uint32_t tolerance = 2;
 
 static const int IPV4_OFFSET = sizeof(struct rte_ether_hdr);
 static const int UDP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr);
-static const int ESP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr);
-static const int ISAKMP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr) + 4;
 
 static int rte_mbuf_dynfield_offset = -1;
 static uint16_t count = 0;
@@ -197,7 +195,29 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
             else if(dst_port == ISAKMP_PORT || src_port == ISAKMP_PORT){
                 struct rte_isakmp_hdr *isakmp_hdr;
                 isakmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_isakmp_hdr*,ESP_OFFSET);
-                print_isakmp_headers_info(isakmp_hdr);
+                char* exchange_type = get_exchange_type(isakmp_hdr);
+                print_isakmp_headers_info(hdr);
+                if(strcmp(exchange_type,"IKE_SA_INIT") == 0){
+                    if(get_initiator_flag(isakmp_hdr) == 1){
+                        int srcip_bit4 = hdr->src_addr >> 24 & 0xFF;
+                        int srcip_bit3 = hdr->src_addr >> 16 & 0xFF;
+                        int srcip_bit2 = hdr->src_addr >> 8 & 0xFF;
+                        int srcip_bit1 = hdr->src_addr & 0xFF;
+                        
+                        int dstip_bit4 = hdr->dst_addr >> 24 & 0xFF;
+                        int dstip_bit3 = hdr->dst_addr >> 16 & 0xFF;
+                        int dstip_bit2 = hdr->dst_addr >> 8 & 0xFF;
+                        int dstip_bit1 = hdr->dst_addr & 0xFF;
+
+
+                        printf("%u.%u.%u.%u is trying to initiate IKE exchange with %u.%u.%u.%u\n", srcip_bit1,srcip_bit2,srcip_bit3,srcip_bit4,dstip_bit1,dstip_bit2,dstip_bit3,dstip_bit4);
+                    }
+                    else{
+                        analyse_isakmp_payload(pkt,isakmp_hdr->nxt_payload,first_payload_hdr_offset);
+                    }
+                    
+                    
+                }
                 isakmp_pkts++;
                 counted++;
             }
@@ -219,64 +239,42 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
             counted++;
         }
         total_processed++;
-        if(counted > 1){
-            printf("packet counted more than once!");
-            FILE * fp;
-            fp = fopen ("log.txt", "a+");
-            fprintf(fp, "\n===================\nExtra packet detected\n===================");
-            fprintf(fp, "\n| Packet Num: %u",total_processed);
-            fprintf(fp, "\n| Suspicious packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
-            fprintf(fp, "\n| Suspicious packet's destination ip: %u.%u.%u.%u\n",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
-            printf("================================\n");
-            fclose(fp);
-        }
-        else if(counted == 0){
-            printf("packet gon");
-            FILE * fp;
-            fp = fopen ("log.txt", "a+");
-            fprintf(fp, "\n===================\nLost packet detected\n===================");
-            fprintf(fp, "\n| Packet Num: %u",total_processed);
-            fprintf(fp, "\n| Suspicious packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
-            fprintf(fp, "\n| Suspicious packet's destination ip: %u.%u.%u.%u\n",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
-            printf("================================\n");
-            fclose(fp);
-        }
-        if(total_processed % 10 == 0) {
-            printf("\e[1;1H\e[2J");
-            printf("================================\n          Tunnels\n================================\n");
-            for (uint32_t i = 1; i <= tunnels->size; i++){
-                struct tunnel* check = ((struct tunnel*) tunnels->array[i]);
-                //get src and dst ip addresses in x.x.x.x form
-                int srcip_bit4 = check->src >> 24 & 0xFF;
-                int srcip_bit3 = check->src >> 16 & 0xFF;
-                int srcip_bit2 = check->src >> 8 & 0xFF;
-                int srcip_bit1 = check->src & 0xFF;
+        // if(total_processed % 10 == 0) {
+        //     printf("\e[1;1H\e[2J");
+        //     printf("================================\n          Tunnels\n================================\n");
+        //     for (uint32_t i = 1; i <= tunnels->size; i++){
+        //         struct tunnel* check = ((struct tunnel*) tunnels->array[i]);
+        //         //get src and dst ip addresses in x.x.x.x form
+        //         int srcip_bit4 = check->src >> 24 & 0xFF;
+        //         int srcip_bit3 = check->src >> 16 & 0xFF;
+        //         int srcip_bit2 = check->src >> 8 & 0xFF;
+        //         int srcip_bit1 = check->src & 0xFF;
                 
-                int dstip_bit4 = check->dst >> 24 & 0xFF;
-                int dstip_bit3 = check->dst >> 16 & 0xFF;
-                int dstip_bit2 = check->dst >> 8 & 0xFF;
-                int dstip_bit1 = check->dst & 0xFF;
+        //         int dstip_bit4 = check->dst >> 24 & 0xFF;
+        //         int dstip_bit3 = check->dst >> 16 & 0xFF;
+        //         int dstip_bit2 = check->dst >> 8 & 0xFF;
+        //         int dstip_bit1 = check->dst & 0xFF;
 
 
 
 
-                printf("--------------------------------\n| tunnel %d\n",i);
-                printf("| Src IP: %u.%u.%u.%u\n",srcip_bit4,srcip_bit3,srcip_bit2,srcip_bit1);
-                printf("| Dst IP: %u.%u.%u.%u\n",dstip_bit4,dstip_bit3,dstip_bit2,dstip_bit1);
-            }
-            printf("================================");
-            printf("\n| Non IPSec packets: %d", non_ipsec);
-            printf("\n| Tampered IPSec packets: %d",tampered_pkts);
-            printf("\n| Legitimate IPSec packets: %d",legit_pkts + isakmp_pkts);
-            printf("\n| Total packets processed: %d\n",total_processed);
-            printf("================================\n");
-            if(total_processed - non_ipsec - tampered_pkts - legit_pkts - isakmp_pkts == 0){
-                printf("| All traffic accounted for\n");
-            }else{
-                printf("| %d packets unaccounted for. \n| Please check network logs.\n", total_processed - non_ipsec - tampered_pkts - legit_pkts - isakmp_pkts);
-            }
-            printf("================================\n");
-        }
+        //         printf("--------------------------------\n| tunnel %d\n",i);
+        //         printf("| Src IP: %u.%u.%u.%u\n",srcip_bit4,srcip_bit3,srcip_bit2,srcip_bit1);
+        //         printf("| Dst IP: %u.%u.%u.%u\n",dstip_bit4,dstip_bit3,dstip_bit2,dstip_bit1);
+        //     }
+        //     printf("================================");
+        //     printf("\n| Non IPSec packets: %d", non_ipsec);
+        //     printf("\n| Tampered IPSec packets: %d",tampered_pkts);
+        //     printf("\n| Legitimate IPSec packets: %d",legit_pkts + isakmp_pkts);
+        //     printf("\n| Total packets processed: %d\n",total_processed);
+        //     printf("================================\n");
+        //     if(total_processed - non_ipsec - tampered_pkts - legit_pkts - isakmp_pkts == 0){
+        //         printf("| All traffic accounted for\n");
+        //     }else{
+        //         printf("| %d packets unaccounted for. \n| Please check network logs.\n", total_processed - non_ipsec - tampered_pkts - legit_pkts - isakmp_pkts);
+        //     }
+        //     printf("================================\n");
+        // }
 
     }
        
