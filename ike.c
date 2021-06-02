@@ -1,6 +1,6 @@
 #include "include/ike.h"
 
-
+struct Array *tunnels;
 
 int get_response_flag(struct rte_isakmp_hdr *hdr){
     //if 1, this packet is used to respond
@@ -112,8 +112,8 @@ void print_isakmp_headers_info(struct rte_isakmp_hdr *isakmp_hdr){
     printf("Message ID: %04x\n\n",rte_be_to_cpu_32(isakmp_hdr->message_id));
 }
 
-void analyse_isakmp_payload(struct rte_mbuf *pkt,int nxt_payload,uint16_t offset){
-    switch(nxt_payload){
+void analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hdr,uint16_t offset){
+    switch(isakmp_hdr->nxt_payload){
         case SA:
             analyse_SA(pkt,offset);
             break;
@@ -121,6 +121,22 @@ void analyse_isakmp_payload(struct rte_mbuf *pkt,int nxt_payload,uint16_t offset
         case KE:
             analyse_KE(pkt,offset);
             break;
+
+        case N:
+            analyse_N(pkt,offset,isakmp_hdr->exchange_type);
+            break;
+
+        case D:
+            printf("Session ended btw SPI: %lx, %lx", rte_be_to_cpu_64(isakmp_hdr->initiator_spi), rte_be_to_cpu_64(isakmp_hdr->responder_spi));
+            for(int i = 1;i <= tunnels->size; i++){
+                struct tunnel *tunnel = tunnels->array[i];
+                if(check_ike_spi(isakmp_hdr,tunnel)){
+                    removeIndex(tunnels,i-1);
+                }
+            }
+        
+        case SK:
+            analyse_SK(pkt,offset,isakmp_hdr);
     }   
 
 }
@@ -144,11 +160,110 @@ void analyse_SA(struct rte_mbuf *pkt,uint16_t offset){
 }
 
 void analyse_KE(struct rte_mbuf *pkt,uint16_t offset){
-    struct key_exchange *payload;
+    struct key_exchange* payload;
     payload = malloc(sizeof(struct key_exchange));
     if(payload){
         payload = rte_pktmbuf_mtod_offset(pkt,struct key_exchange *,offset);
         printf("Key Exchange: %u\n",rte_be_to_cpu_16(payload->DH_GRP_NUM));
+        if(payload->hdr.nxt_payload !=0){
+            analyse_isakmp_payload(pkt,payload->hdr.nxt_payload,offset + rte_be_to_cpu_16(payload->hdr.length));
+        }
+    }
+    
+}
+
+void analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *hdr){
+    struct isakmp_payload_hdr *hdr;
+    hdr = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr *,offset);
+    if(hdr->nxt_payload == NO){
+        //dpd
+        for(int i = 0;i <= tunnels->size; i++){
+            struct tunnel *tunnel = tunnels->array[i];
+            if(check_ike_spi(hdr,tunnel)){
+                if(get_initiator_flag(hdr) == 1){
+                    tunnel->dpd_count += 1;
+                    if(tunnel->dpd_count == 1){
+                        tunnel->dpd = true;
+                    }
+                    if(tunnel->dpd_count == 6){
+                        printf("Session ended btw SPI: %lx, %lx", rte_be_to_cpu_64(hdr->initiator_spi), rte_be_to_cpu_64(hdr->responder_spi));
+                        removeIndex(tunnels,i-1);
+                    }
+                }
+                else if(get_response_flag(hdr) == 1){
+                    tunnel->dpd_count = 0;
+                    tunnel->dpd = false;
+                }
+            }
+            
+        }
+    }
+    else if(hdr->nxt_payload == AUTH){
+        //TODO: ADD NEW TUNNEL
+    }
+}
+
+void analyse_N(struct rte_mbuf *pkt, uint16_t offset, int exchange_type){
+    struct notify *payload;
+    payload = malloc(sizeof(struct notify_hdr));
+    char *failed_msg = "IKE failed with error:";
+    if(payload){
+        payload->payload_hdr = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr *,offset);
+        payload->hdr = rte_pktmbuf_mtod_offset(pkt,struct notify_hdr *,offset + sizeof(struct isakmp_payload_hdr));
+        switch(payload->hdr->msg_type){
+            case INVALID_KE_PAYLOAD:
+                strcat(failed_msg,"INVALID_KE_PAYLAOD\n");
+                break;
+            case INVALID_MAJOR_VERSION:
+                strcat(failed_msg,"INVALID_MAJOR_VERSION\n");
+                break;
+            case UNSUPPORTED_CRIT_PAYLOAD:
+                strcat(failed_msg,"UNSUPPORTED_CRIT_PAYLOAD\n");
+                break;
+            case INVALID_SYNTAX:
+                strcat(failed_msg,"INVALID_SYNTAX\n");
+                break;
+            case INVALID_SPI:
+                char *failed_msg = "Invalid SPI detected by firewall\n";
+                break;
+            case INVALID_MSG_ID:
+                char *failed_msg = "Invalid Message ID detected by firewall\n";
+                break;
+            case NO_PROPOSAL_CHOSEN:
+                strcat(failed_msg,"NO_PROPOSAL_CHOSEN\n");
+                break;
+            case AUTH_FAILED:
+                strcat(failed_msg,"INVALID_SYNTAX\n");
+                break;
+            case SINGLE_PAIR_REQUIRED:
+                strcat(failed_msg,"SINGLE_PAIR_REQUIRED\n");
+                break;
+            case NO_ADDITIONAL_SAS:
+                strcat(failed_msg,"SINGLE_PAIR_REQUIRED\n");
+                break;
+            case INTERNAL_ADDRESS_FAILURE:
+                strcat(failed_msg,"INTERNAL_ADDRESS_FAILURE\n");
+                break;
+            case FAILED_CP_REQUIRED:
+                strcat(failed_msg,"FAILED_CP_REQUIRED\n");
+                break;
+            case TS_UNACCEPTABLE:
+                strcat(failed_msg,"TS_UNACCEPTABLE\n");
+                break;
+            case INVALID_SELECTORS:
+                strcat(failed_msg,"INVALID_SELECTORS\n");
+                break;
+            case TEMPORARY_FAILURE:
+                strcat(failed_msg,"TEMPORARY_FAILURE\n");
+                break;
+            case CHILD_SA_NOT_FOUND:
+                strcat(failed_msg,"CHILD_SA_NOT_FOUND\n");
+                break;
+            default:
+                strcat(failed_msg,"Unknown Error\n");
+                break;
+        }
+        printf("%s",failed_msg);
     }
 }
 
@@ -213,4 +328,10 @@ void get_transformations(struct rte_mbuf *pkt, struct Array *transformations,int
         }while(transform->hdr->nxt_payload != 0);
     }
 
+}
+
+bool check_ike_spi(struct rte_isakmp_hdr *isakmp_hdr,struct tunnel* tunnel){
+    return (tunnel->client_spi == isakmp_hdr->initiator_spi 
+                && tunnel->host_spi == isakmp_hdr->responder_spi) || (tunnel->client_spi == isakmp_hdr->responder_spi 
+                && tunnel->host_spi == isakmp_hdr->initiator_spi);
 }

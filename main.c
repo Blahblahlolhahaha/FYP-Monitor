@@ -136,12 +136,12 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                     // printf("SPI: %04x\n",rte_be_to_cpu_32(esp_header->spi));
                     // printf("Seq: %u\n",rte_be_to_cpu_32(esp_header->seq));
                     // printf("yayyyyyy\n\n");
-                    struct tunnel tunnel_to_chk = {
-                        .src = src_addr_int,
-                        .dst = dst_addr_int,
-                        .seq = rte_be_to_cpu_32(esp_header->seq),
-                        .spi = rte_be_to_cpu_32(esp_header->spi)
-                    };
+                    // struct tunnel tunnel_to_chk = {
+                    //     .src = src_addr_int,
+                    //     .dst = dst_addr_int,
+                    //     .seq = rte_be_to_cpu_32(esp_header->seq),
+                    //     .spi = rte_be_to_cpu_32(esp_header->spi)
+                    // };
 
                     bool tunnel_exists = FALSE;
                     //Lets check for new tunnels
@@ -208,7 +208,6 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                         int dstip_bit3 = hdr->dst_addr >> 16 & 0xFF;
                         int dstip_bit2 = hdr->dst_addr >> 8 & 0xFF;
                         int dstip_bit1 = hdr->dst_addr & 0xFF;
-
 
                         printf("%u.%u.%u.%u is trying to initiate IKE exchange with %u.%u.%u.%u\n", srcip_bit1,srcip_bit2,srcip_bit3,srcip_bit4,dstip_bit1,dstip_bit2,dstip_bit3,dstip_bit4);
                     }

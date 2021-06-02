@@ -150,7 +150,7 @@ enum D_H{
 enum NOTIFY_MSG_TYPE{
     UNSUPPORTED_CRIT_PAYLOAD = 1,
     INVALID_IKE_SPI = 4,
-    INVALID_MAJOR_VERION = 5,
+    INVALID_MAJOR_VERSION = 5,
     INVALID_SYNTAX = 7,
     INVALID_MSG_ID = 9,
     INVALID_SPI = 11,
@@ -244,11 +244,15 @@ struct nonce{
     struct isakmp_payload_hdr hdr;
 };
 
-struct notify{
-    struct isakmp_payload_hdr hdr;
+struct notify_hdr{
     int8_t protocol_id; //type of SA
     int8_t spi_size;
     rte_be16_t msg_type;
+};
+
+struct notify{
+    struct isakmp_payload_hdr *payload_hdr;
+    struct notify_hdr *hdr;
     void* SPI;
     void* data;
 };
@@ -261,7 +265,18 @@ struct delete{
     void* SPI;
 };
 
-
+struct tunnel{
+    uint64_t client_spi;
+    uint64_t host_spi;
+    int client_ip;
+    int host_ip;
+    uint32_t seq;
+    uint32_t client_spi;
+    uint32_t host_ip;
+    char *algo;
+    int dpd_count; //if count == 5
+    bool dpd;
+};
 
 /*flags in hdr:
 RESPONSE
@@ -280,7 +295,7 @@ char *get_payload_type(struct rte_isakmp_hdr *hdr);
 
 void print_isakmp_headers_info(struct rte_isakmp_hdr *isakmp_hdr);
 
-void analyse_isakmp_payload(struct rte_mbuf *pkt,int nxt_payload,uint16_t offset);
+void analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hdr,uint16_t offset);
 
 #endif
 
