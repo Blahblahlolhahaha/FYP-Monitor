@@ -13,11 +13,11 @@
 #include <rte_ether.h>
 #include <rte_esp.h>
 #include <rte_udp.h>
-
+#include <stdbool.h>
 static const int ESP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr);
 static const int ISAKMP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr) + 4;
 static const int first_payload_hdr_offset = ESP_OFFSET + 28;
-
+struct Array *tunnels;
 enum EXCHANGE_TYPE{
     IKE_SA_INIT = 34,
     IKE_AUTH = 35,
@@ -271,8 +271,8 @@ struct tunnel{
     int client_ip;
     int host_ip;
     uint32_t seq;
-    uint32_t client_spi;
-    uint32_t host_ip;
+    uint32_t client_esp_spi;
+    uint32_t host_esp_spi;
     char *algo;
     int dpd_count; //if count == 5
     bool dpd;
@@ -295,7 +295,8 @@ char *get_payload_type(struct rte_isakmp_hdr *hdr);
 
 void print_isakmp_headers_info(struct rte_isakmp_hdr *isakmp_hdr);
 
-void analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hdr,uint16_t offset,int nxt_payload);
+void analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr,uint16_t offset,int nxt_payload);
 
+void get_ip_address_string(rte_be32_t ip_address,char *ip);
 #endif
 

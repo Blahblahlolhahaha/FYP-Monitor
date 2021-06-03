@@ -131,7 +131,7 @@ void removeIndex(struct Array* array, int index){
             }
             void *test = malloc(array->itemSize);
             if(test){
-                pointer[skipped? i - 1 : i] = test;
+                pointer[skipped? i + 1 : i] = test;
                 if(array->string){
                     strcpy(pointer[i],array->array[skipped? i + 1 : i]);
                 }
