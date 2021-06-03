@@ -232,7 +232,6 @@ void analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *is
         struct tunnel *tunnel = tunnels->array[i];
         
         if(check_ike_spi(isakmp_hdr,ipv4_hdr,tunnel) == 1){
-            printf("%u\n",offset);
             if(payload_hdr->nxt_payload == NO && isakmp_hdr->exchange_type == INFORMATIONAL){
                 //Dead peer detection
                 if(get_initiator_flag(isakmp_hdr) == 1){
@@ -471,7 +470,7 @@ void delete_tunnel(struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_h
         
         if(check_ike_spi(isakmp_hdr,ipv4_hdr,tunnel) == 1){
             
-            // removeIndex(tunnels,i-1);
+            removeIndex(tunnels,i);
             break;
         }
     }
