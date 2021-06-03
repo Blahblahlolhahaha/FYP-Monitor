@@ -17,6 +17,8 @@ int get_initiator_flag(struct rte_isakmp_hdr *hdr){
     return (hdr->flags >> 3) & 1;
 }
 
+/// Gets Exchange type of isakmp packet
+/// @return String containing Exchange type of packet
 char *get_exchange_type (struct rte_isakmp_hdr *hdr){
     switch (hdr->exchange_type){
 
@@ -42,6 +44,8 @@ char *get_exchange_type (struct rte_isakmp_hdr *hdr){
     }
 }
 
+/// Gets Payload Type from a isakmp header
+/// @returns a string containing the payload type
 char *get_payload_type(struct rte_isakmp_hdr *hdr){
     switch (hdr->nxt_payload){
         case NO:
@@ -112,21 +116,29 @@ void print_isakmp_headers_info(struct rte_isakmp_hdr *isakmp_hdr){
     printf("Message ID: %04x\n\n",rte_be_to_cpu_32(isakmp_hdr->message_id));
 }
 
-void analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hdr,uint16_t offset){
+/**
+ * Analyzes payload within an isakmp packet. Note that this function is recursive in nature and will continue until nxt_payload is 0
+ * @param pkt Pointer to packet buffer to be analyzed
+ * @param isakmp_hdr pointer to isakmp headers in a packet
+ * @param offset to start analyzing
+ * @param nxt_payload Should take from isakmp_hdr or payload_hdr
+ */
+void analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hdr,uint16_t offset,int nxt_payload){
     switch(isakmp_hdr->nxt_payload){
         case SA:
-            analyse_SA(pkt,offset);
+            analyse_SA(pkt,offset,isakmp_hdr);
             break;
 
         case KE:
-            analyse_KE(pkt,offset);
+            analyse_KE(pkt,offset,isakmp_hdr);
             break;
 
         case N:
-            analyse_N(pkt,offset,isakmp_hdr->exchange_type);
+            analyse_N(pkt,offset,isakmp_hdr);
             break;
 
         case D:
+            //Session is deleted
             printf("Session ended btw SPI: %lx, %lx", rte_be_to_cpu_64(isakmp_hdr->initiator_spi), rte_be_to_cpu_64(isakmp_hdr->responder_spi));
             for(int i = 1;i <= tunnels->size; i++){
                 struct tunnel *tunnel = tunnels->array[i];
@@ -140,57 +152,80 @@ void analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_h
     }   
 
 }
-
-void analyse_SA(struct rte_mbuf *pkt,uint16_t offset){
+/**
+ * Analyses a Security Association payload
+ * @param pkt : pointer to packet used
+ * @param offset: offset to paylaod headers
+ * @param isakmp_hdr pointer to isakmp headers
+ */
+void analyse_SA(struct rte_mbuf *pkt,uint16_t offset,struct rte_isakmp_hdr *isakmp_hdr){
     struct SA_payload *payload;
     payload = malloc(sizeof(struct SA_payload));
     if(payload){
-        payload->hdr = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr *,offset);
+        payload->hdr = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr *,offset); //get payload header
         printf("Size: %x\n",rte_be_to_cpu_16(payload->hdr->length));
         payload->proposals = malloc(sizeof(struct Array));
         if(payload->proposals){
             void *objects[] = {0};
             initArray(payload->proposals,0,objects,false,sizeof(struct proposal_struc));
-            get_proposals(pkt,payload->proposals);
+            get_proposals(pkt,payload->proposals,offset + sizeof(struct isakmp_payload_hdr)); //get proposals and their respective transformations
         }
         if(payload->hdr->nxt_payload !=0){
-            analyse_isakmp_payload(pkt,payload->hdr->nxt_payload,offset + rte_be_to_cpu_16(payload->hdr->length));
+            analyse_isakmp_payload(pkt,isakmp_hdr,offset + rte_be_to_cpu_16(payload->hdr->length),payload->hdr->nxt_payload); //continue analyzing packet
         }
     }
+    // clean up
+    clean_proposals(payload->proposals);
+    free(payload);
 }
 
-void analyse_KE(struct rte_mbuf *pkt,uint16_t offset){
+/**
+ * Analyses a Key Exchange payload
+ * @param pkt : pointer to packet used
+ * @param offset: offset to paylaod headers
+ * @param isakmp_hdr pointer to isakmp headers
+ */
+void analyse_KE(struct rte_mbuf *pkt,uint16_t offset,struct rte_isakmp_hdr *isakmp_hdr){
     struct key_exchange* payload;
     payload = malloc(sizeof(struct key_exchange));
     if(payload){
         payload = rte_pktmbuf_mtod_offset(pkt,struct key_exchange *,offset);
         printf("Key Exchange: %u\n",rte_be_to_cpu_16(payload->DH_GRP_NUM));
         if(payload->hdr.nxt_payload !=0){
-            analyse_isakmp_payload(pkt,payload->hdr.nxt_payload,offset + rte_be_to_cpu_16(payload->hdr.length));
+            analyse_isakmp_payload(pkt,isakmp_hdr,offset + rte_be_to_cpu_16(payload->hdr.length),payload->hdr.nxt_payload);
         }
     }
-    
+    free(payload);
 }
 
+/**
+ * Analyses a Authenticated and Encrypted payload. Note that whats inside cannot be analysed because it is encrypted
+ * @param pkt : pointer to packet used
+ * @param offset: offset to paylaod headers
+ * @param isakmp_hdr pointer to isakmp headers
+ */
 void analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *hdr){
     struct isakmp_payload_hdr *hdr;
     hdr = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr *,offset);
     if(hdr->nxt_payload == NO){
-        //dpd
+        //Dead peer detection
         for(int i = 0;i <= tunnels->size; i++){
             struct tunnel *tunnel = tunnels->array[i];
             if(check_ike_spi(hdr,tunnel)){
                 if(get_initiator_flag(hdr) == 1){
+                    // DPD start/continue
                     tunnel->dpd_count += 1;
                     if(tunnel->dpd_count == 1){
                         tunnel->dpd = true;
                     }
                     if(tunnel->dpd_count == 6){
+                        // Peer is dead and session should be removed
                         printf("Session ended btw SPI: %lx, %lx", rte_be_to_cpu_64(hdr->initiator_spi), rte_be_to_cpu_64(hdr->responder_spi));
                         removeIndex(tunnels,i-1);
                     }
                 }
                 else if(get_response_flag(hdr) == 1){
+                    //Peer has responded and is not dead 
                     tunnel->dpd_count = 0;
                     tunnel->dpd = false;
                 }
@@ -203,8 +238,16 @@ void analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *hd
     }
 }
 
-void analyse_N(struct rte_mbuf *pkt, uint16_t offset, int exchange_type){
+/**
+ * Analyses a Notify payload. If an error code is sent, should kill sesssion i think?
+ * @param pkt : pointer to packet used
+ * @param offset: offset to paylaod headers
+ * @param isakmp_hdr pointer to isakmp headers
+ */
+
+void analyse_N(struct rte_mbuf *pkt, uint16_t offset,struct rte_isakmp_hdr *isakmp_hdr){
     struct notify *payload;
+    bool error = false;
     payload = malloc(sizeof(struct notify_hdr));
     char *failed_msg = "IKE failed with error:";
     if(payload){
@@ -213,77 +256,113 @@ void analyse_N(struct rte_mbuf *pkt, uint16_t offset, int exchange_type){
         switch(payload->hdr->msg_type){
             case INVALID_KE_PAYLOAD:
                 strcat(failed_msg,"INVALID_KE_PAYLAOD\n");
+                error = true;
                 break;
             case INVALID_MAJOR_VERSION:
                 strcat(failed_msg,"INVALID_MAJOR_VERSION\n");
+                error = true;
                 break;
             case UNSUPPORTED_CRIT_PAYLOAD:
                 strcat(failed_msg,"UNSUPPORTED_CRIT_PAYLOAD\n");
+                error = true;
                 break;
             case INVALID_SYNTAX:
                 strcat(failed_msg,"INVALID_SYNTAX\n");
+                error = true;
                 break;
             case INVALID_SPI:
                 char *failed_msg = "Invalid SPI detected by firewall\n";
+                error = true;
                 break;
             case INVALID_MSG_ID:
                 char *failed_msg = "Invalid Message ID detected by firewall\n";
+                error = true;
                 break;
             case NO_PROPOSAL_CHOSEN:
                 strcat(failed_msg,"NO_PROPOSAL_CHOSEN\n");
+                error = true;
                 break;
             case AUTH_FAILED:
                 strcat(failed_msg,"INVALID_SYNTAX\n");
+                error = true;
                 break;
             case SINGLE_PAIR_REQUIRED:
                 strcat(failed_msg,"SINGLE_PAIR_REQUIRED\n");
+                error = true;
                 break;
             case NO_ADDITIONAL_SAS:
                 strcat(failed_msg,"SINGLE_PAIR_REQUIRED\n");
+                error = true;
                 break;
             case INTERNAL_ADDRESS_FAILURE:
                 strcat(failed_msg,"INTERNAL_ADDRESS_FAILURE\n");
+                error = true;
                 break;
             case FAILED_CP_REQUIRED:
                 strcat(failed_msg,"FAILED_CP_REQUIRED\n");
+                error = true;
                 break;
             case TS_UNACCEPTABLE:
                 strcat(failed_msg,"TS_UNACCEPTABLE\n");
+                error = true;
                 break;
             case INVALID_SELECTORS:
                 strcat(failed_msg,"INVALID_SELECTORS\n");
+                error = true;
                 break;
             case TEMPORARY_FAILURE:
                 strcat(failed_msg,"TEMPORARY_FAILURE\n");
+                error = true;
                 break;
             case CHILD_SA_NOT_FOUND:
                 strcat(failed_msg,"CHILD_SA_NOT_FOUND\n");
+                error = true;
                 break;
             default:
                 strcat(failed_msg,"Unknown Error\n");
+                error = true;
                 break;
         }
         printf("%s",failed_msg);
+        if(error){
+            for(int i = 1;i <= tunnels->size; i++){
+                struct tunnel *tunnel = tunnels->array[i];
+                if(check_ike_spi(isakmp_hdr,tunnel)){
+                    removeIndex(tunnels,i-1);
+                }
+            }
+        }
     }
+   
+    if(payload->payload_hdr->nxt_payload != NO){
+        analyse_isakmp_payload(pkt,isakmp_hdr,offset + rte_be_to_cpu_16(payload->payload_hdr->length),payload->payload_hdr->nxt_payload);
+    }
+    free(payload);
 }
 
-void get_proposals(struct rte_mbuf *pkt, struct Array *proposals){
-    int proposal_offset = first_payload_hdr_offset + sizeof(struct isakmp_payload_hdr);
+/**
+ * Get proposals and transformations found in a SA payload and place them in an Array object
+ * @param pkt pointer to packet being analyzed
+ * @param proposals pointer to Array object used in a SA_paylaod struct
+ * @param offset offset to SA hdr
+ */
+void get_proposals(struct rte_mbuf *pkt, struct Array *proposals, int offset){
     struct proposal_struc *proposal;
     proposal = malloc(3 * __SIZEOF_POINTER__);
     if(proposal){
         do{
-            proposal->hdr = rte_pktmbuf_mtod_offset(pkt,struct proposal_hdr *, proposal_offset);
+            proposal->hdr = rte_pktmbuf_mtod_offset(pkt,struct proposal_hdr *, offset);
             proposal->transformations = malloc(sizeof(struct Array));
-            int transformation_offset = proposal_offset + 8 + proposal->hdr->spi_size;
+            int transformation_offset = offset + 8 + proposal->hdr->spi_size;
             if(proposal->transformations){
+                //get proposed transformations
                 get_transformations(pkt,proposal->transformations,transformation_offset,proposal->hdr->num_transforms);
             }
             else{
                 printf("Failed to allocate memory. Exiting\n");
                 exit(1);
             }
-            proposal_offset += rte_be_to_cpu_16(proposal->hdr->len);
+            offset += rte_be_to_cpu_16(proposal->hdr->len); //add offset for nxt proposal
             push(proposals,(void*)proposal);
             for(int i = 0;i< proposals->size;i++){
                 struct proposal_struc *proposal =  proposals->array[i+1]; 
@@ -301,6 +380,13 @@ void get_proposals(struct rte_mbuf *pkt, struct Array *proposals){
     
 }
 
+/** 
+ * Get Transformations found in a proposal and place them in an array:
+ * @param pkt pointer to packet to be analyzed
+ * @param transformations pointer to Array contained in payload_struc object
+ * @param offset Offset to transformation
+ * @param size Number of transformations
+ */
 void get_transformations(struct rte_mbuf *pkt, struct Array *transformations,int offset,int size){
     struct transform_struc *transform = malloc(2 * __SIZEOF_POINTER__);
     if(transform){
@@ -316,6 +402,7 @@ void get_transformations(struct rte_mbuf *pkt, struct Array *transformations,int
             printf("\n| Type ID: %x",rte_be_to_cpu_16(transform->hdr->transform_ID));
             printf("\n================================\n");
             if(transform->hdr->len != 8){
+                //get attributes for transformation usually key length
                 struct attr *attribute  = rte_pktmbuf_mtod_offset(pkt,struct attr *,offset + 8);
                 transform->attribute = attribute;
             }
@@ -327,6 +414,21 @@ void get_transformations(struct rte_mbuf *pkt, struct Array *transformations,int
             offset += rte_be_to_cpu_16(transform->hdr->len);
         }while(transform->hdr->nxt_payload != 0);
     }
+
+}
+
+/** 
+ * Free up memory allocated to proposals and transformations
+ */
+void clean_proposals(struct Array* proposals){
+    for(int i = 0;i< proposals->size;i++){
+        struct proposal_struc *proposal =  proposals->array[i+1]; 
+        clearArray(proposal->transformations);
+        free(proposal->transformations);
+        free(proposal);
+    }
+    clearArray(proposals);
+    free(proposals);
 
 }
 

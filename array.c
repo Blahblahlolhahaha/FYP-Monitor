@@ -133,15 +133,16 @@ void removeIndex(struct Array* array, int index){
             if(test){
                 pointer[skipped? i - 1 : i] = test;
                 if(array->string){
-                    strcpy(pointer[skipped? i - 1 : i],array->array[i]);
+                    strcpy(pointer[i],array->array[skipped? i + 1 : i]);
                 }
                 else{
-                    memcpy(pointer[skipped? i - 1 : i],array->array[i],array->itemSize);
+                    memcpy(pointer[i],array->array[skipped? i + 1 : i],array->itemSize);
                 }
             }
         }
-        pointer[0] = array->array[0] - 1;
+        pointer[0] = newUsed;
         array->array = pointer;
+        array->size = newUsed;
         
     }
     else{

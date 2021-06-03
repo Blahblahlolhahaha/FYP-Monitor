@@ -295,7 +295,7 @@ char *get_payload_type(struct rte_isakmp_hdr *hdr);
 
 void print_isakmp_headers_info(struct rte_isakmp_hdr *isakmp_hdr);
 
-void analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hdr,uint16_t offset);
+void analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hdr,uint16_t offset,int nxt_payload);
 
 #endif
 

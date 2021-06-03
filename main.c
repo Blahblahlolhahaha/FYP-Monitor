@@ -213,7 +213,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                         printf("%u.%u.%u.%u is trying to initiate IKE exchange with %u.%u.%u.%u\n", srcip_bit1,srcip_bit2,srcip_bit3,srcip_bit4,dstip_bit1,dstip_bit2,dstip_bit3,dstip_bit4);
                     }
                     else{
-                        analyse_isakmp_payload(pkt,isakmp_hdr->nxt_payload,first_payload_hdr_offset);
+                        analyse_isakmp_payload(pkt,isakmp_hdr,first_payload_hdr_offset,isakmp_hdr->nxt_payload);
                     }
                     
                     
