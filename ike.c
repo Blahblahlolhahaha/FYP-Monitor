@@ -20,27 +20,9 @@ int get_initiator_flag(struct rte_isakmp_hdr *hdr){
 /// Gets Exchange type of isakmp packet
 /// @return String containing Exchange type of packet
 char *get_exchange_type (struct rte_isakmp_hdr *hdr){
-    switch (hdr->exchange_type){
-
-        case IKE_SA_INIT:
-            return "IKE_SA_INIT";
-            break;
-
-        case IKE_AUTH:
-            return "IKE_AUTH";
-            break;
-        
-        case CREATE_CHILD_SA:
-            return "CREATE_CHILD_SA";
-            break;
-        
-        case INFORMATIONAL:
-            return "INFORMATIONAL";
-            break;
-        
-        default:
-            return NULL;
-            break;
+    int index  = hdr->exchange_type - 34;
+    if(index > 0 && index - 34 < 4){
+        return exchange_types[index];
     }
 }
 
@@ -126,6 +108,7 @@ void print_isakmp_headers_info(struct rte_isakmp_hdr *isakmp_hdr){
 void analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr,uint16_t offset,int nxt_payload){
     if(isakmp_hdr->exchange_type == IKE_SA_INIT){
         if(check_if_tunnel_exists(isakmp_hdr,ipv4_hdr)==0 && get_initiator_flag(isakmp_hdr) == 0 && isakmp_hdr->responder_spi != (rte_be64_t)0){
+            
             struct tunnel new_tunnel;
             new_tunnel.host_ip = ipv4_hdr->src_addr;
             new_tunnel.client_ip = ipv4_hdr->dst_addr;
@@ -139,41 +122,48 @@ void analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_h
             new_tunnel.seq = 0;
             new_tunnel.algo = "";
             push(tunnels,&new_tunnel);
+            printf("%x\n",check_if_tunnel_exists(isakmp_hdr,ipv4_hdr));
         };
     }
-    
-    switch(nxt_payload){
-        case SA:
-            analyse_SA(pkt,offset,isakmp_hdr,ipv4_hdr);
-            break;
+   
+    if((isakmp_hdr->exchange_type == IKE_SA_INIT && check_if_tunnel_exists(isakmp_hdr,ipv4_hdr)==0) || (check_if_tunnel_exists(isakmp_hdr,ipv4_hdr)==1)){
+        switch(nxt_payload){
+            case SA:
+                analyse_SA(pkt,offset,isakmp_hdr,ipv4_hdr);
+                break;
 
-        case KE:
-            analyse_KE(pkt,offset,isakmp_hdr,ipv4_hdr);
-            break;
+            case KE:
+                analyse_KE(pkt,offset,isakmp_hdr,ipv4_hdr);
+                break;
 
-        case N:
-            analyse_N(pkt,offset,isakmp_hdr,ipv4_hdr);
-            break;
+            case N:
+                analyse_N(pkt,offset,isakmp_hdr,ipv4_hdr);
+                break;
 
-        case D:
-            //Session is deleted
-            printf("Session ended btw SPI: %lx, %lx\n", rte_be_to_cpu_64(isakmp_hdr->initiator_spi), rte_be_to_cpu_64(isakmp_hdr->responder_spi));
-            delete_tunnel(isakmp_hdr,ipv4_hdr);
-            break;
-        
-        case SK:
-            analyse_SK(pkt,offset,isakmp_hdr,ipv4_hdr);
-            break;
-        
-        default:{
-            struct isakmp_payload_hdr *payload_hdr;
-            payload_hdr = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr *,offset);
-            if(nxt_payload != SKF){
-                analyse_isakmp_payload(pkt,isakmp_hdr,ipv4_hdr,offset + rte_be_to_cpu_16(payload_hdr->length),payload_hdr->nxt_payload);
+            case D:
+                //Session is deleted
+                printf("Session ended btw SPI: %lx, %lx\n", rte_be_to_cpu_64(isakmp_hdr->initiator_spi), rte_be_to_cpu_64(isakmp_hdr->responder_spi));
+                delete_tunnel(isakmp_hdr,ipv4_hdr);
+                break;
+            
+            case SK:
+                analyse_SK(pkt,offset,isakmp_hdr,ipv4_hdr);
+                break;
+            
+            default:{
+                struct isakmp_payload_hdr *payload_hdr;
+                payload_hdr = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr *,offset);
+                if(nxt_payload != SKF){
+                    analyse_isakmp_payload(pkt,isakmp_hdr,ipv4_hdr,offset + rte_be_to_cpu_16(payload_hdr->length),payload_hdr->nxt_payload);
+                }
+                break;
             }
-            break;
-        }
-    }   
+        }   
+    }
+    else{
+        printf("Unauthorised Packet\n");
+    }
+    
 
 }
 /**
@@ -188,18 +178,12 @@ void analyse_SA(struct rte_mbuf *pkt,uint16_t offset,struct rte_isakmp_hdr *isak
     if(payload){
         payload->hdr = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr *,offset); //get payload header
         printf("Size: %x\n",rte_be_to_cpu_16(payload->hdr->length));
-        payload->proposals = malloc(sizeof(struct Array));
-        if(payload->proposals){
-            void *objects[] = {0};
-            initArray(payload->proposals,0,objects,false,sizeof(struct proposal_struc));
-            get_proposals(pkt,payload->proposals,offset + sizeof(struct isakmp_payload_hdr)); //get proposals and their respective transformations
-        }
+        get_proposals(pkt,offset + sizeof(struct isakmp_payload_hdr)); //get proposals and their respective transformations
         if(payload->hdr->nxt_payload !=0){
             analyse_isakmp_payload(pkt,isakmp_hdr,ipv4_hdr,offset + rte_be_to_cpu_16(payload->hdr->length),payload->hdr->nxt_payload); //continue analyzing packet
         }
     }
     // clean up
-    clean_proposals(payload->proposals);
     free(payload);
 }
 
@@ -234,20 +218,22 @@ void analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *is
         if(check_ike_spi(isakmp_hdr,ipv4_hdr,tunnel) == 1){
             if(payload_hdr->nxt_payload == NO && isakmp_hdr->exchange_type == INFORMATIONAL){
                 //Dead peer detection
-                if(get_initiator_flag(isakmp_hdr) == 1){
+                if(get_initiator_flag(isakmp_hdr) == 0 && get_response_flag(isakmp_hdr) == 0){
                     // DPD start/continue
                     tunnel->dpd_count += 1;
                     if(tunnel->dpd_count == 1){
                         tunnel->dpd = true;
                     }
+                    printf("dpd count: %d\n",tunnel->dpd_count);
                     if(tunnel->dpd_count == 6){
                         // Peer is dead and session should be removed
                         printf("Session ended btw SPI: %lx, %lx\n", rte_be_to_cpu_64(isakmp_hdr->initiator_spi), rte_be_to_cpu_64(isakmp_hdr->responder_spi));
                         removeIndex(tunnels,i-1);
                     }
                 }
-                else if(get_response_flag(isakmp_hdr) == 1){
+                else if(get_initiator_flag(isakmp_hdr) == 1 && get_response_flag(isakmp_hdr) == 1){
                     //Peer has responded and is not dead 
+                    printf("refresh\n");
                     tunnel->dpd_count = 0;
                     tunnel->dpd = false;
                 }
@@ -374,35 +360,26 @@ void analyse_N(struct rte_mbuf *pkt, uint16_t offset,struct rte_isakmp_hdr *isak
 }
 
 /**
- * Get proposals and transformations found in a SA payload and place them in an Array object
+ * Get proposals and transformations found in a SA payload
  * @param pkt pointer to packet being analyzed
  * @param proposals pointer to Array object used in a SA_paylaod struct
  * @param offset offset to SA hdr
  */
-void get_proposals(struct rte_mbuf *pkt, struct Array *proposals, uint16_t offset){
+void get_proposals(struct rte_mbuf *pkt, uint16_t offset){
     struct proposal_struc *proposal;
     proposal = malloc(3 * __SIZEOF_POINTER__);
     if(proposal){
         do{
             // printf("current offset: %u",offset);
             proposal->hdr = rte_pktmbuf_mtod_offset(pkt,struct proposal_hdr *, offset);
-            proposal->transformations = malloc(sizeof(struct Array));
             
             // printf("length: %x\n", rte_be_to_cpu_16(proposal->hdr->len));
             // printf("proposal_num: %x\n",proposal->hdr->proposal_num);
             // printf("No. Transformations: %d",proposal->hdr->num_transforms);
             // printf("reserve %x\n\n",proposal->hdr->reserved);
             uint16_t transformation_offset = offset + 8 + proposal->hdr->spi_size;
-            if(proposal->transformations){
-                //get proposed transformations
-                get_transformations(pkt,proposal->transformations,transformation_offset,proposal->hdr->num_transforms);
-            }
-            else{
-                printf("Failed to allocate memory. Exiting\n");
-                exit(1);
-            }
+            get_transformations(pkt,transformation_offset,proposal->hdr->num_transforms);
             offset += rte_be_to_cpu_16(proposal->hdr->len); //add offset for nxt proposal
-            push(proposals,(void*)proposal);
             
         }while(proposal->hdr->nxt_payload != (int8_t)0);
     }
@@ -420,15 +397,30 @@ void get_proposals(struct rte_mbuf *pkt, struct Array *proposals, uint16_t offse
  * @param offset Offset to transformation
  * @param size Number of transformations
  */
-void get_transformations(struct rte_mbuf *pkt, struct Array *transformations,int offset,int size){
+void get_transformations(struct rte_mbuf *pkt, int offset,int size){
     struct transform_struc *transform = malloc(2 * __SIZEOF_POINTER__);
     if(transform){
         int actual = 0;
         void *objects[] = {0};
-        initArray(transformations,size,objects,false,sizeof(struct transform_struc));
         do{
             transform->hdr = rte_pktmbuf_mtod_offset(pkt,struct transform_hdr *, offset);
             actual++;
+            switch(transform->hdr->type){
+                case ENCR:
+                    break;
+                case PRF:
+                    break;
+                case INTEG:
+                    break;
+                case D_H:
+                    break;
+                case ESN:
+                    
+                    break;
+                default:
+                    printf("Invalid Transform Type!");
+                    break;
+            }
             // printf("\n===================\nTransform %d\n===================",actual);
             // printf("\n| Type: %u",transform->hdr->type);
             // printf("\n| Type ID: %x",rte_be_to_cpu_16(transform->hdr->transform_ID));
@@ -438,8 +430,6 @@ void get_transformations(struct rte_mbuf *pkt, struct Array *transformations,int
                 struct attr *attribute  = rte_pktmbuf_mtod_offset(pkt,struct attr *,offset + 8);
                 transform->attribute = attribute;
             }
-            push(transformations,transform);
-            
             if(actual > size){
                 printf("Too many transformations!");
             }
@@ -449,25 +439,10 @@ void get_transformations(struct rte_mbuf *pkt, struct Array *transformations,int
 
 }
 
-/** 
- * Free up memory allocated to proposals and transformations
- */
-void clean_proposals(struct Array* proposals){
-    for(int i = 0;i< proposals->size;i++){
-        struct proposal_struc *proposal =  proposals->array[i+1]; 
-        clearArray(proposal->transformations);
-        free(proposal->transformations);
-        free(proposal);
-    }
-    clearArray(proposals);
-    free(proposals);
-
-}
-
 void delete_tunnel(struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr){
     for(int i = 1;i <= tunnels->size; i++){
         struct tunnel *tunnel = tunnels->array[i];
-        
+        printf("%lx, %lx\n", rte_be_to_cpu_64(tunnel->host_spi), rte_be_to_cpu_64(tunnel->client_spi));
         if(check_ike_spi(isakmp_hdr,ipv4_hdr,tunnel) == 1){
             removeIndex(tunnels,i);
             break;
@@ -482,7 +457,7 @@ int check_ike_spi(struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hd
 }
 
 int check_if_tunnel_exists(struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *hdr){
-    for(int i = 1;i<tunnels->size;i++){
+    for(int i = 1;i<=tunnels->size;i++){
         struct tunnel *tunnel = (struct tunnel *)tunnels->array[i];
         if(check_ike_spi(isakmp_hdr,hdr,tunnel) == 1){
             return 1;

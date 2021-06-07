@@ -124,25 +124,31 @@ void removeIndex(struct Array* array, int index){
     void** pointer = malloc(newUsed * __SIZEOF_POINTER__ + sizeof(int));
     bool skipped = false;
     if(pointer){
-        for(int i = 1; i<= newUsed + 1; i++){
-            if(!skipped & i - 1== index){
-                skipped = true;
-                continue;
-            }
-            void *test = malloc(array->itemSize);
-            if(test){
-                pointer[skipped? i + 1 : i] = test;
-                if(array->string){
-                    strcpy(pointer[i],array->array[skipped? i + 1 : i]);
+        if(newUsed == 0){
+            pointer[0] = newUsed;
+            array->array = pointer;
+            array->size = newUsed;
+        }
+        else{
+            for(int i = 1; i<= array->size; i++){
+                if(!skipped && i == index){
+                    skipped = true;
+                    continue;
                 }
-                else{
-                    memcpy(pointer[i],array->array[skipped? i + 1 : i],array->itemSize);
+                pointer[skipped? i - 1 : i] = malloc(array->itemSize);
+                if(pointer[skipped? i - 1 : i]){
+                    if(array->string){
+                        strcpy(pointer[skipped? i - 1 : i],array->array[i]);
+                    }
+                    else{
+                        memcpy(pointer[skipped? i - 1 : i],array->array[i],array->itemSize);
+                    }
                 }
             }
         }
-        pointer[0] = newUsed;
-        array->array = pointer;
-        array->size = newUsed;
+        
+       
+        
         
     }
     else{

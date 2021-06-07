@@ -14,7 +14,6 @@
 
 
 #include "include/ike.h"
-#include <glib-2.0/gmodule.h>
 
 #define RX_RING_SIZE 1024
 #define TX_RING_SIZE 1024
@@ -69,7 +68,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
 	unsigned i;
 	uint64_t now = rte_rdtsc();
     
-
+    
 	for (i = 0; i < nb_pkts; i++){
         uint32_t x = rte_pktmbuf_data_len(pkts[i]); //get size of entire packet
         struct rte_mbuf *pkt = pkts[i];
@@ -135,19 +134,19 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                     //     .spi = rte_be_to_cpu_32(esp_header->spi)
                     // };
 
-                    bool tunnel_exists = FALSE;
+                    bool tunnel_exists = false;
                     //Lets check for new tunnels
                     // if (tunnels->size == 0){
                     //         push(tunnels, &tunnel_to_chk);
                     //         // printf("\nNew tunnel from: %u.%u.%u.%u\n",src_bit1,src_bit2,src_bit3,src_bit4);
                     //         // legit_pkts++;
-                    //         tunnel_exists = TRUE;
+                    //         tunnel_exists = true;
                     // }else{
                     
                     // for (uint32_t i = 1; i <= tunnels->size; i++){
                     //     struct tunnel* check = ((struct tunnel*) tunnels->array[i]);
                     //     if (check->client_ip == src_addr_int && check->host_ip == dst_addr_int){
-                    //         tunnel_exists = TRUE;
+                    //         tunnel_exists = true;
                     //         //Lets check if there are any sus packets
                     //         if(check->seq + tolerance >= rte_be_to_cpu_32(esp_header->seq) && check->seq < rte_be_to_cpu_32(esp_header->seq) &&check->spi == rte_be_to_cpu_32(esp_header->spi)) {
                     //             check-> seq = rte_be_to_cpu_32(esp_header->seq);
@@ -187,9 +186,8 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
             else if(dst_port == ISAKMP_PORT || src_port == ISAKMP_PORT){
                 struct rte_isakmp_hdr *isakmp_hdr;
                 isakmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_isakmp_hdr*,ESP_OFFSET);
-                char* exchange_type = get_exchange_type(isakmp_hdr);
                 // print_isakmp_headers_info(hdr);
-                if(strcmp(exchange_type,"IKE_SA_INIT") == 0){
+                if(isakmp_hdr->exchange_type ==  IKE_SA_INIT){
                     if(get_initiator_flag(isakmp_hdr) == 1){
 
                         char* src_ip[15];

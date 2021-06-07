@@ -14,10 +14,18 @@
 #include <rte_esp.h>
 #include <rte_udp.h>
 #include <stdbool.h>
+
+        
+
 static const int ESP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr);
 static const int ISAKMP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr) + 4;
 static const int first_payload_hdr_offset = ESP_OFFSET + 28;
 struct Array *tunnels;
+
+static const char * transform_types[5] = { "Encryption Algorithm","Pseudorandom Function","Integrity Algorithm","Diffie-Hellman Group","Extended Sequence Numbers"};
+static const char * exchange_types[4] = {"IKE_SA_INIT","IKE_AUTH","CREATE_CHILD_SA","INFORMATIONAL"};
+
+
 enum EXCHANGE_TYPE{
     IKE_SA_INIT = 34,
     IKE_AUTH = 35,
@@ -189,7 +197,6 @@ struct isakmp_payload_hdr{
 
 struct SA_payload{
     struct isakmp_payload_hdr *hdr;
-    struct Array *proposals;
 };
 
 struct proposal_hdr{
@@ -205,7 +212,6 @@ struct proposal_hdr{
 struct proposal_struc{
     struct proposal_hdr *hdr;
     void* SPI; //Sender's SPI
-    struct Array *transformations;
 };
 
 struct transform_hdr{
@@ -217,16 +223,18 @@ struct transform_hdr{
     rte_be16_t transform_ID; //Instance of transform type propsed
 };
 
+struct attr{
+    int8_t type; //attribute type
+    int8_t value; //attribute value
+};
+
 struct transform_struc{
     struct transform_hdr *hdr;
     struct attr *attribute;
 };
 
 
-struct attr{
-    int8_t type; //attribute type
-    int8_t value; //attribute value
-};
+
 
 
 struct key_exchange{
@@ -298,5 +306,6 @@ void print_isakmp_headers_info(struct rte_isakmp_hdr *isakmp_hdr);
 void analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr,uint16_t offset,int nxt_payload);
 
 void get_ip_address_string(rte_be32_t ip_address,char *ip);
+
 #endif
 

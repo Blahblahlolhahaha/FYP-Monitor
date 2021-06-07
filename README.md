@@ -36,3 +36,4 @@ Log other ip protocols like tcp/icmp
 * Random segmentation fault
 * Flagging tcp packets and udp thats not port 500 and 4500
 * Proper logging to file
+* Checking size
