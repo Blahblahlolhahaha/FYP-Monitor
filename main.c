@@ -191,15 +191,6 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                 // print_isakmp_headers_info(hdr);
                 if(strcmp(exchange_type,"IKE_SA_INIT") == 0){
                     if(get_initiator_flag(isakmp_hdr) == 1){
-                        int srcip_bit4 = hdr->src_addr >> 24 & 0xFF;
-                        int srcip_bit3 = hdr->src_addr >> 16 & 0xFF;
-                        int srcip_bit2 = hdr->src_addr >> 8 & 0xFF;
-                        int srcip_bit1 = hdr->src_addr & 0xFF;
-                        
-                        int dstip_bit4 = hdr->dst_addr >> 24 & 0xFF;
-                        int dstip_bit3 = hdr->dst_addr >> 16 & 0xFF;
-                        int dstip_bit2 = hdr->dst_addr >> 8 & 0xFF;
-                        int dstip_bit1 = hdr->dst_addr & 0xFF;
 
                         char* src_ip[15];
                         char* dst_ip[15];

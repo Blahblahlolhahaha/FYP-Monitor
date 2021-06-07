@@ -9,21 +9,30 @@ sudo ./build.sh
 ## Explanation
 Some explanation in code but in general:
 
-NAT-T used by IPsec uses UDP port 4500
+NAT-T used by IPsec uses UDP port 4500, IKE_SA_INIT uses UDP port 500
 
-Soooooooo for now, can just flag out any traffic thats not using udp port 4500 
+Using next payload number and exchange type in IKE header, can identify data stored within IKE packet
 
 
 ## TODO:
 Log SPI pair for each remote ip client sad :(
 Log other ip protocols like tcp/icmp
 
-## Some plans:
-Use SPI and sequence numebers to find out sus packets
+## Whats Done:
+* Capturing of IKE headers and ESP headers.
+* Finding out payload type found within IKE headers using the next payload number.
+* Storing tunnels based on ip, spis
+* Can identify successful/unsuccessful ike exchanges
+* Can identify ike session ending
+* Can identify dead pear(theorectical, havent test yet)
 
-Flow: ISAKMP btw clients and fw every 2mins? Other comms using ESP
+## Whats Not Done:
+* Use SPI and sequence numebers to find out sus packets
 
-Store SPI pairs/sequence number somewhr (memory,file,sql db whatever)
-* Can track out dead clients by tracking time (idk abt this one)
+* Store SPI pairs/sequence number somewhr (memory,file,sql db whatever)
 * If got SPI that doesnt match any records, flag it
 * If sequence number not in sequence, flag it
+
+* Random segmentation fault
+* Flagging tcp packets and udp thats not port 500 and 4500
+* Proper logging to file

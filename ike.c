@@ -157,7 +157,7 @@ void analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_h
 
         case D:
             //Session is deleted
-            printf("Session ended btw SPI: %lx, %lx", rte_be_to_cpu_64(isakmp_hdr->initiator_spi), rte_be_to_cpu_64(isakmp_hdr->responder_spi));
+            printf("Session ended btw SPI: %lx, %lx\n", rte_be_to_cpu_64(isakmp_hdr->initiator_spi), rte_be_to_cpu_64(isakmp_hdr->responder_spi));
             delete_tunnel(isakmp_hdr,ipv4_hdr);
             break;
         
@@ -242,7 +242,7 @@ void analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *is
                     }
                     if(tunnel->dpd_count == 6){
                         // Peer is dead and session should be removed
-                        printf("Session ended btw SPI: %lx, %lx", rte_be_to_cpu_64(isakmp_hdr->initiator_spi), rte_be_to_cpu_64(isakmp_hdr->responder_spi));
+                        printf("Session ended btw SPI: %lx, %lx\n", rte_be_to_cpu_64(isakmp_hdr->initiator_spi), rte_be_to_cpu_64(isakmp_hdr->responder_spi));
                         removeIndex(tunnels,i-1);
                     }
                 }
@@ -253,7 +253,7 @@ void analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *is
                 }
             }
             else if(payload_hdr->nxt_payload == D && isakmp_hdr->exchange_type == INFORMATIONAL){
-                printf("Session ended btw SPI: %lx, %lx", rte_be_to_cpu_64(isakmp_hdr->initiator_spi), rte_be_to_cpu_64(isakmp_hdr->responder_spi));
+                printf("Session ended btw SPI: %lx, %lx\n", rte_be_to_cpu_64(isakmp_hdr->initiator_spi), rte_be_to_cpu_64(isakmp_hdr->responder_spi));
                 delete_tunnel(isakmp_hdr,ipv4_hdr);
             }
             else if(payload_hdr->nxt_payload == AUTH && isakmp_hdr->exchange_type == IKE_AUTH){
@@ -469,7 +469,6 @@ void delete_tunnel(struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_h
         struct tunnel *tunnel = tunnels->array[i];
         
         if(check_ike_spi(isakmp_hdr,ipv4_hdr,tunnel) == 1){
-            
             removeIndex(tunnels,i);
             break;
         }

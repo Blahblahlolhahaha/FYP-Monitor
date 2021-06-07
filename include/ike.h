@@ -274,7 +274,7 @@ struct tunnel{
     uint32_t client_esp_spi;
     uint32_t host_esp_spi;
     char *algo;
-    int dpd_count; //if count == 5
+    int dpd_count; //if count == 6, peer is deado
     bool dpd;
 };
 
