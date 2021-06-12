@@ -197,7 +197,6 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                             get_ip_address_string(hdr->dst_addr,dst_ip);
                             printf("%s is trying to initiate IKE exchange with %s\n", src_ip, dst_ip);
 
-
                         }
                     }
                     else{

@@ -24,6 +24,15 @@ struct Array *tunnels;
 
 static const char * transform_types[5] = { "Encryption Algorithm","Pseudorandom Function","Integrity Algorithm","Diffie-Hellman Group","Extended Sequence Numbers"};
 static const char * exchange_types[4] = {"IKE_SA_INIT","IKE_AUTH","CREATE_CHILD_SA","INFORMATIONAL"};
+static const char * payload_types[17] = {"Security Association", "Key Exchange", "Identification - Initiator", 
+"Identification - Responder", "Certificate", "Certificate Request", "Authentication", "Nonce",
+"Notify", "Delete", "Vendor ID", "Traffic Selector - Initiator", "Traffic Selector - Responder",
+"Encrypted and Authenticated", "Configuration", "Extensible Authentication"};
+static const char* notify_msg_type[44] = {"UNSUPPORTED_CRIT_PAYLOAD\n","\0","\0","INVALID_IKE_SPI\n",
+"INVALID_MAJOR_VERSION\n","\0","INVALID_SYNTAX\n","\0","INVALID_MSG_ID\n","\0","INVALID_SPI\n","\0","\0","NO_PROPOSAL_CHOSEN\n",
+"\0","\0","INVALID_KE_PAYLOAD\n","\0","\0","\0","\0","\0","\0","AUTH_FAILED\n","\0","\0","\0","\0","\0","\0","\0","\0","\0",
+"SINGLE_PAIR_REQUIRED\n","NO_ADDITIONAL_SAS\n","INTERNAL_ADDRESS_FAILURE\n","FAILED_CP_REQUIRED\n","TS_UNACCEPTABLE\n",
+"INVALID_SELECTORS\n","\0","\0","\0","TEMPORARY_FAILURE\n","CHILD_SA_NOT_FOUND\n"};
 
 
 enum EXCHANGE_TYPE{
@@ -299,7 +308,9 @@ int get_initiator_flag(struct rte_isakmp_hdr *hdr);
 
 char *get_exchange_type (struct rte_isakmp_hdr *hdr);
 
-char *get_payload_type(struct rte_isakmp_hdr *hdr);
+char *get_ike_payload_type(struct rte_isakmp_hdr *hdr);
+
+char *get_payload_nxt_payload(struct isakmp_payload_hdr *hdr);
 
 void print_isakmp_headers_info(struct rte_isakmp_hdr *isakmp_hdr);
 

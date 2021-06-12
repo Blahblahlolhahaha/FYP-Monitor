@@ -18,6 +18,7 @@ int get_initiator_flag(struct rte_isakmp_hdr *hdr){
 }
 
 /// Gets Exchange type of isakmp packet
+/// Should only be used if logging the exchange type is needed
 /// @return String containing Exchange type of packet
 char *get_exchange_type (struct rte_isakmp_hdr *hdr){
     int index  = hdr->exchange_type - 34;
@@ -26,76 +27,50 @@ char *get_exchange_type (struct rte_isakmp_hdr *hdr){
     }
 }
 
-/// Gets Payload Type from a isakmp header
+/// Gets Payload Type from a isakmp header as a string
+/// Should only be used if logging the payload type is needed
 /// @returns a string containing the payload type
-char *get_payload_type(struct rte_isakmp_hdr *hdr){
-    switch (hdr->nxt_payload){
-        case NO:
-            return "No Next Payload";
-            break;
-        case SA:
-            return "Security Association";
-            break;
-        case KE:
-            return "Key Exchange";
-            break;
-        case IDI:
-            return "Identification - Initiator";
-            break;
-        case IDR:
-            return "Identification - Responder";
-            break;
-        case CERT:
-            return "Certificate";
-            break;
-        case CERTREQ:
-            return "Certificate Request";
-            break;
-        case AUTH:
-            return "Authentication";
-            break;
-        case NONCE:
-            return "Nonce";
-            break;
-        case N:
-            return "Notify";
-            break;
-        case D:
-            return "Delete";
-            break;
-        case V:
-            return "Vendor ID";
-            break;
-        case TSI:
-            return "Traffic Selector - Initiator";
-            break;
-        case TSR:
-            return "Traffic Selector - Responder";
-            break;
-        case SK:
-            return "Encrypted and Authenticated";
-            break;
-        case SKF:
-            return "Encrypted and Authenticated Fragment";
-            break;
-        case CP:
-            return "Configuration";
-            break;
-        case EAP:
-            return "Extensible Authentication";
-            break;
-        default:
-            return NULL;
-            break;
+char *get_ike_payload_type(struct rte_isakmp_hdr *hdr){
+    if(hdr->nxt_payload == NO){
+        return "No Next Payload";
+    }
+    else if(hdr->nxt_payload == SKF){
+        return "Encrypted and Authenticated Fragment";
+    }
+    else if(hdr->nxt_payload >= SA && hdr->nxt_payload <= EAP){
+        return payload_types[hdr->nxt_payload - 33];
+    }
+    else{
+        return NULL;
+    }
+}
+
+/// Gets Payload Type from a isakmp payload header as a string
+/// Should only be used if logging the payload type is needed
+/// @returns a string containing the payload type
+char *get_payload_nxt_payload(struct isakmp_payload_hdr *hdr){
+    if(hdr->nxt_payload == NO){
+        return "No Next Payload";
+    }
+    else if(hdr->nxt_payload == SKF){
+        return "Encrypted and Authenticated Fragment";
+    }
+    else if(hdr->nxt_payload >= SA && hdr->nxt_payload <= EAP){
+        return payload_types[hdr->nxt_payload - 33];
+    }
+    else{
+        return NULL;
     }
 }
 
 void print_isakmp_headers_info(struct rte_isakmp_hdr *isakmp_hdr){
+    //used to print important ike header instructions, can be converted to log into file if needed
     printf("Initiator SPI: %lx\n", rte_be_to_cpu_64(isakmp_hdr->initiator_spi));
     printf("Responder SPI: %lx\n", rte_be_to_cpu_64(isakmp_hdr->responder_spi));
     printf("Initiator: %d\n",get_initiator_flag(isakmp_hdr));
     printf("Response: %d\n",get_response_flag(isakmp_hdr));
     printf("Message ID: %04x\n\n",rte_be_to_cpu_32(isakmp_hdr->message_id));
+    printf("Exchange type: %s", get_exchange_type(isakmp_hdr));
 }
 
 /**
@@ -108,7 +83,7 @@ void print_isakmp_headers_info(struct rte_isakmp_hdr *isakmp_hdr){
 void analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr,uint16_t offset,int nxt_payload){
     if(isakmp_hdr->exchange_type == IKE_SA_INIT){
         if(check_if_tunnel_exists(isakmp_hdr,ipv4_hdr)==0 && get_initiator_flag(isakmp_hdr) == 0 && isakmp_hdr->responder_spi != (rte_be64_t)0){
-            
+            //Only if server responds then tunnel should be considered legit
             struct tunnel new_tunnel;
             new_tunnel.host_ip = ipv4_hdr->src_addr;
             new_tunnel.client_ip = ipv4_hdr->dst_addr;
@@ -127,6 +102,7 @@ void analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_h
     }
    
     if((isakmp_hdr->exchange_type == IKE_SA_INIT && check_if_tunnel_exists(isakmp_hdr,ipv4_hdr)==0) || (check_if_tunnel_exists(isakmp_hdr,ipv4_hdr)==1)){
+        // If tunnel does not exist, should only be IKE_SA_INIT, else sus
         switch(nxt_payload){
             case SA:
                 analyse_SA(pkt,offset,isakmp_hdr,ipv4_hdr);
@@ -173,18 +149,12 @@ void analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_h
  * @param isakmp_hdr pointer to isakmp headers
  */
 void analyse_SA(struct rte_mbuf *pkt,uint16_t offset,struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr){
-    struct SA_payload *payload;
-    payload = malloc(sizeof(struct SA_payload));
-    if(payload){
-        payload->hdr = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr *,offset); //get payload header
-        printf("Size: %x\n",rte_be_to_cpu_16(payload->hdr->length));
-        get_proposals(pkt,offset + sizeof(struct isakmp_payload_hdr)); //get proposals and their respective transformations
-        if(payload->hdr->nxt_payload !=0){
-            analyse_isakmp_payload(pkt,isakmp_hdr,ipv4_hdr,offset + rte_be_to_cpu_16(payload->hdr->length),payload->hdr->nxt_payload); //continue analyzing packet
-        }
+    struct isakmp_payload_hdr *payload;
+    payload = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr *,offset); //get payload header
+    get_proposals(pkt,offset + sizeof(struct isakmp_payload_hdr)); //get proposals and their respective transformations
+    if(payload->nxt_payload !=0){
+        analyse_isakmp_payload(pkt,isakmp_hdr,ipv4_hdr,offset + rte_be_to_cpu_16(payload->length),payload->nxt_payload); //continue analyzing packet
     }
-    // clean up
-    free(payload);
 }
 
 /**
@@ -196,8 +166,6 @@ void analyse_SA(struct rte_mbuf *pkt,uint16_t offset,struct rte_isakmp_hdr *isak
 void analyse_KE(struct rte_mbuf *pkt,uint16_t offset,struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr){
     struct key_exchange* payload;
     payload = rte_pktmbuf_mtod_offset(pkt,struct key_exchange *,offset);
-    printf("Key Exchange: %u\n",rte_be_to_cpu_16(payload->DH_GRP_NUM));
-    
     if(payload->hdr.nxt_payload !=0){
         analyse_isakmp_payload(pkt,isakmp_hdr,ipv4_hdr,offset + rte_be_to_cpu_16(payload->hdr.length),payload->hdr.nxt_payload);
     }
@@ -216,8 +184,10 @@ void analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *is
         struct tunnel *tunnel = tunnels->array[i];
         
         if(check_ike_spi(isakmp_hdr,ipv4_hdr,tunnel) == 1){
+            //nid to ensure spi is the same
             if(payload_hdr->nxt_payload == NO && isakmp_hdr->exchange_type == INFORMATIONAL){
                 //Dead peer detection
+                //responder will send the request and initiator has to respond within 6 requests
                 if(get_initiator_flag(isakmp_hdr) == 0 && get_response_flag(isakmp_hdr) == 0){
                     // DPD start/continue
                     tunnel->dpd_count += 1;
@@ -232,17 +202,19 @@ void analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *is
                     }
                 }
                 else if(get_initiator_flag(isakmp_hdr) == 1 && get_response_flag(isakmp_hdr) == 1){
-                    //Peer has responded and is not dead 
+                    //Peer has responded and is not dead , hence refresh dpd is reset
                     printf("refresh\n");
                     tunnel->dpd_count = 0;
                     tunnel->dpd = false;
                 }
             }
             else if(payload_hdr->nxt_payload == D && isakmp_hdr->exchange_type == INFORMATIONAL){
+                //Either side ends connection, so delete tunnel
                 printf("Session ended btw SPI: %lx, %lx\n", rte_be_to_cpu_64(isakmp_hdr->initiator_spi), rte_be_to_cpu_64(isakmp_hdr->responder_spi));
                 delete_tunnel(isakmp_hdr,ipv4_hdr);
             }
             else if(payload_hdr->nxt_payload == AUTH && isakmp_hdr->exchange_type == IKE_AUTH){
+                //99.9% means authenticated once responder sends this payload unless server kena gon
                 if(get_response_flag(isakmp_hdr) == 1){
                     char* src_ip[15];
                     char* dst_ip[15];
@@ -273,90 +245,44 @@ void analyse_N(struct rte_mbuf *pkt, uint16_t offset,struct rte_isakmp_hdr *isak
     bool error = false;
     bool special_error = false;
     payload = malloc(sizeof(struct notify_hdr));
-    char *msg;
+    char *msg = malloc(256);
     char failed_msg[128] = "";
     strcat(failed_msg,"IKE failed with error:");
-    if(payload){
+    if(payload && msg){
         payload->payload_hdr = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr *,offset);
         payload->hdr = rte_pktmbuf_mtod_offset(pkt,struct notify_hdr *,offset + sizeof(struct isakmp_payload_hdr));
-        switch(rte_be_to_cpu_16(payload->hdr->msg_type)){
-            case INVALID_KE_PAYLOAD:
-                strcat(failed_msg,"INVALID_KE_PAYLAOD\n");
+        if(rte_be_to_cpu_16(payload->hdr->msg_type) <= 44){
+            //so far anything above 44 isnt done theres the 16k series of msg types;
+            char * msg_type = notify_msg_type[rte_be_to_cpu_16(payload->hdr->msg_type) - 1];
+            if(strcmp(msg_type, "\0") != 0 && rte_be_to_cpu_16(payload->hdr->msg_type) !=  INVALID_SPI && rte_be_to_cpu_16(payload->hdr->msg_type) !=  INVALID_MSG_ID){
+                //Error codes related to auth
                 error = true;
-                break;
-            case INVALID_MAJOR_VERSION:
-                strcat(failed_msg,"INVALID_MAJOR_VERSION\n");
-                error = true;
-                break;
-            case UNSUPPORTED_CRIT_PAYLOAD:
-                strcat(failed_msg,"UNSUPPORTED_CRIT_PAYLOAD\n");
-                error = true;
-                break;
-            case INVALID_SYNTAX:
-                strcat(failed_msg,"INVALID_SYNTAX\n");
-                error = true;
-                break;
-            case INVALID_SPI:
+                strcat(failed_msg,msg_type);
+            }
+            //other error codes
+            else if(rte_be_to_cpu_16(payload->hdr->msg_type) ==  INVALID_SPI){
                 msg = "Invalid SPI detected by firewall\n";
                 special_error = true;
-                break;
-            case INVALID_MSG_ID:
+            }
+            else if(rte_be_to_cpu_16(payload->hdr->msg_type) ==  INVALID_MSG_ID){
                 msg = "Invalid Message ID detected by firewall\n";
                 special_error = true;
-                break;
-            case NO_PROPOSAL_CHOSEN:
-                strcat(failed_msg,"NO_PROPOSAL_CHOSEN\n");
-                error = true;
-                break;
-            case AUTH_FAILED:
-                strcat(failed_msg,"INVALID_SYNTAX\n");
-                error = true;
-                break;
-            case SINGLE_PAIR_REQUIRED:
-                strcat(failed_msg,"SINGLE_PAIR_REQUIRED\n");
-                error = true;
-                break;
-            case NO_ADDITIONAL_SAS:
-                strcat(failed_msg,"SINGLE_PAIR_REQUIRED\n");
-                error = true;
-                break;
-            case INTERNAL_ADDRESS_FAILURE:
-                strcat(failed_msg,"INTERNAL_ADDRESS_FAILURE\n");
-                error = true;
-                break;
-            case FAILED_CP_REQUIRED:
-                strcat(failed_msg,"FAILED_CP_REQUIRED\n");
-                error = true;
-                break;
-            case TS_UNACCEPTABLE:
-                strcat(failed_msg,"TS_UNACCEPTABLE\n");
-                error = true;
-                break;
-            case INVALID_SELECTORS:
-                strcat(failed_msg,"INVALID_SELECTORS\n");
-                error = true;
-                break;
-            case TEMPORARY_FAILURE:
-                strcat(failed_msg,"TEMPORARY_FAILURE\n");
-                error = true;
-                break;
-            case CHILD_SA_NOT_FOUND:
-                strcat(failed_msg,"CHILD_SA_NOT_FOUND\n");
-                error = true;
-                break;
+            }
+            if(error){
+                delete_tunnel(isakmp_hdr,ipv4_hdr);
+                printf("%s",failed_msg);
+            }
+            else if(special_error){
+                printf("%s",msg);
+            }
         }
     }
-    if(error){
-        delete_tunnel(isakmp_hdr,ipv4_hdr);
-        printf("%s",failed_msg);
-    }
-    else if(special_error){
-        printf("%s",msg);
-    }
-    else if(payload->payload_hdr->nxt_payload != NO){
+    if(payload->payload_hdr->nxt_payload != NO){
         analyse_isakmp_payload(pkt,isakmp_hdr,ipv4_hdr,offset + rte_be_to_cpu_16(payload->payload_hdr->length),payload->payload_hdr->nxt_payload);
     }
     free(payload);
+    free(msg);
+    
 }
 
 /**
@@ -439,6 +365,12 @@ void get_transformations(struct rte_mbuf *pkt, int offset,int size){
 
 }
 
+/** deletes tunnel from authenticated tunnels once session ends
+ * 
+ * @param isakmp_hdr isakmp header containing initiator and responder spis to delete
+ * @param ipv4_hdr IPV4 header containing respective ip addresses of client and host to remove
+ * 
+ */
 void delete_tunnel(struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr){
     for(int i = 1;i <= tunnels->size; i++){
         struct tunnel *tunnel = tunnels->array[i];
@@ -450,22 +382,39 @@ void delete_tunnel(struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_h
     }
 }
 
+/** 
+ * checks whether if ike information in tunnel matches isakmp header and ip address
+ * @param isakmp_hdr isakmp header containing initiator and responder spis to check
+ * @param ipv4_hdr IPV4 header containing respective ip addresses of client and host to check
+ * @param tunnel tunnel to check
+ * @returns 1 if information matches, 0 if otherwise
+ */
 int check_ike_spi(struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr,struct tunnel* tunnel){
     return (tunnel->client_spi == isakmp_hdr->initiator_spi 
                 && tunnel->host_spi == isakmp_hdr->responder_spi) && ((tunnel->client_ip == ipv4_hdr->src_addr && tunnel->host_ip == ipv4_hdr->dst_addr) || 
                 (tunnel->host_ip == ipv4_hdr->src_addr && tunnel->client_ip == ipv4_hdr->dst_addr)) ? 1 : 0;
 }
 
-int check_if_tunnel_exists(struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *hdr){
+/** 
+ * checks whether if ike information in tunnel actually exists
+ * @param isakmp_hdr isakmp header containing initiator and responder spis to check
+ * @param ipv4_hdr IPV4 header containing respective ip addresses of client and host to check
+ * @returns 1 if information matches, 0 if otherwise
+ */
+int check_if_tunnel_exists(struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr){
     for(int i = 1;i<=tunnels->size;i++){
         struct tunnel *tunnel = (struct tunnel *)tunnels->array[i];
-        if(check_ike_spi(isakmp_hdr,hdr,tunnel) == 1){
+        if(check_ike_spi(isakmp_hdr,ipv4_hdr,tunnel) == 1){
             return 1;
         }
     }
     return 0;
 }
 
+/** converts ip address into strings and place them in ip
+ * @param ip_address ipv4 address to convert 
+ * @param ip char pointer to store the converted string
+ */
 void get_ip_address_string(rte_be32_t ip_address,char *ip){
     int bit4 = ip_address >> 24 & 0xFF;
     int bit3 = ip_address >> 16 & 0xFF;
