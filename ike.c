@@ -94,7 +94,8 @@ void analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_h
             new_tunnel.dpd = false;
             new_tunnel.dpd_count = 0;
 
-            new_tunnel.seq = 0;
+            new_tunnel.client_seq = 0;
+            new_tunnel.host_seq = 0;
             new_tunnel.algo = "";
             push(tunnels,&new_tunnel);
             printf("%x\n",check_if_tunnel_exists(isakmp_hdr,ipv4_hdr));

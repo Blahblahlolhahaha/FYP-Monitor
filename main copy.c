@@ -130,7 +130,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                     //esp packet
                     struct rte_esp_hdr *esp_header;
                     esp_header = rte_pktmbuf_mtod_offset(pkt,struct rte_esp_hdr *,ESP_OFFSET); // get esp headers
-                    // log spi
+                    log spi
                     printf("SPI: %04x\n",rte_be_to_cpu_32(esp_header->spi));
                     printf("Seq: %u\n",rte_be_to_cpu_32(esp_header->seq));
                     printf("yayyyyyy\n\n");
@@ -140,56 +140,53 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                         .seq = rte_be_to_cpu_32(esp_header->seq),
                         .spi = rte_be_to_cpu_32(esp_header->spi)
                     };
-                    bool tunnel_exists = false;
-                    // Lets check for new tunnels
-                    if (tunnels->size == 0){
-                            printf("\nUnauthorized packet detected");
-                            tampered_pkts++;
-                    }else{
-                        for (uint32_t i = 1; i <= tunnels->size; i++){
-                            struct tunnel* check = ((struct tunnel*) tunnels->array[i]);
 
-                            if (check->client_ip == src_addr_int && check->host_ip == dst_addr_int){
-                                if (!check->client_esp_spi){
-                                    check->client_esp_spi = rte_be_to_cpu_32(esp_header->spi);
-                                    legit_pkts++;
-                                    tunnel_exists = true;
-                                }
-                                else if(check->client_esp_spi == rte_be_to_cpu_32(esp_header->spi)){
-                                    if(check->client_seq + 1 == rte_be_to_cpu_32(esp_header->seq)){
-                                        check->client_seq = rte_be_to_cpu_32(esp_header->seq);
-                                        legit_pkts++;
-                                        tunnel_exists = true;
-                                    }else{
-                                        tampered_pkts++;
-                                        
-                                    }
-                                }else{
-                                    tampered_pkts++;
-                                }
-                            }else if (check->host_ip == src_addr_int && check->client_ip == dst_addr_int){
-                                if (!check->host_esp_spi){
-                                    check->host_esp_spi = rte_be_to_cpu_32(esp_header->spi);
-                                    legit_pkts++;
-                                    tunnel_exists = true;
-                                }
-                                else if(check->host_esp_spi == rte_be_to_cpu_32(esp_header->spi)){
-                                    if(check->host_seq + 1 == rte_be_to_cpu_32(esp_header->seq)){
-                                        check->host_seq = rte_be_to_cpu_32(esp_header->seq);
-                                        legit_pkts++;
-                                        tunnel_exists = true;
-                                    }else{
-                                        tampered_pkts++;
-                                    }
-                                }else {
-                                    tampered_pkts++;
-                                }
+                    bool tunnel_exists = false;
+                    Lets check for new tunnels
+                    if (tunnels->size == 0){
+                            push(tunnels, &tunnel_to_chk);
+                            // printf("\nNew tunnel from: %u.%u.%u.%u\n",src_bit1,src_bit2,src_bit3,src_bit4);
+                            // legit_pkts++;
+                            tunnel_exists = true;
+                    }else{
+                    
+                    for (uint32_t i = 1; i <= tunnels->size; i++){
+                        struct tunnel* check = ((struct tunnel*) tunnels->array[i]);
+                        if ((check->client_ip == src_addr_int && check->host_ip == dst_addr_int) || (check->host_ip == src_addr_int && check->client_ip == dst_addr_int)){
+                            tunnel_exists = true;
+                            //Lets check if there are any sus packets
+                            if(check->seq >= rte_be_to_cpu_32(esp_header->seq) && check->seq < rte_be_to_cpu_32(esp_header->seq) &&check->client_esp_spi == rte_be_to_cpu_32(esp_header->spi)) {
+                                check-> seq = rte_be_to_cpu_32(esp_header->seq);
+                                legit_pkts++;
+                                counted++;
+                            }else{
+                                FILE * fp;
+
+                                fp = fopen ("log.txt", "a+");
+                                fprintf(fp, "\n===================\nTampered packet detected\n===================");
+                                fprintf(fp, "\n| Suspicious packet's seq: %u",rte_be_to_cpu_32(esp_header->seq));
+                                fprintf(fp, "\n| Expected seq: %u",check-> seq + 1);
+                                fprintf(fp, "\n| Suspicious packet's spi: %u",rte_be_to_cpu_32(esp_header->spi));
+                                fprintf(fp, "\n| Expected spi: %u",check-> spi);
+                                fprintf(fp, "\n| Suspicious packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
+                                fprintf(fp, "\n| Suspicious packet's destination ip: %u.%u.%u.%u",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
+                                fclose(fp);
+                                tampered_pkts++;
+                                counted++;
                             }
+                            break;
                         }
-                        if (!tunnel_exists){
-                            tampered_pkts++;
+
+                    }
+                    if(!tunnel_exists){
+                            push(tunnels, &tunnel_to_chk);
+                            // printf("\nNew tunnel from: %u.%u.%u.%u\n",src_bit1,src_bit2,src_bit3,src_bit4);
+                            isakmp_pkts++;
+                            counted++;
+                            break;
                         }
                     }
+
                 }
                
             }

@@ -287,12 +287,14 @@ struct tunnel{
     uint64_t host_spi;
     int client_ip;
     int host_ip;
-    uint32_t seq;
+    uint32_t client_seq;
+    uint32_t host_seq;
     uint32_t client_esp_spi;
     uint32_t host_esp_spi;
     char *algo;
     int dpd_count; //if count == 6, peer is deado
     bool dpd;
+
 };
 
 /*flags in hdr:
