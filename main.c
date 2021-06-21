@@ -264,8 +264,8 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                     printf("--------------------------------\n| tunnel %d\n",i);
                     get_ip_address_string(check->client_ip,src_ip);
                     get_ip_address_string(check->host_ip,dst_ip);
-                    printf("| Src IP: %s\n",src_ip);
-                    printf("| Dst IP: %s\n",dst_ip);
+                    printf("| Client: %s\n",src_ip);
+                    printf("| Host: %s\n",dst_ip);
                     
                 }
             }
