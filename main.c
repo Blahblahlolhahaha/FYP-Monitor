@@ -162,6 +162,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                 if (check->client_esp_spi == 0){
                                     printf("Added Client SPI! SPI :%x\n", esp_header->spi);
                                     check->client_esp_spi = esp_header->spi;
+                                    check->client_seq = rte_be_to_cpu_32(esp_header->seq);
                                     legit_pkts++;
                                     tunnel_exists = true;
                                 }
@@ -172,9 +173,8 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                         tunnel_exists = true;
                                     }else{
                                         tampered_pkts++;
-                                        printf("sequence nvr match");
+                                        printf("sequence nvr match: %u,%u\n",check->client_seq + 1,rte_be_to_cpu_32(esp_header->seq));
                                         exit(0);
-                                        
                                     }
                                 }else{
                                     tampered_pkts++;
@@ -183,12 +183,13 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                     printf("Client SPI : %x\n",esp_header->spi);
                                     tampered_pkts++;
                                     printf("spi nvr match");
-exit(0);
+                                    exit(0);
                                 }
                             }else if (rte_be_to_cpu_32(check->host_ip) == src_addr_int && rte_be_to_cpu_32(check->client_ip) == dst_addr_int){
                                 if (check->host_esp_spi == 0){
                                     printf("Added Host SPI! SPI :%x\n", esp_header->spi);
                                     check->host_esp_spi = esp_header->spi;
+                                    check->host_seq = rte_be_to_cpu_32(esp_header->seq);
                                     legit_pkts++;
                                     tunnel_exists = true;
                                 }
@@ -199,8 +200,8 @@ exit(0);
                                         tunnel_exists = true;
                                     }else{
                                         tampered_pkts++;
-                                        printf("sequence nvr match");
-exit(0);
+                                        printf("sequence nvr match: %u,%u\n",check->host_seq + 1,rte_be_to_cpu_32(esp_header->seq));
+                                        exit(0);
                                     }
                                 }else {
                                     printf("Host SPI : %x\n",check->host_esp_spi);
@@ -208,7 +209,7 @@ exit(0);
                                     printf("Client SPI : %x\n",esp_header->spi);
                                     tampered_pkts++;
                                     printf("spi nvr match");
-exit(0);
+                                    exit(0);
                                 }
                             }
                         }
