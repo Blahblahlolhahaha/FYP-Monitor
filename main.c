@@ -159,10 +159,9 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                             struct tunnel* check = ((struct tunnel*) tunnels->array[i]);
 
                             if (rte_be_to_cpu_32(check->client_ip) == src_addr_int && rte_be_to_cpu_32(check->host_ip) == dst_addr_int){
-                                if (!check->client_esp_spi){
-                                    struct tunnel updated = *check;
-                                    updated.client_esp_spi = esp_header->spi;
-                                    tunnels->array[i] = (void *)(&updated);
+                                if (check->client_esp_spi == 0){
+                                    printf("Added Client SPI! SPI :%x\n", esp_header->spi);
+                                    check->client_esp_spi = esp_header->spi;
                                     legit_pkts++;
                                     tunnel_exists = true;
                                 }
@@ -187,10 +186,9 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
 exit(0);
                                 }
                             }else if (rte_be_to_cpu_32(check->host_ip) == src_addr_int && rte_be_to_cpu_32(check->client_ip) == dst_addr_int){
-                                if (!check->host_esp_spi){
-                                    struct tunnel updated = *check;
-                                    updated.host_esp_spi = esp_header->spi;
-                                    tunnels->array[i] = (void *)(&updated);
+                                if (check->host_esp_spi == 0){
+                                    printf("Added Host SPI! SPI :%x\n", esp_header->spi);
+                                    check->host_esp_spi = esp_header->spi;
                                     legit_pkts++;
                                     tunnel_exists = true;
                                 }
