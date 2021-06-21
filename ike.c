@@ -79,8 +79,10 @@ void print_isakmp_headers_info(struct rte_isakmp_hdr *isakmp_hdr){
  * @param isakmp_hdr pointer to isakmp headers in a packet
  * @param offset to start analyzing
  * @param nxt_payload Should take from isakmp_hdr or payload_hdr
+ * @return 1 if packet is legit, 0 if otherrwise
  */
-void analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr,uint16_t offset,int nxt_payload){
+int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr,uint16_t offset,int nxt_payload){
+    int check = 1;
     if(isakmp_hdr->exchange_type == IKE_SA_INIT){
         if(check_if_tunnel_exists(isakmp_hdr,ipv4_hdr)==0 && get_initiator_flag(isakmp_hdr) == 0 && isakmp_hdr->responder_spi != (rte_be64_t)0){
             //Only if server responds then tunnel should be considered legit
@@ -139,8 +141,9 @@ void analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_h
     }
     else{
         printf("Unauthorised Packet\n");
+        check = 0;
     }
-    
+    return check;
 
 }
 /**
@@ -297,6 +300,7 @@ void get_proposals(struct rte_mbuf *pkt, uint16_t offset){
     proposal = malloc(3 * __SIZEOF_POINTER__);
     if(proposal){
         do{
+            
             // printf("current offset: %u",offset);
             proposal->hdr = rte_pktmbuf_mtod_offset(pkt,struct proposal_hdr *, offset);
             

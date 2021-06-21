@@ -50,16 +50,9 @@ static int rte_mbuf_dynfield_offset = -1;
 static uint16_t count = 0;
 int total_processed = 0;
 int non_ipsec = 0;
+int tampered_pkts = 0;
 int legit_pkts = 0;
 int isakmp_pkts = 0;
-int tampered_pkts = 0;
-
-struct check{
-    int src;
-    int dst;
-    uint32_t seq;
-    uint32_t spi;
-};
 
 void* count_packets(){
     printf("\rTotal packets processed: %d",total_processed);
@@ -121,80 +114,72 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                 if(test->test_octet == 0){
                     struct rte_isakmp_hdr *isakmp_hdr;
                     isakmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_isakmp_hdr*,ISAKMP_OFFSET);
-                    int check = analyse_isakmp_payload(pkt,isakmp_hdr,hdr,first_payload_hdr_offset + 4,isakmp_hdr->nxt_payload);
+                    analyse_isakmp_payload(pkt,isakmp_hdr,hdr,first_payload_hdr_offset + 4,isakmp_hdr->nxt_payload);
                     // print_isakmp_headers_info(isakmp_hdr);
-                    if(check == 1){
-                        isakmp_pkts++;
-                    }
-                    else{
-                        tampered_pkts++;
-                    }
+                    isakmp_pkts++;
                     counted++;
                 }
                 else{
                     //esp packet
                     struct rte_esp_hdr *esp_header;
                     esp_header = rte_pktmbuf_mtod_offset(pkt,struct rte_esp_hdr *,ESP_OFFSET); // get esp headers
-                    // log spi
-                    printf("SPI: %04x\n",rte_be_to_cpu_32(esp_header->spi));
-                    printf("Seq: %u\n",rte_be_to_cpu_32(esp_header->seq));
-                    printf("yayyyyyy\n\n");
-                    struct check tunnel_to_chk = {
-                        .src = src_addr_int,
-                        .dst = dst_addr_int,
-                        .seq = rte_be_to_cpu_32(esp_header->seq),
-                        .spi = rte_be_to_cpu_32(esp_header->spi)
-                    };
-                    bool tunnel_exists = false;
-                    // Lets check for new tunnels
-                    if (tunnels->size == 0){
-                            printf("\nUnauthorized packet detected");
-                            tampered_pkts++;
-                    }else{
-                        for (uint32_t i = 1; i <= tunnels->size; i++){
-                            struct tunnel* check = ((struct tunnel*) tunnels->array[i]);
+                    //log spi
+                    // printf("SPI: %04x\n",rte_be_to_cpu_32(esp_header->spi));
+                    // printf("Seq: %u\n",rte_be_to_cpu_32(esp_header->seq));
+                    // printf("yayyyyyy\n\n");
+                    // struct tunnel tunnel_to_chk = {
+                    //     .src = src_addr_int,
+                    //     .dst = dst_addr_int,
+                    //     .seq = rte_be_to_cpu_32(esp_header->seq),
+                    //     .spi = rte_be_to_cpu_32(esp_header->spi)
+                    // };
 
-                            if (check->client_ip == src_addr_int && check->host_ip == dst_addr_int){
-                                if (!check->client_esp_spi){
-                                    check->client_esp_spi = rte_be_to_cpu_32(esp_header->spi);
-                                    legit_pkts++;
-                                    tunnel_exists = true;
-                                }
-                                else if(check->client_esp_spi == rte_be_to_cpu_32(esp_header->spi)){
-                                    if(check->client_seq + 1 == rte_be_to_cpu_32(esp_header->seq)){
-                                        check->client_seq = rte_be_to_cpu_32(esp_header->seq);
-                                        legit_pkts++;
-                                        tunnel_exists = true;
-                                    }else{
-                                        tampered_pkts++;
-                                        
-                                    }
-                                }else{
-                                    tampered_pkts++;
-                                }
-                            }else if (check->host_ip == src_addr_int && check->client_ip == dst_addr_int){
-                                if (!check->host_esp_spi){
-                                    check->host_esp_spi = rte_be_to_cpu_32(esp_header->spi);
-                                    legit_pkts++;
-                                    tunnel_exists = true;
-                                }
-                                else if(check->host_esp_spi == rte_be_to_cpu_32(esp_header->spi)){
-                                    if(check->host_seq + 1 == rte_be_to_cpu_32(esp_header->seq)){
-                                        check->host_seq = rte_be_to_cpu_32(esp_header->seq);
-                                        legit_pkts++;
-                                        tunnel_exists = true;
-                                    }else{
-                                        tampered_pkts++;
-                                    }
-                                }else {
-                                    tampered_pkts++;
-                                }
-                            }
-                        }
-                        if (!tunnel_exists){
-                            tampered_pkts++;
-                        }
-                    }
+                    bool tunnel_exists = false;
+                    //Lets check for new tunnels
+                    // if (tunnels->size == 0){
+                    //         push(tunnels, &tunnel_to_chk);
+                    //         // printf("\nNew tunnel from: %u.%u.%u.%u\n",src_bit1,src_bit2,src_bit3,src_bit4);
+                    //         // legit_pkts++;
+                    //         tunnel_exists = true;
+                    // }else{
+                    
+                    // for (uint32_t i = 1; i <= tunnels->size; i++){
+                    //     struct tunnel* check = ((struct tunnel*) tunnels->array[i]);
+                    //     if (check->client_ip == src_addr_int && check->host_ip == dst_addr_int){
+                    //         tunnel_exists = true;
+                    //         //Lets check if there are any sus packets
+                    //         if(check->seq + tolerance >= rte_be_to_cpu_32(esp_header->seq) && check->seq < rte_be_to_cpu_32(esp_header->seq) &&check->spi == rte_be_to_cpu_32(esp_header->spi)) {
+                    //             check-> seq = rte_be_to_cpu_32(esp_header->seq);
+                    //             legit_pkts++;
+                    //             counted++;
+                    //         }else{
+                    //             FILE * fp;
+
+                    //             fp = fopen ("log.txt", "a+");
+                    //             fprintf(fp, "\n===================\nTampered packet detected\n===================");
+                    //             fprintf(fp, "\n| Suspicious packet's seq: %u",rte_be_to_cpu_32(esp_header->seq));
+                    //             fprintf(fp, "\n| Expected seq: %u",check-> seq + 1);
+                    //             fprintf(fp, "\n| Suspicious packet's spi: %u",rte_be_to_cpu_32(esp_header->spi));
+                    //             fprintf(fp, "\n| Expected spi: %u",check-> spi);
+                    //             fprintf(fp, "\n| Suspicious packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
+                    //             fprintf(fp, "\n| Suspicious packet's destination ip: %u.%u.%u.%u",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
+                    //             fclose(fp);
+                    //             tampered_pkts++;
+                    //             counted++;
+                    //         }
+                    //         break;
+                    //     }
+
+                    // }
+                    // if(!tunnel_exists){
+                    //         push(tunnels, &tunnel_to_chk);
+                    //         // printf("\nNew tunnel from: %u.%u.%u.%u\n",src_bit1,src_bit2,src_bit3,src_bit4);
+                    //         isakmp_pkts++;
+                    //         counted++;
+                    //         break;
+                    //     }
+                    // }
+
                 }
                
             }
@@ -211,6 +196,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                             get_ip_address_string(hdr->src_addr,src_ip);
                             get_ip_address_string(hdr->dst_addr,dst_ip);
                             printf("%s is trying to initiate IKE exchange with %s\n", src_ip, dst_ip);
+                            
 
                         }
                     }
@@ -241,47 +227,47 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
             counted++;
         }
         total_processed++;
-        if(total_processed % 10 == 0) {
-            printf("\e[1;1H\e[2J");
-            printf("================================\n          Tunnels\n================================\n");
-            for (uint32_t i = 1; i <= tunnels->size; i++){
-                struct tunnel* check = ((struct tunnel*) tunnels->array[i]);
-                //get src and dst ip addresses in x.x.x.x form
-                int srcip_bit4 = check->client_ip >> 24 & 0xFF;
-                int srcip_bit3 = check->client_ip >> 16 & 0xFF;
-                int srcip_bit2 = check->client_ip >> 8 & 0xFF;
-                int srcip_bit1 = check->client_ip & 0xFF;
+        // if(total_processed % 10 == 0) {
+        //     printf("\e[1;1H\e[2J");
+        //     printf("================================\n          Tunnels\n================================\n");
+        //     for (uint32_t i = 1; i <= tunnels->size; i++){
+        //         struct tunnel* check = ((struct tunnel*) tunnels->array[i]);
+        //         //get src and dst ip addresses in x.x.x.x form
+        //         int srcip_bit4 = check->client_ip >> 24 & 0xFF;
+        //         int srcip_bit3 = check->client_ip >> 16 & 0xFF;
+        //         int srcip_bit2 = check->client_ip >> 8 & 0xFF;
+        //         int srcip_bit1 = check->client_ip & 0xFF;
                 
-                int dstip_bit4 = check->host_ip >> 24 & 0xFF;
-                int dstip_bit3 = check->host_ip >> 16 & 0xFF;
-                int dstip_bit2 = check->host_ip >> 8 & 0xFF;
-                int dstip_bit1 = check->host_ip & 0xFF;
+        //         int dstip_bit4 = check->host_ip >> 24 & 0xFF;
+        //         int dstip_bit3 = check->host_ip >> 16 & 0xFF;
+        //         int dstip_bit2 = check->host_ip >> 8 & 0xFF;
+        //         int dstip_bit1 = check->host_ip & 0xFF;
 
 
-                char* src_ip[15];
-                char* dst_ip[15];
-                if(src_ip && dst_ip){
-                    printf("--------------------------------\n| tunnel %d\n",i);
-                    get_ip_address_string(check->client_ip,src_ip);
-                    get_ip_address_string(check->host_ip,dst_ip);
-                    printf("| Src IP: %s\n",src_ip);
-                    printf("| Dst IP: %s\n",dst_ip);
+        //         char* src_ip[15];
+        //         char* dst_ip[15];
+        //         if(src_ip && dst_ip){
+        //             printf("--------------------------------\n| tunnel %d\n",i);
+        //             get_ip_address_string(hdr->src_addr,src_ip);
+        //             get_ip_address_string(hdr->dst_addr,dst_ip);
+        //             printf("| Src IP: %s\n",src_ip);
+        //             printf("| Dst IP: %u.%u.%u.%u\n",dst_ip);
                     
-                }
-            }
-            printf("================================");
-            printf("\n| Non IPSec packets: %d", non_ipsec);
-            printf("\n| Tampered IPSec packets: %d",tampered_pkts);
-            printf("\n| Legitimate IPSec packets: %d",legit_pkts + isakmp_pkts);
-            printf("\n| Total packets processed: %d\n",total_processed);
-            printf("================================\n");
-            if(total_processed - non_ipsec - tampered_pkts - legit_pkts - isakmp_pkts == 0){
-                printf("| All traffic accounted for\n");
-            }else{
-                printf("| %d packets unaccounted for. \n| Please check network logs.\n", total_processed - non_ipsec - tampered_pkts - legit_pkts - isakmp_pkts);
-            }
-            printf("================================\n");
-        }
+        //         }
+        //     }
+        //     printf("================================");
+        //     printf("\n| Non IPSec packets: %d", non_ipsec);
+        //     printf("\n| Tampered IPSec packets: %d",tampered_pkts);
+        //     printf("\n| Legitimate IPSec packets: %d",legit_pkts + isakmp_pkts);
+        //     printf("\n| Total packets processed: %d\n",total_processed);
+        //     printf("================================\n");
+        //     if(total_processed - non_ipsec - tampered_pkts - legit_pkts - isakmp_pkts == 0){
+        //         printf("| All traffic accounted for\n");
+        //     }else{
+        //         printf("| %d packets unaccounted for. \n| Please check network logs.\n", total_processed - non_ipsec - tampered_pkts - legit_pkts - isakmp_pkts);
+        //     }
+        //     printf("================================\n");
+        // }
 
     }
        
