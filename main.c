@@ -128,6 +128,8 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                     }
                     else{
                         tampered_pkts++;
+                        printf("no ike sad");
+                        exit(0);
                     }
                     counted++;
                 }
@@ -150,49 +152,68 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                     if (tunnels->size == 0){
                             printf("\nUnauthorized packet detected");
                             tampered_pkts++;
+                            printf("packet without tunnel");
+                            exit(0);
                     }else{
                         for (uint32_t i = 1; i <= tunnels->size; i++){
                             struct tunnel* check = ((struct tunnel*) tunnels->array[i]);
 
-                            if (check->client_ip == src_addr_int && check->host_ip == dst_addr_int){
+                            if (rte_be_to_cpu_32(check->client_ip) == src_addr_int && rte_be_to_cpu_32(check->host_ip) == dst_addr_int){
                                 if (!check->client_esp_spi){
                                     check->client_esp_spi = rte_be_to_cpu_32(esp_header->spi);
                                     legit_pkts++;
                                     tunnel_exists = true;
                                 }
-                                else if(check->client_esp_spi == rte_be_to_cpu_32(esp_header->spi)){
+                                else if(check->client_esp_spi == esp_header->spi){
                                     if(check->client_seq + 1 == rte_be_to_cpu_32(esp_header->seq)){
                                         check->client_seq = rte_be_to_cpu_32(esp_header->seq);
                                         legit_pkts++;
                                         tunnel_exists = true;
                                     }else{
                                         tampered_pkts++;
+                                        printf("sequence nvr match");
+                                        exit(0);
                                         
                                     }
                                 }else{
                                     tampered_pkts++;
+                                    printf("Host SPI : %x\n",check->host_esp_spi);
+                                    printf("Client ESP SPI : %x\n",check->client_esp_spi);
+                                    printf("Client SPI : %x\n",esp_header->spi);
+                                    tampered_pkts++;
+                                    printf("spi nvr match");
+exit(0);
                                 }
-                            }else if (check->host_ip == src_addr_int && check->client_ip == dst_addr_int){
+                            }else if (rte_be_to_cpu_32(check->host_ip) == src_addr_int && rte_be_to_cpu_32(check->client_ip) == dst_addr_int){
                                 if (!check->host_esp_spi){
-                                    check->host_esp_spi = rte_be_to_cpu_32(esp_header->spi);
+                                    check->host_esp_spi = esp_header->spi;
                                     legit_pkts++;
                                     tunnel_exists = true;
                                 }
-                                else if(check->host_esp_spi == rte_be_to_cpu_32(esp_header->spi)){
+                                else if(check->host_esp_spi == esp_header->spi){
                                     if(check->host_seq + 1 == rte_be_to_cpu_32(esp_header->seq)){
                                         check->host_seq = rte_be_to_cpu_32(esp_header->seq);
                                         legit_pkts++;
                                         tunnel_exists = true;
                                     }else{
                                         tampered_pkts++;
+                                        printf("sequence nvr match");
+exit(0);
                                     }
                                 }else {
+                                    printf("Host SPI : %x\n",check->host_esp_spi);
+                                    printf("Client ESP SPI : %x\n",check->client_esp_spi);
+                                    printf("Client SPI : %x\n",esp_header->spi);
                                     tampered_pkts++;
+                                    printf("spi nvr match");
+exit(0);
                                 }
                             }
                         }
                         if (!tunnel_exists){
                             tampered_pkts++;
+                            printf("Tunnel didnt exist");
+                            exit(0);
                         }
                     }
                 }
