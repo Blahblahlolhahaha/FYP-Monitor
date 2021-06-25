@@ -3,3 +3,5 @@ build/
 log.txt
 index.html
 build/
+certs/
+main copy.c

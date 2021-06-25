@@ -102,7 +102,6 @@ int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hd
             new_tunnel.host_seq = 0;
             new_tunnel.algo = "";
             push(tunnels,&new_tunnel);
-            printf("%x\n",check_if_tunnel_exists(isakmp_hdr,ipv4_hdr));
         };
     }
    
@@ -121,16 +120,28 @@ int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hd
                 analyse_N(pkt,offset,isakmp_hdr,ipv4_hdr);
                 break;
 
-            case D:
+            case D:{
                 //Session is deleted
-                printf("Session ended btw SPI: %lx, %lx\n", rte_be_to_cpu_64(isakmp_hdr->initiator_spi), rte_be_to_cpu_64(isakmp_hdr->responder_spi));
+                char src_addr[15];
+                char dst_addr[15];
+                get_ip_address_string(ipv4_hdr->src_addr,src_addr);
+                get_ip_address_string(ipv4_hdr->dst_addr,dst_addr);
+                printf("Session ended btw %s and %s\n",src_addr,dst_addr);
                 delete_tunnel(isakmp_hdr,ipv4_hdr);
                 break;
-            
+            }
             case SK:
                 analyse_SK(pkt,offset,isakmp_hdr,ipv4_hdr);
                 break;
             
+            case CERT:
+                analyse_CERT(pkt,offset,isakmp_hdr,ipv4_hdr);
+                break;
+
+            case CERTREQ:
+                analyse_CERT(pkt,offset,isakmp_hdr,ipv4_hdr);
+                break;
+
             default:{
                 struct isakmp_payload_hdr *payload_hdr;
                 payload_hdr = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr *,offset);
@@ -161,6 +172,7 @@ void analyse_SA(struct rte_mbuf *pkt,uint16_t offset,struct rte_isakmp_hdr *isak
     if(payload->nxt_payload !=0){
         analyse_isakmp_payload(pkt,isakmp_hdr,ipv4_hdr,offset + rte_be_to_cpu_16(payload->length),payload->nxt_payload); //continue analyzing packet
     }
+    
 }
 
 /**
@@ -216,7 +228,11 @@ void analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *is
             }
             else if(payload_hdr->nxt_payload == D && isakmp_hdr->exchange_type == INFORMATIONAL){
                 //Either side ends connection, so delete tunnel
-                printf("Session ended btw SPI: %lx, %lx\n", rte_be_to_cpu_64(isakmp_hdr->initiator_spi), rte_be_to_cpu_64(isakmp_hdr->responder_spi));
+                char* src_ip[15];
+                char* dst_ip[15];
+                get_ip_address_string(ipv4_hdr->src_addr,src_ip);
+                get_ip_address_string(ipv4_hdr->dst_addr,dst_ip);
+                printf("Session ended between %s and %s succeeded\n", src_ip, dst_ip);
                 delete_tunnel(isakmp_hdr,ipv4_hdr);
             }
             else if(payload_hdr->nxt_payload == AUTH && isakmp_hdr->exchange_type == IKE_AUTH){
@@ -224,13 +240,18 @@ void analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *is
                 if(get_response_flag(isakmp_hdr) == 1){
                     char* src_ip[15];
                     char* dst_ip[15];
-                    if(src_ip && dst_ip){
-                        get_ip_address_string(ipv4_hdr->src_addr,src_ip);
-                        get_ip_address_string(ipv4_hdr->dst_addr,dst_ip);
-                        printf("IKE Authentication between %s and %s succeeded\n", src_ip, dst_ip);
-                    }
-                    
+                    get_ip_address_string(ipv4_hdr->src_addr,src_ip);
+                    get_ip_address_string(ipv4_hdr->dst_addr,dst_ip);
+                    printf("IKE Authentication between %s and %s succeeded\n", src_ip, dst_ip);
                 }
+            }
+            else if(payload_hdr->nxt_payload == N && isakmp_hdr->exchange_type == INFORMATIONAL && get_initiator_flag(isakmp_hdr) == 0 && get_response_flag(isakmp_hdr) == 1){
+                // for now it prob means smth went wrong
+                char* src_ip[15];
+                char* dst_ip[15];
+                get_ip_address_string(ipv4_hdr->src_addr,src_ip);
+                get_ip_address_string(ipv4_hdr->dst_addr,dst_ip);
+                printf("IKE Authentication between %s and %s failed\n", src_ip, dst_ip);
             }
             
         }
@@ -282,13 +303,51 @@ void analyse_N(struct rte_mbuf *pkt, uint16_t offset,struct rte_isakmp_hdr *isak
                 printf("%s",msg);
             }
         }
+
     }
     if(payload->payload_hdr->nxt_payload != NO){
         analyse_isakmp_payload(pkt,isakmp_hdr,ipv4_hdr,offset + rte_be_to_cpu_16(payload->payload_hdr->length),payload->payload_hdr->nxt_payload);
-    }
+    }   
     free(payload);
     free(msg);
-    
+
+}
+
+void analyse_CERT(struct rte_mbuf *pkt, uint16_t offset,struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr){
+    struct certificate *certificate =  malloc(sizeof(struct certificate));
+    if(certificate){
+        certificate->hdr = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr*,offset);
+        certificate->type = rte_pktmbuf_mtod_offset(pkt,int8_t*,offset + sizeof(struct isakmp_payload_hdr));
+        int encoding_length = rte_be_to_cpu_16(certificate->hdr->length) - sizeof(struct isakmp_payload_hdr) - sizeof(int8_t);
+        uint8_t *buf = malloc(encoding_length);
+        if(buf){
+            uint8_t *sad = rte_pktmbuf_read(pkt,offset+sizeof(struct isakmp_payload_hdr)+1,encoding_length,buf);
+            printf("Certificate Encoding: ");
+            if(sad){
+                for(int i = 0;i<encoding_length;i++){
+                    if(i == encoding_length - 1){
+                        printf("%0x\n",sad[i]);
+                    }
+                    else{
+                        printf("%0x",sad[i]);
+                    }
+                }
+            }
+            else{
+                for(int i = 0;i<encoding_length;i++){
+                    if(i == encoding_length - 1){
+                        printf("%x\n",buf[i]);
+                    }
+                    else{
+                        printf("%x",buf[i]);
+                    }
+                }
+            }
+        }
+        if(certificate->hdr->nxt_payload != NO){
+            analyse_isakmp_payload(pkt,isakmp_hdr,ipv4_hdr,offset + rte_be_to_cpu_16(certificate->hdr->length),certificate->hdr->nxt_payload);
+        }
+    }
 }
 
 /**
@@ -302,7 +361,6 @@ void get_proposals(struct rte_mbuf *pkt, uint16_t offset){
     proposal = malloc(3 * __SIZEOF_POINTER__);
     if(proposal){
         do{
-            
             // printf("current offset: %u",offset);
             proposal->hdr = rte_pktmbuf_mtod_offset(pkt,struct proposal_hdr *, offset);
             
@@ -381,7 +439,6 @@ void get_transformations(struct rte_mbuf *pkt, int offset,int size){
 void delete_tunnel(struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr){
     for(int i = 1;i <= tunnels->size; i++){
         struct tunnel *tunnel = tunnels->array[i];
-        printf("%lx, %lx\n", rte_be_to_cpu_64(tunnel->host_spi), rte_be_to_cpu_64(tunnel->client_spi));
         if(check_ike_spi(isakmp_hdr,ipv4_hdr,tunnel) == 1){
             removeIndex(tunnels,i);
             break;

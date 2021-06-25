@@ -33,6 +33,9 @@ static const char* notify_msg_type[44] = {"UNSUPPORTED_CRIT_PAYLOAD\n","\0","\0"
 "\0","\0","INVALID_KE_PAYLOAD\n","\0","\0","\0","\0","\0","\0","AUTH_FAILED\n","\0","\0","\0","\0","\0","\0","\0","\0","\0",
 "SINGLE_PAIR_REQUIRED\n","NO_ADDITIONAL_SAS\n","INTERNAL_ADDRESS_FAILURE\n","FAILED_CP_REQUIRED\n","TS_UNACCEPTABLE\n",
 "INVALID_SELECTORS\n","\0","\0","\0","TEMPORARY_FAILURE\n","CHILD_SA_NOT_FOUND\n"};
+static const char* cert_encoding[13] = {"PKCS #7 wrapped X.509 certificate ","PGP Certificate","DNS Signed Key","X.509 Certificate - Signature","\0","Kerberos Token",
+"Certificate Revocation List (CRL)","Authority Revocation List (ARL)","SPKI Certificate","X.509 Certificate - Attribute","Raw RSA Key","Hash and URL of X.509 certificate",
+"Hash and URL of X.509 bundle"};
 
 enum EXCHANGE_TYPE{
     IKE_SA_INIT = 34,
@@ -242,9 +245,6 @@ struct transform_struc{
 };
 
 
-
-
-
 struct key_exchange{
     struct isakmp_payload_hdr hdr;
     rte_be16_t DH_GRP_NUM;
@@ -252,8 +252,9 @@ struct key_exchange{
 };
 
 struct certificate{
-    struct isakmp_payload_hdr hdr;
-    int8_t encoding; // Certificate contained
+    struct isakmp_payload_hdr *hdr;
+    int8_t *type;
+    void* encoding; // Certificate contained
 };
 
 struct nonce{
