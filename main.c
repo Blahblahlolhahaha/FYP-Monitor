@@ -127,6 +127,13 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                         isakmp_pkts++;
                     }
                     else{
+                        FILE * fp;
+
+                        fp = fopen ("log.txt", "a+");
+                        fprintf(fp, "\n===================\nInvalid packet detected\n===================");
+                        fprintf(fp, "\n| Suspicious packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
+                        fprintf(fp, "\n| Suspicious packet's destination ip: %u.%u.%u.%u",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
+                        fclose(fp);
                         tampered_pkts++;
                     }
                     counted++;
@@ -149,6 +156,13 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                     // Lets check for new tunnels
                     if (tunnels->size == 0){
                             printf("\nUnauthorized packet detected");
+                            FILE * fp;
+
+                            fp = fopen ("log.txt", "a+");
+                            fprintf(fp, "\n===================\nUnauthorized packet detected\n===================");
+                            fprintf(fp, "\n| Suspicious packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
+                            fprintf(fp, "\n| Suspicious packet's destination ip: %u.%u.%u.%u",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
+                            fclose(fp);
                             tampered_pkts++;
                     }else{
                         for (uint32_t i = 1; i <= tunnels->size; i++){
@@ -168,13 +182,27 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                         legit_pkts++;
                                         tunnel_exists = true;
                                     }else{
+                                        FILE * fp;
+
+                                        fp = fopen ("log.txt", "a+");
+                                        fprintf(fp, "\n===================\nTampered packet detected\n===================");
+                                        fprintf(fp, "\n| Suspicious packet's seq: %u",rte_be_to_cpu_32(esp_header->seq));
+                                        fprintf(fp, "\n| Expected seq: %u",check-> client_seq + 1);
+                                        fprintf(fp, "\n| Suspicious packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
+                                        fprintf(fp, "\n| Suspicious packet's destination ip: %u.%u.%u.%u",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
+                                        fclose(fp);
                                         tampered_pkts++;
                                     }
                                 }else{
-                                    tampered_pkts++;
-                                    printf("Host SPI : %x\n",check->host_esp_spi);
-                                    printf("Client ESP SPI : %x\n",check->client_esp_spi);
-                                    printf("Client SPI : %x\n",esp_header->spi);
+                                    FILE * fp;
+
+                                    fp = fopen ("log.txt", "a+");
+                                    fprintf(fp, "\n===================\nTampered packet detected\n===================");
+                                    fprintf(fp, "\n| Suspicious packet's spi: %u",rte_be_to_cpu_32(esp_header->spi));
+                                    fprintf(fp, "\n| Expected spi: %u",check-> client_esp_spi);
+                                    fprintf(fp, "\n| Suspicious packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
+                                    fprintf(fp, "\n| Suspicious packet's destination ip: %u.%u.%u.%u",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
+                                    fclose(fp);
                                     tampered_pkts++;
                                 }
                             }else if (rte_be_to_cpu_32(check->host_ip) == src_addr_int && rte_be_to_cpu_32(check->client_ip) == dst_addr_int){
@@ -191,9 +219,27 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                         legit_pkts++;
                                         tunnel_exists = true;
                                     }else{
+                                        FILE * fp;
+
+                                        fp = fopen ("log.txt", "a+");
+                                        fprintf(fp, "\n===================\nTampered packet detected\n===================");
+                                        fprintf(fp, "\n| Suspicious packet's seq: %u",rte_be_to_cpu_32(esp_header->seq));
+                                        fprintf(fp, "\n| Expected seq: %u",check-> client_seq + 1);
+                                        fprintf(fp, "\n| Suspicious packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
+                                        fprintf(fp, "\n| Suspicious packet's destination ip: %u.%u.%u.%u",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
+                                        fclose(fp);
                                         tampered_pkts++;
                                     }
                                 }else {
+                                    FILE * fp;
+
+                                    fp = fopen ("log.txt", "a+");
+                                    fprintf(fp, "\n===================\nTampered packet detected\n===================");
+                                    fprintf(fp, "\n| Suspicious packet's spi: %u",rte_be_to_cpu_32(esp_header->spi));
+                                    fprintf(fp, "\n| Expected spi: %u",check-> client_esp_spi);
+                                    fprintf(fp, "\n| Suspicious packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
+                                    fprintf(fp, "\n| Suspicious packet's destination ip: %u.%u.%u.%u",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
+                                    fclose(fp);
                                     tampered_pkts++;
                                 }
                             }
