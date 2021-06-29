@@ -145,11 +145,10 @@ void removeIndex(struct Array* array, int index){
                     }
                 }
             }
-        }
-        
-       
-        
-        
+            pointer[0] = newUsed;
+            array->array = pointer;
+            array->size = newUsed;
+        } 
     }
     else{
         printf("Failed to allocate space.... exiting");

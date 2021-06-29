@@ -10,7 +10,7 @@
 #include <rte_debug.h>
 #include <rte_lcore.h>
 #include <rte_per_lcore.h>
-
+#include <unistd.h>
 
 
 #include "include/ike.h"
@@ -20,11 +20,11 @@
 
 #define NUM_MBUFS 8191
 #define MBUF_CACHE_SIZE 250
-#define BURST_SIZE 1
+#define BURST_SIZE 8192
 #define ISAKMP_PORT 500
 #define IPSEC_NAT_T_PORT 4500
 #include <string.h>
-
+#include <pthread.h>
 
 
 /*
@@ -67,6 +67,29 @@ void* count_packets(){
     
 }
 
+void timeout(){
+    while(true){
+        for(int i = 1;i<=tunnels->size;i++){
+            struct tunnel *tunnel = (struct tunnel *)tunnels->array[i];
+            tunnel->timeout ++;
+            if(tunnel->timeout == 10){
+                char* src_ip[15];
+                char* dst_ip[15];
+                get_ip_address_string(tunnel->client_ip,src_ip);
+                get_ip_address_string(tunnel->host_ip,dst_ip);
+                if(tunnel->auth){
+                    printf("Session ended between %s and %s\n", src_ip, dst_ip);
+                }
+                else{
+                    printf("IKE Authentication between %s and %s failed\n", src_ip, dst_ip);
+                }
+                delete_tunnel(tunnel->client_spi,tunnel->host_spi,tunnel->client_ip,tunnel->host_ip);
+            }
+        }
+        sleep(1);
+    }
+}
+
 static uint16_t
 read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
 		struct rte_mbuf **pkts, uint16_t nb_pkts,
@@ -81,8 +104,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
         struct rte_mbuf *pkt = pkts[i];
         struct rte_ipv4_hdr *hdr;
         hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_ipv4_hdr *, IPV4_OFFSET); //get ipv4 header
-        // printf("Packet %u:\n",count);
-        // printf("Size %u\n",x);
+
 
         //get src and dst ip addresses in x.x.x.x form
         int src_bit4 = hdr->src_addr >> 24 & 0xFF;
@@ -143,19 +165,15 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                     struct rte_esp_hdr *esp_header;
                     esp_header = rte_pktmbuf_mtod_offset(pkt,struct rte_esp_hdr *,ESP_OFFSET); // get esp headers
                     // log spi
-                    printf("SPI: %04x\n",rte_be_to_cpu_32(esp_header->spi));
-                    printf("Seq: %u\n",rte_be_to_cpu_32(esp_header->seq));
-                    printf("yayyyyyy\n\n");
                     struct check tunnel_to_chk = {
                         .src = src_addr_int,
                         .dst = dst_addr_int,
                         .seq = rte_be_to_cpu_32(esp_header->seq),
                         .spi = rte_be_to_cpu_32(esp_header->spi)
                     };
-                    bool tunnel_exists = false;
+                    
                     // Lets check for new tunnels
                     if (tunnels->size == 0){
-                            printf("\nUnauthorized packet detected");
                             FILE * fp;
 
                             fp = fopen ("log.txt", "a+");
@@ -165,12 +183,12 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                             fclose(fp);
                             tampered_pkts++;
                     }else{
+                        struct tunnel* check;
                         for (uint32_t i = 1; i <= tunnels->size; i++){
-                            struct tunnel* check = ((struct tunnel*) tunnels->array[i]);
-
+                            check = ((struct tunnel*) tunnels->array[i]);
+                            bool tunnel_exists = false;
                             if (rte_be_to_cpu_32(check->client_ip) == src_addr_int && rte_be_to_cpu_32(check->host_ip) == dst_addr_int){
                                 if (check->client_esp_spi == 0){
-                                    printf("Added Client SPI! SPI :%x\n", esp_header->spi);
                                     check->client_esp_spi = esp_header->spi;
                                     check->client_seq = rte_be_to_cpu_32(esp_header->seq);
                                     legit_pkts++;
@@ -207,7 +225,6 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                 }
                             }else if (rte_be_to_cpu_32(check->host_ip) == src_addr_int && rte_be_to_cpu_32(check->client_ip) == dst_addr_int){
                                 if (check->host_esp_spi == 0){
-                                    printf("Added Host SPI! SPI :%x\n", esp_header->spi);
                                     check->host_esp_spi = esp_header->spi;
                                     check->host_seq = rte_be_to_cpu_32(esp_header->seq);
                                     legit_pkts++;
@@ -243,9 +260,9 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                     tampered_pkts++;
                                 }
                             }
-                        }
-                        if (!tunnel_exists){
-                            tampered_pkts++;
+                            if(tunnel_exists){
+                                ((struct tunnel*) tunnels->array[i])->timeout = 0;
+                            }
                         }
                     }
                 }
@@ -473,6 +490,8 @@ int main(int argc, char **argv){
     printf("\n\n\n\n\n\n\n\n\n\n\n\n=====================\nNow monitoring...\n=====================\n\n");
     if (tunnels) {
         initArray(tunnels,0,object,false,sizeof(struct tunnel));
+        pthread_t thread;
+        pthread_create(&thread,NULL,timeout,NULL);
         lcore_main();
         rte_eal_cleanup();
     }

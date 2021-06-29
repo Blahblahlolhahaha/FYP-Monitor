@@ -294,7 +294,8 @@ struct tunnel{
     char *algo;
     int dpd_count; //if count == 6, peer is deado
     bool dpd;
-
+    bool auth;
+    int timeout;
 };
 
 /*flags in hdr:
@@ -320,5 +321,6 @@ int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hd
 
 void get_ip_address_string(rte_be32_t ip_address,char *ip);
 
+void delete_tunnel(uint64_t initiator_spi,uint64_t responder_spi,int src_addr,int dst_addr);
 #endif
 
