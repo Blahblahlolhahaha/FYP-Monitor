@@ -10,6 +10,7 @@
 #include <rte_debug.h>
 #include <rte_lcore.h>
 #include <rte_per_lcore.h>
+#include <rte_icmp.h>
 #include <unistd.h>
 
 
@@ -20,7 +21,7 @@
 
 #define NUM_MBUFS 8191
 #define MBUF_CACHE_SIZE 250
-#define BURST_SIZE 8192
+#define BURST_SIZE 1
 #define ISAKMP_PORT 500
 #define IPSEC_NAT_T_PORT 4500
 #include <string.h>
@@ -72,7 +73,7 @@ void timeout(){
         for(int i = 1;i<=tunnels->size;i++){
             struct tunnel *tunnel = (struct tunnel *)tunnels->array[i];
             tunnel->timeout ++;
-            if(tunnel->timeout == 10){
+            if(tunnel->timeout == 20){
                 char* src_ip[15];
                 char* dst_ip[15];
                 get_ip_address_string(tunnel->client_ip,src_ip);
@@ -125,7 +126,6 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
         int counted = 0;
         if(hdr->next_proto_id == IPPROTO_UDP){
             // printf("Protocol: UDP\n");
-            struct rte_ipv4_hdr *inner_header;
             struct rte_udp_hdr *udp_hdr;
 
             udp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_udp_hdr *,UDP_OFFSET); //get udp header
@@ -150,11 +150,14 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                     }
                     else{
                         FILE * fp;
-
+                        char src_ip[15];
+                        char dst_ip[15];
+                        get_ip_address_string(hdr->src_addr,src_ip);
+                        get_ip_address_string(hdr->dst_addr,dst_ip);
                         fp = fopen ("log.txt", "a+");
                         fprintf(fp, "\n===================\nInvalid packet detected\n===================");
-                        fprintf(fp, "\n| Suspicious packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
-                        fprintf(fp, "\n| Suspicious packet's destination ip: %u.%u.%u.%u",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
+                        fprintf(fp, "\n| Suspicious packet's source ip: %s",src_ip);
+                        fprintf(fp, "\n| Suspicious packet's destination ip: %s",dst_ip);
                         fclose(fp);
                         tampered_pkts++;
                     }
@@ -175,11 +178,14 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                     // Lets check for new tunnels
                     if (tunnels->size == 0){
                             FILE * fp;
-
+                            char src_ip[15];
+                            char dst_ip[15];
+                            get_ip_address_string(hdr->src_addr,src_ip);
+                            get_ip_address_string(hdr->dst_addr,dst_ip);
                             fp = fopen ("log.txt", "a+");
                             fprintf(fp, "\n===================\nUnauthorized packet detected\n===================");
-                            fprintf(fp, "\n| Suspicious packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
-                            fprintf(fp, "\n| Suspicious packet's destination ip: %u.%u.%u.%u",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
+                            fprintf(fp, "\n| Suspicious packet's source ip: %s",src_ip);
+                            fprintf(fp, "\n| Suspicious packet's destination ip: %s",dst_ip);
                             fclose(fp);
                             tampered_pkts++;
                     }else{
@@ -201,25 +207,31 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                         tunnel_exists = true;
                                     }else{
                                         FILE * fp;
-
+                                        char src_ip[15];
+                                        char dst_ip[15];
+                                        get_ip_address_string(hdr->src_addr,src_ip);
+                                        get_ip_address_string(hdr->dst_addr,dst_ip);
                                         fp = fopen ("log.txt", "a+");
                                         fprintf(fp, "\n===================\nTampered packet detected\n===================");
                                         fprintf(fp, "\n| Suspicious packet's seq: %u",rte_be_to_cpu_32(esp_header->seq));
                                         fprintf(fp, "\n| Expected seq: %u",check-> client_seq + 1);
-                                        fprintf(fp, "\n| Suspicious packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
-                                        fprintf(fp, "\n| Suspicious packet's destination ip: %u.%u.%u.%u",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
+                                        fprintf(fp, "\n| Suspicious packet's source ip: %s",src_ip);
+                                        fprintf(fp, "\n| Suspicious packet's destination ip: %s",dst_ip);
                                         fclose(fp);
                                         tampered_pkts++;
                                     }
                                 }else{
                                     FILE * fp;
-
+                                    char src_ip[15];
+                                    char dst_ip[15];
+                                    get_ip_address_string(hdr->src_addr,src_ip);
+                                    get_ip_address_string(hdr->dst_addr,dst_ip);
                                     fp = fopen ("log.txt", "a+");
                                     fprintf(fp, "\n===================\nTampered packet detected\n===================");
                                     fprintf(fp, "\n| Suspicious packet's spi: %u",rte_be_to_cpu_32(esp_header->spi));
                                     fprintf(fp, "\n| Expected spi: %u",check-> client_esp_spi);
-                                    fprintf(fp, "\n| Suspicious packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
-                                    fprintf(fp, "\n| Suspicious packet's destination ip: %u.%u.%u.%u",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
+                                    fprintf(fp, "\n| Suspicious packet's source ip: %s",src_ip);
+                                    fprintf(fp, "\n| Suspicious packet's destination ip: %s",dst_ip);
                                     fclose(fp);
                                     tampered_pkts++;
                                 }
@@ -237,25 +249,31 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                         tunnel_exists = true;
                                     }else{
                                         FILE * fp;
-
+                                        char src_ip[15];
+                                        char dst_ip[15];
+                                        get_ip_address_string(hdr->src_addr,src_ip);
+                                        get_ip_address_string(hdr->dst_addr,dst_ip);
                                         fp = fopen ("log.txt", "a+");
                                         fprintf(fp, "\n===================\nTampered packet detected\n===================");
                                         fprintf(fp, "\n| Suspicious packet's seq: %u",rte_be_to_cpu_32(esp_header->seq));
                                         fprintf(fp, "\n| Expected seq: %u",check-> client_seq + 1);
-                                        fprintf(fp, "\n| Suspicious packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
-                                        fprintf(fp, "\n| Suspicious packet's destination ip: %u.%u.%u.%u",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
+                                        fprintf(fp, "\n| Suspicious packet's source ip: %s",src_ip);
+                                        fprintf(fp, "\n| Suspicious packet's destination ip: %s",dst_ip);
                                         fclose(fp);
                                         tampered_pkts++;
                                     }
                                 }else {
                                     FILE * fp;
-
+                                    char src_ip[15];
+                                    char dst_ip[15];
+                                    get_ip_address_string(hdr->src_addr,src_ip);
+                                    get_ip_address_string(hdr->dst_addr,dst_ip);
                                     fp = fopen ("log.txt", "a+");
                                     fprintf(fp, "\n===================\nTampered packet detected\n===================");
                                     fprintf(fp, "\n| Suspicious packet's spi: %u",rte_be_to_cpu_32(esp_header->spi));
                                     fprintf(fp, "\n| Expected spi: %u",check-> client_esp_spi);
-                                    fprintf(fp, "\n| Suspicious packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
-                                    fprintf(fp, "\n| Suspicious packet's destination ip: %u.%u.%u.%u",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
+                                    fprintf(fp, "\n| Suspicious packet's source ip: %s",src_ip);
+                                    fprintf(fp, "\n| Suspicious packet's destination ip: %s",dst_ip);
                                     fclose(fp);
                                     tampered_pkts++;
                                 }
@@ -277,12 +295,9 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
 
                         char* src_ip[15];
                         char* dst_ip[15];
-                        if(src_ip && dst_ip){
-                            get_ip_address_string(hdr->src_addr,src_ip);
-                            get_ip_address_string(hdr->dst_addr,dst_ip);
-                            printf("%s is trying to initiate IKE exchange with %s\n", src_ip, dst_ip);
-
-                        }
+                        get_ip_address_string(hdr->src_addr,src_ip);
+                        get_ip_address_string(hdr->dst_addr,dst_ip);
+                        printf("%s is trying to initiate IKE exchange with %s\n", src_ip, dst_ip);
                     }
                     else{
                         analyse_isakmp_payload(pkt,isakmp_hdr,hdr,first_payload_hdr_offset,isakmp_hdr->nxt_payload);
@@ -295,20 +310,49 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
             }
             else{ 
                //not esp packet
-                // printf("\n\n===================\nNon IPSec UDP packet detected\n===================");
-                // printf("\n| packet's source ip: %u.%u.%u.%u",src_bit1,src_bit2,src_bit3,src_bit4);
-                // printf("\n| packet's destination ip: %u.%u.%u.%u\n",dst_bit1,dst_bit2,dst_bit3,dst_bit4);
-                // printf("\n===================\n\n");
+                char src_ip[15];
+                char dst_ip[15];
+                get_ip_address_string(hdr->src_addr,src_ip);
+                get_ip_address_string(hdr->dst_addr,dst_ip);
+                printf("%s is trying to connect to %s from UDP port %d to %d\n", src_ip,dst_ip,src_port,dst_port);
                 non_ipsec++;
                 counted++;
 
             }   
         }
-        else{
+        else if(hdr->next_proto_id == IPPROTO_TCP){
+            //TCP packet
             //TODO: should log protocol xD
-            // printf("Not UDP\n\n");
+            struct rte_tcp_hdr* tcp_hdr;
+            tcp_hdr =  rte_pktmbuf_mtod_offset(pkt,struct rte_tcp_hdr*,UDP_OFFSET);
+            int src_port = rte_be_to_cpu_16(tcp_hdr->src_port);
+            int dst_port = rte_be_to_cpu_16(tcp_hdr->dst_port);
+            char src_ip[15];
+            char dst_ip[15];
+            get_ip_address_string(hdr->src_addr,src_ip);
+            get_ip_address_string(hdr->dst_addr,dst_ip);
+            printf("%s is trying to connect to %s from TCP port %d to %d\n", src_ip,dst_ip,src_port,dst_port);
             non_ipsec++;
             counted++;
+        }
+        else if(hdr->next_proto_id == IPPROTO_ICMP){
+            //ICMP packet
+            char src_ip[15];
+            char dst_ip[15];
+            get_ip_address_string(hdr->src_addr,src_ip);
+            get_ip_address_string(hdr->dst_addr,dst_ip);
+            struct rte_icmp_hdr* icmp_hdr;
+            icmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_icmp_hdr*,UDP_OFFSET);
+            if(icmp_hdr->icmp_type == 0){
+                printf("Ping response: %s to %s\n", src_ip,dst_ip);
+            }
+            else if(icmp_hdr->icmp_type == 8){
+                printf("Ping request: %s to %s\n", src_ip,dst_ip);
+            }
+            else{
+                printf("ICMP Packet: %s to %s\n", src_ip,dst_ip)
+            }
+            
         }
         total_processed++;
         if(total_processed % 10 == 0) {
@@ -316,18 +360,6 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
             printf("================================\n          Tunnels\n================================\n");
             for (uint32_t i = 1; i <= tunnels->size; i++){
                 struct tunnel* check = ((struct tunnel*) tunnels->array[i]);
-                //get src and dst ip addresses in x.x.x.x form
-                int srcip_bit4 = check->client_ip >> 24 & 0xFF;
-                int srcip_bit3 = check->client_ip >> 16 & 0xFF;
-                int srcip_bit2 = check->client_ip >> 8 & 0xFF;
-                int srcip_bit1 = check->client_ip & 0xFF;
-                
-                int dstip_bit4 = check->host_ip >> 24 & 0xFF;
-                int dstip_bit3 = check->host_ip >> 16 & 0xFF;
-                int dstip_bit2 = check->host_ip >> 8 & 0xFF;
-                int dstip_bit1 = check->host_ip & 0xFF;
-
-
                 char* src_ip[15];
                 char* dst_ip[15];
                 if(src_ip && dst_ip){
