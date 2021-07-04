@@ -5,9 +5,11 @@
 APP = rxtx_callbacks
 
 # all source are stored in SRCS-y
-SRCS-y := main.c
-SRCS-y += ike.c
-SRCS-y += array.c
+DIR := src/
+SRCS-y := $(DIR)main.c
+SRCS-y += $(DIR)ike.c
+SRCS-y += $(DIR)array.c
+SRCS-y += $(DIR)log.c
 # Build using pkg-config variables if possible
 ifneq ($(shell pkg-config --exists libdpdk && echo 0),0)
 $(error "no installation of DPDK found")

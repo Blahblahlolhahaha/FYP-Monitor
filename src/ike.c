@@ -1,6 +1,8 @@
-#include "include/ike.h"
+#include "../include/ike.h"
 
 
+char src_addr[15];
+char dst_addr[15];
 
 int get_response_flag(struct rte_isakmp_hdr *hdr){
     //if 1, this packet is used to respond
@@ -83,6 +85,12 @@ void print_isakmp_headers_info(struct rte_isakmp_hdr *isakmp_hdr){
  */
 int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr,uint16_t offset,int nxt_payload){
     int check = 1;
+    get_ip_address_string(ipv4_hdr->src_addr,src_addr);
+    get_ip_address_string(ipv4_hdr->dst_addr,dst_addr);
+
+    char *current_time[21] = {0};
+    get_current_time(current_time);
+
     if(isakmp_hdr->exchange_type == IKE_SA_INIT){
         if(check_if_tunnel_exists(isakmp_hdr,ipv4_hdr)==0 && get_initiator_flag(isakmp_hdr) == 0 && isakmp_hdr->responder_spi != (rte_be64_t)0){
             //Only if server responds then tunnel should be considered legit
@@ -109,6 +117,8 @@ int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hd
    
     if((isakmp_hdr->exchange_type == IKE_SA_INIT && check_if_tunnel_exists(isakmp_hdr,ipv4_hdr)==0) || (check_if_tunnel_exists(isakmp_hdr,ipv4_hdr)==1)){
         // If tunnel does not exist, should only be IKE_SA_INIT, else sus
+        char *current_time[21] = {0};
+        get_current_time(current_time);
         switch(nxt_payload){
             case SA:
                 analyse_SA(pkt,offset,isakmp_hdr,ipv4_hdr);
@@ -124,11 +134,10 @@ int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hd
 
             case D:{
                 //Session is deleted
-                char src_addr[15];
-                char dst_addr[15];
-                get_ip_address_string(ipv4_hdr->src_addr,src_addr);
-                get_ip_address_string(ipv4_hdr->dst_addr,dst_addr);
-                printf("Session ended btw %s and %s\n",src_addr,dst_addr);
+                char log[77] = {0};
+                sprintf(log,"%s;Session ended btw %s and %s\n",current_time,
+                src_addr,dst_addr);
+                write_log(ipsec_log,log);
                 delete_tunnel(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,ipv4_hdr->src_addr,ipv4_hdr->dst_addr);
                 break;
             }
@@ -199,6 +208,10 @@ void analyse_KE(struct rte_mbuf *pkt,uint16_t offset,struct rte_isakmp_hdr *isak
 void analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr){
     struct isakmp_payload_hdr *payload_hdr;
     payload_hdr = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr *,offset);
+    
+    char *current_time[21] = {0};
+    get_current_time(current_time);
+
     for(int i = 1;i <= tunnels->size; i++){
         struct tunnel *tunnel = tunnels->array[i];
         
@@ -216,7 +229,11 @@ void analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *is
                     printf("dpd count: %d\n",tunnel->dpd_count);
                     if(tunnel->dpd_count == 6){
                         // Peer is dead and session should be removed
-                        printf("Session ended btw SPI: %lx, %lx\n", rte_be_to_cpu_64(isakmp_hdr->initiator_spi), rte_be_to_cpu_64(isakmp_hdr->responder_spi));
+
+                        char log[76] = {0};
+                        sprintf(log,"%s;Session ended btw %s and %s\n",current_time,src_addr,dst_addr);
+                        write_log(ipsec_log,log);
+                        // printf("Session ended btw SPI: %lx, %lx\n", rte_be_to_cpu_64(isakmp_hdr->initiator_spi), rte_be_to_cpu_64(isakmp_hdr->responder_spi));
                         removeIndex(tunnels,i);
                     }
                 }
@@ -229,31 +246,28 @@ void analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *is
             }
             else if(payload_hdr->nxt_payload == D && isakmp_hdr->exchange_type == INFORMATIONAL){
                 //Either side ends connection, so delete tunnel
-                char* src_ip[15];
-                char* dst_ip[15];
-                get_ip_address_string(ipv4_hdr->src_addr,src_ip);
-                get_ip_address_string(ipv4_hdr->dst_addr,dst_ip);
-                printf("Session ended between %s and %s\n", src_ip, dst_ip);
+                char log[77] = {0};
+                sprintf(log,"%s;Session ended btw %s and %s\n",current_time,
+                src_addr,dst_addr);
+                write_log(ipsec_log,log);
                 delete_tunnel(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,ipv4_hdr->src_addr,ipv4_hdr->dst_addr);
             }
             else if(payload_hdr->nxt_payload == AUTH && isakmp_hdr->exchange_type == IKE_AUTH){
                 //99.9% means authenticated once responder sends this payload unless server kena gon
                 if(get_response_flag(isakmp_hdr) == 1){
-                    char* src_ip[15];
-                    char* dst_ip[15];
-                    get_ip_address_string(ipv4_hdr->src_addr,src_ip);
-                    get_ip_address_string(ipv4_hdr->dst_addr,dst_ip);
-                    printf("IKE Authentication between %s and %s succeeded\n", src_ip, dst_ip);
+                    char log[96] = {0};
+                    sprintf(log,"%s;IKE Authentication between %s and %s succeeded\n",current_time,
+                    src_addr,dst_addr);
+                    write_log(ipsec_log,log);
                     tunnel->auth = true;
                 }
             }
             else if(payload_hdr->nxt_payload == N && isakmp_hdr->exchange_type == INFORMATIONAL && get_initiator_flag(isakmp_hdr) == 0 && get_response_flag(isakmp_hdr) == 1){
                 // for now it prob means smth went wrong
-                char* src_ip[15];
-                char* dst_ip[15];
-                get_ip_address_string(ipv4_hdr->src_addr,src_ip);
-                get_ip_address_string(ipv4_hdr->dst_addr,dst_ip);
-                printf("IKE Authentication between %s and %s failed\n", src_ip, dst_ip);
+                char log[93] = {0};
+                sprintf(log,"%s;IKE Authentication between %s and %s failed\n",current_time,
+                src_addr, dst_addr);
+                delete_tunnel(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,ipv4_hdr->src_addr,ipv4_hdr->dst_addr);
             }
             
         }
@@ -277,6 +291,10 @@ void analyse_N(struct rte_mbuf *pkt, uint16_t offset,struct rte_isakmp_hdr *isak
     char *msg = malloc(256);
     char failed_msg[128] = "";
     strcat(failed_msg,"IKE failed with error:");
+
+    char *current_time[21] = {0};
+    get_current_time(current_time);
+
     if(payload && msg){
         payload->payload_hdr = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr *,offset);
         payload->hdr = rte_pktmbuf_mtod_offset(pkt,struct notify_hdr *,offset + sizeof(struct isakmp_payload_hdr));
@@ -299,10 +317,16 @@ void analyse_N(struct rte_mbuf *pkt, uint16_t offset,struct rte_isakmp_hdr *isak
             }
             if(error){
                 delete_tunnel(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,ipv4_hdr->src_addr,ipv4_hdr->dst_addr);
-                printf("%s",failed_msg);
+                char log[150];
+                sprintf(log,"%s;%s",current_time,
+                failed_msg);
+                write_log(ipsec_log,log);
             }
             else if(special_error){
-                printf("%s",msg);
+                char log[277];
+                sprintf(log,"%s;%s",current_time,
+                msg);
+                write_log(ipsec_log,log);
             }
         }
 
@@ -441,10 +465,7 @@ void delete_tunnel(uint64_t initiator_spi,uint64_t responder_spi,int src_addr,in
     for(int i = 1;i <= tunnels->size; i++){
         struct tunnel *tunnel = tunnels->array[i];
         if(check_ike_spi(initiator_spi,responder_spi,src_addr,dst_addr,tunnel) == 1){
-            printf("deleting\n");
-            printf("%x\n",tunnels->array[0]);
             removeIndex(tunnels,i);
-            printf("%x\n",tunnels->array[0]);
             break;
         }
     }
