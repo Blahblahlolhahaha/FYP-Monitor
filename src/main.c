@@ -322,35 +322,36 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
             non_ipsec++;
         }
         total_processed++;
-        // if(total_processed % 10 == 0) {
-        //     printf("\e[1;1H\e[2J");
-        //     printf("================================\n          Tunnels\n================================\n");
-        //     for (uint32_t i = 1; i <= tunnels->size; i++){
-        //         struct tunnel* check = ((struct tunnel*) tunnels->array[i]);
-        //         char* src_ip[15];
-        //         char* dst_ip[15];
-        //         if(src_ip && dst_ip){
-        //             printf("--------------------------------\n| tunnel %d\n",i);
-        //             get_ip_address_string(check->client_ip,src_ip);
-        //             get_ip_address_string(check->host_ip,dst_ip);
-        //             printf("| Client: %s\n",src_ip);
-        //             printf("| Host: %s\n",dst_ip);
-                    
-        //         }
-        //     }
-        //     printf("================================");
-        //     printf("\n| Non IPSec packets: %d", non_ipsec);
-        //     printf("\n| Tampered IPSec packets: %d",tampered_pkts);
-        //     printf("\n| Legitimate IPSec packets: %d",legit_pkts + isakmp_pkts);
-        //     printf("\n| Total packets processed: %d\n",total_processed);
-        //     printf("================================\n");
-        //     if(total_processed - non_ipsec - tampered_pkts - legit_pkts - isakmp_pkts == 0){
-        //         printf("| All traffic accounted for\n");
-        //     }else{
-        //         printf("| %d packets unaccounted for. \n| Please check network logs.\n", total_processed - non_ipsec - tampered_pkts - legit_pkts - isakmp_pkts);
-        //     }
-        //     printf("================================\n");
-        // }
+        if(total_processed % 10 == 0) {
+            printf("\e[1;1H\e[2J");
+            printf("================================\n          Tunnels\n================================\n");
+            for (uint32_t i = 1; i <= tunnels->size; i++){
+                struct tunnel* check = ((struct tunnel*) tunnels->array[i]);
+                printf("--------------------------------\n| tunnel %d\n",i);
+                int bit4 = check->client_ip >> 24 & 0xFF;
+                int bit3 = check->client_ip >> 16 & 0xFF;
+                int bit2 = check->client_ip >> 8 & 0xFF;
+                int bit1 = check->client_ip & 0xFF;
+                printf("| Client: %u.%u.%u.%u\n",bit1,bit2,bit3,bit4);
+                bit4 = check->client_ip >> 24 & 0xFF;
+                bit3 = check->client_ip >> 16 & 0xFF;
+                bit2 = check->client_ip >> 8 & 0xFF;
+                bit1 = check->client_ip & 0xFF;
+                printf("| Host: %u.%u.%u.%u\n",bit1,bit2,bit3,bit4);
+            }
+            printf("================================");
+            printf("\n| Non IPSec packets: %d", non_ipsec);
+            printf("\n| Tampered IPSec packets: %d",tampered_pkts);
+            printf("\n| Legitimate IPSec packets: %d",legit_pkts + isakmp_pkts);
+            printf("\n| Total packets processed: %d\n",total_processed);
+            printf("================================\n");
+            if(total_processed - non_ipsec - tampered_pkts - legit_pkts - isakmp_pkts == 0){
+                printf("| All traffic accounted for\n");
+            }else{
+                printf("| %d packets unaccounted for. \n| Please check network logs.\n", total_processed - non_ipsec - tampered_pkts - legit_pkts - isakmp_pkts);
+            }
+            printf("================================\n");
+        }
 
     }
        

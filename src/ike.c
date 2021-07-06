@@ -205,6 +205,7 @@ void analyse_SA(struct rte_mbuf *pkt,uint16_t offset,struct rte_isakmp_hdr *isak
         proposals = NULL;
         free(proposals);
     }
+    
     if(payload->nxt_payload !=0){
         analyse_isakmp_payload(pkt,isakmp_hdr,ipv4_hdr,offset + rte_be_to_cpu_16(payload->length),payload->nxt_payload); //continue analyzing packet
     }
@@ -383,16 +384,15 @@ int get_proposals(struct rte_mbuf *pkt, uint16_t offset,char***proposals){
     struct proposal_struc *proposal;
     proposal = malloc(3 * __SIZEOF_POINTER__);
     int count = 0;
+    *proposals = 0;
     do{
         if(*proposals){
-            
             char **temp = reallocarray(*proposals,count+1,__SIZEOF_POINTER__);
             if(temp){
                 *proposals = temp;
             }
         }
         else{
-            
             *proposals = calloc(1,__SIZEOF_POINTER__);
         }
         
