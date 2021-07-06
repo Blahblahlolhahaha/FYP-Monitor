@@ -1,8 +1,9 @@
 #include "../include/ike.h"
 
 
-char src_addr[15];
-char dst_addr[15];
+char src_addr[16];
+char dst_addr[16];
+char current_time[21];
 
 int get_response_flag(struct rte_isakmp_hdr *hdr){
     //if 1, this packet is used to respond
@@ -87,8 +88,6 @@ int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hd
     int check = 1;
     get_ip_address_string(ipv4_hdr->src_addr,src_addr);
     get_ip_address_string(ipv4_hdr->dst_addr,dst_addr);
-
-    char *current_time[21] = {0};
     get_current_time(current_time);
 
     if(isakmp_hdr->exchange_type == IKE_SA_INIT){
@@ -117,8 +116,6 @@ int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hd
    
     if((isakmp_hdr->exchange_type == IKE_SA_INIT && check_if_tunnel_exists(isakmp_hdr,ipv4_hdr)==0) || (check_if_tunnel_exists(isakmp_hdr,ipv4_hdr)==1)){
         // If tunnel does not exist, should only be IKE_SA_INIT, else sus
-        char *current_time[21] = {0};
-        get_current_time(current_time);
         switch(nxt_payload){
             case SA:
                 analyse_SA(pkt,offset,isakmp_hdr,ipv4_hdr);
@@ -178,7 +175,36 @@ int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hd
 void analyse_SA(struct rte_mbuf *pkt,uint16_t offset,struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr){
     struct isakmp_payload_hdr *payload;
     payload = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr *,offset); //get payload header
-    get_proposals(pkt,offset + sizeof(struct isakmp_payload_hdr)); //get proposals and their respective transformations
+    char **proposals;
+    
+    int count = get_proposals(pkt,offset + sizeof(struct isakmp_payload_hdr),&proposals); //get proposals and their respective transformations
+    if(count == 0){
+        printf("sad\n");
+    }
+    else{
+        for(int i = 0;i<count;i++){
+            char* proposal = proposals[i];
+            char log[2109] = {0};
+            if(get_initiator_flag(isakmp_hdr) == 0){
+                sprintf(log,"%s;Proposals selected by %s: %s\n",current_time,src_addr,proposal);
+            }
+            else{
+                sprintf(log,"%s;Proposals proposed by %s: %s\n",current_time,src_addr,proposal);
+                for(int i = 1;i <= tunnels->size; i++){
+                    struct tunnel *tunnel = tunnels->array[i];
+                    if(check_ike_spi(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,ipv4_hdr->src_addr,ipv4_hdr->dst_addr,tunnel) == 1){
+                        tunnel->algo = proposal;
+                        break;
+                    }
+                }
+            }
+            write_log(ipsec_log,log);
+            proposal = NULL;
+            free(proposal);
+        }
+        proposals = NULL;
+        free(proposals);
+    }
     if(payload->nxt_payload !=0){
         analyse_isakmp_payload(pkt,isakmp_hdr,ipv4_hdr,offset + rte_be_to_cpu_16(payload->length),payload->nxt_payload); //continue analyzing packet
     }
@@ -209,9 +235,6 @@ void analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *is
     struct isakmp_payload_hdr *payload_hdr;
     payload_hdr = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr *,offset);
     
-    char *current_time[21] = {0};
-    get_current_time(current_time);
-
     for(int i = 1;i <= tunnels->size; i++){
         struct tunnel *tunnel = tunnels->array[i];
         
@@ -226,7 +249,6 @@ void analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *is
                     if(tunnel->dpd_count == 1){
                         tunnel->dpd = true;
                     }
-                    printf("dpd count: %d\n",tunnel->dpd_count);
                     if(tunnel->dpd_count == 6){
                         // Peer is dead and session should be removed
 
@@ -239,7 +261,6 @@ void analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *is
                 }
                 else if(get_initiator_flag(isakmp_hdr) == 1 && get_response_flag(isakmp_hdr) == 1){
                     //Peer has responded and is not dead , hence refresh dpd is reset
-                    printf("refresh\n");
                     tunnel->dpd_count = 0;
                     tunnel->dpd = false;
                 }
@@ -291,9 +312,6 @@ void analyse_N(struct rte_mbuf *pkt, uint16_t offset,struct rte_isakmp_hdr *isak
     char *msg = malloc(256);
     char failed_msg[128] = "";
     strcat(failed_msg,"IKE failed with error:");
-
-    char *current_time[21] = {0};
-    get_current_time(current_time);
 
     if(payload && msg){
         payload->payload_hdr = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr *,offset);
@@ -347,28 +365,7 @@ void analyse_CERT(struct rte_mbuf *pkt, uint16_t offset,struct rte_isakmp_hdr *i
         int encoding_length = rte_be_to_cpu_16(certificate->hdr->length) - sizeof(struct isakmp_payload_hdr) - sizeof(int8_t);
         uint8_t *buf = malloc(encoding_length);
         if(buf){
-            uint8_t *sad = rte_pktmbuf_read(pkt,offset+sizeof(struct isakmp_payload_hdr)+1,encoding_length,buf);
-            printf("Certificate Encoding: ");
-            if(sad){
-                for(int i = 0;i<encoding_length;i++){
-                    if(i == encoding_length - 1){
-                        printf("%0x\n",sad[i]);
-                    }
-                    else{
-                        printf("%0x",sad[i]);
-                    }
-                }
-            }
-            else{
-                for(int i = 0;i<encoding_length;i++){
-                    if(i == encoding_length - 1){
-                        printf("%x\n",buf[i]);
-                    }
-                    else{
-                        printf("%x",buf[i]);
-                    }
-                }
-            }
+            uint8_t *encoding = rte_pktmbuf_read(pkt,offset+sizeof(struct isakmp_payload_hdr)+1,encoding_length,buf);
         }
         if(certificate->hdr->nxt_payload != NO){
             analyse_isakmp_payload(pkt,isakmp_hdr,ipv4_hdr,offset + rte_be_to_cpu_16(certificate->hdr->length),certificate->hdr->nxt_payload);
@@ -379,31 +376,47 @@ void analyse_CERT(struct rte_mbuf *pkt, uint16_t offset,struct rte_isakmp_hdr *i
 /**
  * Get proposals and transformations found in a SA payload
  * @param pkt pointer to packet being analyzed
- * @param proposals pointer to Array object used in a SA_paylaod struct
+ * @param proposals string array containing proposals
  * @param offset offset to SA hdr
  */
-void get_proposals(struct rte_mbuf *pkt, uint16_t offset){
+int get_proposals(struct rte_mbuf *pkt, uint16_t offset,char***proposals){
     struct proposal_struc *proposal;
     proposal = malloc(3 * __SIZEOF_POINTER__);
-    if(proposal){
-        do{
-            // printf("current offset: %u",offset);
-            proposal->hdr = rte_pktmbuf_mtod_offset(pkt,struct proposal_hdr *, offset);
+    int count = 0;
+    do{
+        if(*proposals){
             
-            // printf("length: %x\n", rte_be_to_cpu_16(proposal->hdr->len));
-            // printf("proposal_num: %x\n",proposal->hdr->proposal_num);
-            // printf("No. Transformations: %d",proposal->hdr->num_transforms);
-            // printf("reserve %x\n\n",proposal->hdr->reserved);
-            uint16_t transformation_offset = offset + 8 + proposal->hdr->spi_size;
-            get_transformations(pkt,transformation_offset,proposal->hdr->num_transforms);
-            offset += rte_be_to_cpu_16(proposal->hdr->len); //add offset for nxt proposal
+            char **temp = reallocarray(*proposals,count+1,__SIZEOF_POINTER__);
+            if(temp){
+                *proposals = temp;
+            }
+        }
+        else{
             
-        }while(proposal->hdr->nxt_payload != (int8_t)0);
-    }
-    else{
-        printf("Failed to allocate memory. Exiting\n");
-        exit(1);
-    }
+            *proposals = calloc(1,__SIZEOF_POINTER__);
+        }
+        
+        if(!*proposals){
+            printf("Failed to allocate memory. Exiting\n");
+            exit(1);
+        }
+        proposal->hdr = rte_pktmbuf_mtod_offset(pkt,struct proposal_hdr *, offset);
+        
+        uint16_t transformation_offset = offset + 8 + proposal->hdr->spi_size;
+        (*proposals)[count] = calloc(2048,sizeof(char));
+        if((*proposals)[count]){
+            get_transformations(pkt,transformation_offset,proposal->hdr->num_transforms,(*proposals)[count]);
+        }
+        else{
+            printf("Failed to allocate memory. Exiting\n");
+            exit(1);
+        }
+        
+        offset += rte_be_to_cpu_16(proposal->hdr->len); //add offset for nxt proposal
+        count++;
+    }while(proposal->hdr->nxt_payload != (int8_t)0 && *proposals);
+    
+    return count;
     
 }
 
@@ -414,7 +427,7 @@ void get_proposals(struct rte_mbuf *pkt, uint16_t offset){
  * @param offset Offset to transformation
  * @param size Number of transformations
  */
-void get_transformations(struct rte_mbuf *pkt, int offset,int size){
+void get_transformations(struct rte_mbuf *pkt, int offset,int size,char *buf){
     struct transform_struc *transform = malloc(2 * __SIZEOF_POINTER__);
     if(transform){
         int actual = 0;
@@ -422,14 +435,27 @@ void get_transformations(struct rte_mbuf *pkt, int offset,int size){
         do{
             transform->hdr = rte_pktmbuf_mtod_offset(pkt,struct transform_hdr *, offset);
             actual++;
+            
             switch(transform->hdr->type){
                 case ENCR:
+                    sprintf(buf + strlen(buf),"%s",encr_algo[rte_be_to_cpu_16(transform->hdr->transform_ID) - 1]);
+                    if(transform->hdr->len != 8){
+                        //get attributes for transformation usually key length
+                        struct attr *attribute  = rte_pktmbuf_mtod_offset(pkt,struct attr *,offset + 8);
+                        sprintf(buf + strlen(buf),"_%d/",rte_be_to_cpu_16(attribute->value));
+                    }
+                    else{
+                        sprintf(buf + strlen(buf),"/");
+                    }
                     break;
                 case PRF:
+                    sprintf(buf + strlen(buf),"%s/",pseudorandom_func[rte_be_to_cpu_16(transform->hdr->transform_ID) -1]);
                     break;
                 case INTEG:
+                    sprintf(buf + strlen(buf),"%s/",integrity_func[rte_be_to_cpu_16(transform->hdr->transform_ID)]);
                     break;
                 case D_H:
+                    sprintf(buf + strlen(buf),"%s/",DH[rte_be_to_cpu_16(transform->hdr->transform_ID)]);
                     break;
                 case ESN:
                     break;
@@ -437,19 +463,11 @@ void get_transformations(struct rte_mbuf *pkt, int offset,int size){
                     printf("Invalid Transform Type!");
                     break;
             }
-            // printf("\n===================\nTransform %d\n===================",actual);
-            // printf("\n| Type: %u",transform->hdr->type);
-            // printf("\n| Type ID: %x",rte_be_to_cpu_16(transform->hdr->transform_ID));
-            // printf("\n================================\n");
-            if(transform->hdr->len != 8){
-                //get attributes for transformation usually key length
-                struct attr *attribute  = rte_pktmbuf_mtod_offset(pkt,struct attr *,offset + 8);
-                transform->attribute = attribute;
-            }
             if(actual > size){
                 printf("Too many transformations!");
             }
             offset += rte_be_to_cpu_16(transform->hdr->len);
+            
         }while(transform->hdr->nxt_payload != 0);
     }
 

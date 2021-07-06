@@ -23,19 +23,35 @@ static const int first_payload_hdr_offset = ESP_OFFSET + 28;
 struct Array *tunnels;
 
 static const char * transform_types[5] = { "Encryption Algorithm","Pseudorandom Function","Integrity Algorithm","Diffie-Hellman Group","Extended Sequence Numbers"};
+
 static const char * exchange_types[4] = {"IKE_SA_INIT","IKE_AUTH","CREATE_CHILD_SA","INFORMATIONAL"};
+
 static const char * payload_types[17] = {"Security Association", "Key Exchange", "Identification - Initiator", 
 "Identification - Responder", "Certificate", "Certificate Request", "Authentication", "Nonce",
 "Notify", "Delete", "Vendor ID", "Traffic Selector - Initiator", "Traffic Selector - Responder",
 "Encrypted and Authenticated", "Configuration", "Extensible Authentication"};
+
 static const char* notify_msg_type[44] = {"UNSUPPORTED_CRIT_PAYLOAD\n","\0","\0","INVALID_IKE_SPI\n",
 "INVALID_MAJOR_VERSION\n","\0","INVALID_SYNTAX\n","\0","INVALID_MSG_ID\n","\0","INVALID_SPI\n","\0","\0","NO_PROPOSAL_CHOSEN\n",
 "\0","\0","INVALID_KE_PAYLOAD\n","\0","\0","\0","\0","\0","\0","AUTH_FAILED\n","\0","\0","\0","\0","\0","\0","\0","\0","\0",
 "SINGLE_PAIR_REQUIRED\n","NO_ADDITIONAL_SAS\n","INTERNAL_ADDRESS_FAILURE\n","FAILED_CP_REQUIRED\n","TS_UNACCEPTABLE\n",
 "INVALID_SELECTORS\n","\0","\0","\0","TEMPORARY_FAILURE\n","CHILD_SA_NOT_FOUND\n"};
+
 static const char* cert_encoding[13] = {"PKCS #7 wrapped X.509 certificate ","PGP Certificate","DNS Signed Key","X.509 Certificate - Signature","\0","Kerberos Token",
 "Certificate Revocation List (CRL)","Authority Revocation List (ARL)","SPKI Certificate","X.509 Certificate - Attribute","Raw RSA Key","Hash and URL of X.509 certificate",
 "Hash and URL of X.509 bundle"};
+
+static const char* encr_algo[35] = {"DES_IV64","DES","3DES","RCS","IDEA","CAST","BLOWFISH","3IDEA","DES_IV32","\0","NONE","AES_CBC","AES_CTR","AES_CCM_8","AES_CCM_12",
+"AES_CCM_16","\0","AES_GCM_8","AES_GCM_12","AES_GCM_16","NULL_AUTH_AWS_GMAC","AES_XTS","CAMELLIA_CBC","CAMELLIA_CTR","CAMELLIA_CCM_8","CAMELLIA_CCM_12","CAMELLIA_CCM_16",
+"CHACHA20_POLY_1305","AES_CCM_8_IIV","AES_GCM_16_IIV","CHACHA20_POLY1305_IIV","KUZNYECHIK_MGM_KTREE","MAGMA_MGM_KTREE","KUZNYECHIK_MGM_MAC_KTREE","MAGMA_MGM_MAC_KTREE"};
+
+static const char* pseudorandom_func[9] = {"HMAC_MD5","HMAC_SHA1","HMAC_TIGER","AES128_XCBC","HMAC_SHA2_256","HMAC_SHA2_384","HMAC_SHA2_512","AES128_CMAC","HMAC_STRIBOG_512"};
+
+static const char* integrity_func[15] = {"INTEG_NONE","HMAC_MD5_96","HMAC_SHA1_96","DES_MAC","KPDK_MD5","AES_XCBC_96","HMAC_MD5_128","HMAC_SHA1_160","AES_CMAC_96",
+"AES_128_GMAC","AES_192_GMAC","AES_256_GMAC","HMAC_SHA2_256_128","HMAC_SHA2_384_192","HMAC_SHA2_512_256"};
+
+static const char* DH[27] = {"DH_NONE","MODP_768","MODP_1024","\0","\0","MODP_1536","\0","\0","\0","\0","\0","\0","\0","\0","MODP_2048","MODP_3072","MODP_4096",
+"MODP_6144","MODP_8192","ECP_256","ECP_384","ECP_521","MODP_1024_PO_160","MODP_2048_PO_224","MODP_2048_PO_256","ECP_192","ECP_224"};
 
 enum EXCHANGE_TYPE{
     IKE_SA_INIT = 34,
@@ -235,8 +251,8 @@ struct transform_hdr{
 };
 
 struct attr{
-    int8_t type; //attribute type
-    int8_t value; //attribute value
+    int16_t type; //attribute type
+    int16_t value; //attribute value
 };
 
 struct transform_struc{
@@ -308,6 +324,8 @@ int get_response_flag(struct rte_isakmp_hdr *hdr);
 int get_version_flag(struct rte_isakmp_hdr *hdr);
 
 int get_initiator_flag(struct rte_isakmp_hdr *hdr);
+
+int get_proposals(struct rte_mbuf *pkt, uint16_t offset,char*** proposals);
 
 char *get_exchange_type (struct rte_isakmp_hdr *hdr);
 
