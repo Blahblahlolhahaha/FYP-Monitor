@@ -1,7 +1,6 @@
 build/
 .vscode/
-log.txt
+log/*
 index.html
 build/
 certs/
-main copy.c
