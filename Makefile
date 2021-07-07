@@ -5,8 +5,11 @@
 APP = rxtx_callbacks
 
 # all source are stored in SRCS-y
-SRCS-y := main.c
-
+DIR := src/
+SRCS-y := $(DIR)main.c
+SRCS-y += $(DIR)ike.c
+SRCS-y += $(DIR)array.c
+SRCS-y += $(DIR)log.c
 # Build using pkg-config variables if possible
 ifneq ($(shell pkg-config --exists libdpdk && echo 0),0)
 $(error "no installation of DPDK found")
@@ -22,7 +25,7 @@ static: build/$(APP)-static
 PKGCONF ?= pkg-config
 
 PC_FILE := $(shell $(PKGCONF) --path libdpdk 2>/dev/null)
-CFLAGS += -O3 $(shell $(PKGCONF) --cflags libdpdk)
+CFLAGS += -O3 $(shell $(PKGCONF) --cflags libdpdk --cflags --libs gmodule-2.0)
 LDFLAGS_SHARED = $(shell $(PKGCONF) --libs libdpdk)
 LDFLAGS_STATIC = $(shell $(PKGCONF) --static --libs libdpdk)
 
@@ -37,10 +40,10 @@ endif
 CFLAGS += -DALLOW_EXPERIMENTAL_API
 
 build/$(APP)-shared: $(SRCS-y) Makefile $(PC_FILE) | build
-	$(CC) $(CFLAGS) $(SRCS-y) -o $@ $(LDFLAGS) $(LDFLAGS_SHARED)
+	$(CC) $(CFLAGS) $(SRCS-y) -o $@ $(LDFLAGS) $(LDFLAGS_SHARED) -lpthread
 
 build/$(APP)-static: $(SRCS-y) Makefile $(PC_FILE) | build
-	$(CC) $(CFLAGS) $(SRCS-y) -o $@ $(LDFLAGS) $(LDFLAGS_STATIC)
+	$(CC) $(CFLAGS) $(SRCS-y) -o $@ $(LDFLAGS) $(LDFLAGS_STATIC) -lpthread
 
 build:
 	@mkdir -p $@
