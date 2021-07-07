@@ -151,12 +151,12 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                         }
                         else{
                             char log[110] = {0};
-                            sprintf(log,"%s;INVALID_ISAKMP_PACKET;%s;%s;%x;%x\n",current_time
+                            sprintf(log,"%s;INVALID_ISAKMP_PACKET;%s;%s;%lx;%lx\n",current_time
                             ,src_ip, dst_ip, isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi);
                             write_log(ipsec_log,log);
                             tampered_pkts++;
                         }
-                        counted++;
+                        
                     }
                     else{
                         //esp packet
@@ -179,6 +179,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                         }else{
                             struct tunnel* check;
                             bool tunnel_exists = false;
+                            bool tampered = false;
                             for (uint32_t i = 1; i <= tunnels->size; i++){
                                 check = ((struct tunnel*) tunnels->array[i]);
                                 if (check->client_ip == src_addr_int && check->host_ip == dst_addr_int){
@@ -200,6 +201,8 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                             
                                             write_log(ipsec_log,log);
                                             tampered_pkts++;
+                                            tampered = true;
+                                            break;
                                         }
                                     }else{
                                         char log[104] = {0};
@@ -208,6 +211,9 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                         
                                         write_log(ipsec_log,log);
                                         tampered_pkts++;
+                                        tampered = true;
+                                        break;
+
                                     }
                                 }else if (check->host_ip == src_addr_int && check->client_ip == dst_addr_int){
                                     if (check->host_esp_spi == 0){
@@ -215,6 +221,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                         check->host_seq = rte_be_to_cpu_32(esp_header->seq);
                                         legit_pkts++;
                                         tunnel_exists = true;
+                                        
                                     }
                                     else if(check->host_esp_spi == esp_header->spi){
                                         if(check->host_seq + 1 == rte_be_to_cpu_32(esp_header->seq)){
@@ -228,6 +235,8 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                             
                                             write_log(ipsec_log,log);
                                             tampered_pkts++;
+                                            tampered = true;
+                                            break;
                                         }
                                     }else {
                                         char log[84] = {0};
@@ -236,6 +245,8 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                         
                                         write_log(ipsec_log,log);
                                         tampered_pkts++;
+                                        tampered = true;
+                                        break;
                                     }
                                 }
                                 if(tunnel_exists){
@@ -243,12 +254,12 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                     break;
                                 }
                             }
-                            if(!tunnel_exists){
+                            if(!(tunnel_exists||tampered)){
                                 char log[106] = {0};
                                 sprintf(log,"%s;UNAUTHORISED_ESP_PACKET;%s;%s;%x;%d\n",current_time
                                 ,src_ip, dst_ip,tunnel_to_chk.spi,tunnel_to_chk.seq);
                                 write_log(ipsec_log,log);
-                                tampered_pkts++;    
+                                // tampered_pkts++;    
                             }
                         }
                     }
@@ -269,10 +280,6 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                         analyse_isakmp_payload(pkt,isakmp_hdr,hdr,first_payload_hdr_offset,isakmp_hdr->nxt_payload);
                     }
                     isakmp_pkts++;
-                    counted++;
-                    char **sad;
-                    char sadd = **sad;
-                    
                 }
                 else{ 
                     //not esp packet
@@ -281,7 +288,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                     ,src_ip,src_port,dst_ip,dst_port);
                     write_log(main_log,log);
                     non_ipsec++;
-                    counted++;
+                    
 
                 }   
             }
@@ -300,7 +307,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                 
                 write_log(main_log,log);
                 non_ipsec++;
-                counted++;
+                
             }
             else if(hdr->next_proto_id == IPPROTO_ICMP){
                 //ICMP packet
@@ -319,7 +326,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                 }
                 write_log(main_log,log);
                 non_ipsec++;
-                counted++;
+                
             }
             else{
                 non_ipsec++;
