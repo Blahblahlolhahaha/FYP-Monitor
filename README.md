@@ -15,8 +15,7 @@ Using next payload number and exchange type in IKE header, can identify data sto
 
 
 ## TODO:
-Log SPI pair for each remote ip client sad :(
-Log other ip protocols like tcp/icmp
+* Check whether if rte_pktmbuf_mtod_offset will be legit before calling
 
 ## Whats Done:
 * Capturing of IKE headers and ESP headers.
@@ -25,9 +24,8 @@ Log other ip protocols like tcp/icmp
 * Can identify successful/unsuccessful ike exchanges
 * Can identify ike session ending
 * Can identify dead pear(theorectical, havent test yet)
-
-## Whats Not Done:
 * Use SPI and sequence numebers to find out sus packets
-
 * Flagging tcp packets and udp thats not port 500 and 4500
 * Proper logging to file
+
+## Whats Not Done:

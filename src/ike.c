@@ -131,8 +131,8 @@ int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hd
 
             case D:{
                 //Session is deleted
-                char log[77] = {0};
-                sprintf(log,"%s;Session ended btw %s and %s\n",current_time,
+                char log[2048] = {0};
+                snprintf(log,2048,"%s;Session ended btw %s and %s\n",current_time,
                 src_addr,dst_addr);
                 write_log(ipsec_log,log);
                 delete_tunnel(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,ipv4_hdr->src_addr,ipv4_hdr->dst_addr);
@@ -184,12 +184,12 @@ void analyse_SA(struct rte_mbuf *pkt,uint16_t offset,struct rte_isakmp_hdr *isak
     else{
         for(int i = 0;i<count;i++){
             char* proposal = proposals[i];
-            char log[2109] = {0};
+            char log[4096] = {0};
             if(get_initiator_flag(isakmp_hdr) == 0){
-                sprintf(log,"%s;Proposals selected by %s: %s\n",current_time,src_addr,proposal);
+                snprintf(log,4096,"%s;Proposals selected by %s: %s\n",current_time,src_addr,proposal);
             }
             else{
-                sprintf(log,"%s;Proposals proposed by %s: %s\n",current_time,src_addr,proposal);
+                snprintf(log,4096,"%s;Proposals proposed by %s: %s\n",current_time,src_addr,proposal);
                 for(int i = 1;i <= tunnels->size; i++){
                     struct tunnel *tunnel = tunnels->array[i];
                     if(check_ike_spi(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,ipv4_hdr->src_addr,ipv4_hdr->dst_addr,tunnel) == 1){
@@ -238,7 +238,7 @@ void analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *is
     
     for(int i = 1;i <= tunnels->size; i++){
         struct tunnel *tunnel = tunnels->array[i];
-        
+        char log[2048] = {0};
         if(check_ike_spi(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,ipv4_hdr->src_addr,ipv4_hdr->dst_addr,tunnel) == 1){
             //nid to ensure spi is the same
             if(payload_hdr->nxt_payload == NO && isakmp_hdr->exchange_type == INFORMATIONAL){
@@ -253,8 +253,8 @@ void analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *is
                     if(tunnel->dpd_count == 6){
                         // Peer is dead and session should be removed
 
-                        char log[76] = {0};
-                        sprintf(log,"%s;Session ended btw %s and %s\n",current_time,src_addr,dst_addr);
+                        
+                        snprintf(log,2048,"%s;Session ended btw %s and %s\n",current_time,src_addr,dst_addr);
                         write_log(ipsec_log,log);
                         // printf("Session ended btw SPI: %lx, %lx\n", rte_be_to_cpu_64(isakmp_hdr->initiator_spi), rte_be_to_cpu_64(isakmp_hdr->responder_spi));
                         removeIndex(tunnels,i);
@@ -268,8 +268,7 @@ void analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *is
             }
             else if(payload_hdr->nxt_payload == D && isakmp_hdr->exchange_type == INFORMATIONAL){
                 //Either side ends connection, so delete tunnel
-                char log[77] = {0};
-                sprintf(log,"%s;Session ended btw %s and %s\n",current_time,
+                snprintf(log,2048,"%s;Session ended btw %s and %s\n",current_time,
                 src_addr,dst_addr);
                 write_log(ipsec_log,log);
                 delete_tunnel(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,ipv4_hdr->src_addr,ipv4_hdr->dst_addr);
@@ -277,8 +276,7 @@ void analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *is
             else if(payload_hdr->nxt_payload == AUTH && isakmp_hdr->exchange_type == IKE_AUTH){
                 //99.9% means authenticated once responder sends this payload unless server kena gon
                 if(get_response_flag(isakmp_hdr) == 1){
-                    char log[96] = {0};
-                    sprintf(log,"%s;IKE Authentication between %s and %s succeeded\n",current_time,
+                    snprintf(log,2048,"%s;IKE Authentication between %s and %s succeeded\n",current_time,
                     src_addr,dst_addr);
                     write_log(ipsec_log,log);
                     tunnel->auth = true;
@@ -286,8 +284,7 @@ void analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *is
             }
             else if(payload_hdr->nxt_payload == N && isakmp_hdr->exchange_type == INFORMATIONAL && get_initiator_flag(isakmp_hdr) == 0 && get_response_flag(isakmp_hdr) == 1){
                 // for now it prob means smth went wrong
-                char log[93] = {0};
-                sprintf(log,"%s;IKE Authentication between %s and %s failed\n",current_time,
+                snprintf(log,2048,"%s;IKE Authentication between %s and %s failed\n",current_time,
                 src_addr, dst_addr);
                 delete_tunnel(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,ipv4_hdr->src_addr,ipv4_hdr->dst_addr);
             }
@@ -312,6 +309,7 @@ void analyse_N(struct rte_mbuf *pkt, uint16_t offset,struct rte_isakmp_hdr *isak
     payload = malloc(sizeof(struct notify_hdr));
     char *msg = malloc(256);
     char failed_msg[128] = "";
+    char log[2048];
     strcat(failed_msg,"IKE failed with error:");
 
     if(payload && msg){
@@ -336,14 +334,13 @@ void analyse_N(struct rte_mbuf *pkt, uint16_t offset,struct rte_isakmp_hdr *isak
             }
             if(error){
                 delete_tunnel(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,ipv4_hdr->src_addr,ipv4_hdr->dst_addr);
-                char log[150];
-                sprintf(log,"%s;%s",current_time,
+                
+                snprintf(log,2048,"%s;%s",current_time,
                 failed_msg);
                 write_log(ipsec_log,log);
             }
             else if(special_error){
-                char log[277];
-                sprintf(log,"%s;%s",current_time,
+                snprintf(log,2048,"%s;%s",current_time,
                 msg);
                 write_log(ipsec_log,log);
             }
@@ -403,7 +400,7 @@ int get_proposals(struct rte_mbuf *pkt, uint16_t offset,char***proposals){
         proposal->hdr = rte_pktmbuf_mtod_offset(pkt,struct proposal_hdr *, offset);
         
         uint16_t transformation_offset = offset + 8 + proposal->hdr->spi_size;
-        (*proposals)[count] = calloc(2048,sizeof(char));
+        (*proposals)[count] = calloc(4096,sizeof(char));
         if((*proposals)[count]){
             get_transformations(pkt,transformation_offset,proposal->hdr->num_transforms,(*proposals)[count]);
         }
@@ -519,7 +516,7 @@ int check_if_tunnel_exists(struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr
     return 0;
 }
 
-/** converts ip address into strings and place them in ip
+/** converts ipv4 address into strings and place them in ip
  * @param ip_address ipv4 address to convert 
  * @param ip char pointer to store the converted string
  */
@@ -528,5 +525,36 @@ void get_ip_address_string(rte_be32_t ip_address,char *ip){
     int bit3 = ip_address >> 16 & 0xFF;
     int bit2 = ip_address >> 8 & 0xFF;
     int bit1 = ip_address & 0xFF;
-    sprintf(ip,"%u.%u.%u.%u",bit1,bit2,bit3,bit4);
+    snprintf(ip,16,"%u.%u.%u.%u",bit1,bit2,bit3,bit4);
 }   
+
+
+/** converts ipv6 address into strings and place them in ip
+ * @param ip_address ipv4 address to convert 
+ * @param src_ip char pointer to store the converted source ip string
+ * @param dst_ip char pointer to store the converted destination ip string
+ */
+void get_ipv6_hdr_string(struct rte_ipv6_hdr *hdr,char *src_ip, char *dst_ip)
+{
+    uint8_t *addr;
+    addr = hdr->src_addr;
+    snprintf(src_ip,45,"%4hx:%4hx:%4hx:%4hx:%4hx:%4hx:%4hx:%4hx \t",
+           (uint16_t)((addr[0] << 8) | addr[1]),
+           (uint16_t)((addr[2] << 8) | addr[3]),
+           (uint16_t)((addr[4] << 8) | addr[5]),
+           (uint16_t)((addr[6] << 8) | addr[7]),
+           (uint16_t)((addr[8] << 8) | addr[9]),
+           (uint16_t)((addr[10] << 8) | addr[11]),
+           (uint16_t)((addr[12] << 8) | addr[13]),
+           (uint16_t)((addr[14] << 8) | addr[15]));
+    addr = hdr->dst_addr;
+    snprintf(dst_ip,45,"%4hx:%4hx:%4hx:%4hx:%4hx:%4hx:%4hx:%4hx",
+           (uint16_t)((addr[0] << 8) | addr[1]),
+           (uint16_t)((addr[2] << 8) | addr[3]),
+           (uint16_t)((addr[4] << 8) | addr[5]),
+           (uint16_t)((addr[6] << 8) | addr[7]),
+           (uint16_t)((addr[8] << 8) | addr[9]),
+           (uint16_t)((addr[10] << 8) | addr[11]),
+           (uint16_t)((addr[12] << 8) | addr[13]),
+           (uint16_t)((addr[14] << 8) | addr[15]));
+}
