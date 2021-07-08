@@ -325,7 +325,7 @@ int get_version_flag(struct rte_isakmp_hdr *hdr);
 
 int get_initiator_flag(struct rte_isakmp_hdr *hdr);
 
-int get_proposals(struct rte_mbuf *pkt, uint16_t offset,char*** proposals);
+int get_proposals(struct rte_mbuf *pkt, uint16_t offset,char***proposals,int *check);
 
 char *get_exchange_type (struct rte_isakmp_hdr *hdr);
 
@@ -342,5 +342,6 @@ void get_ip_address_string(rte_be32_t ip_address,char *ip);
 void get_ipv6_hdr_string(struct rte_ipv6_hdr *hdr,char *src_ip, char *dst_ip);
 
 void delete_tunnel(uint64_t initiator_spi,uint64_t responder_spi,int src_addr,int dst_addr);
+
 #endif
 

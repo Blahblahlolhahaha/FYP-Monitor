@@ -55,7 +55,7 @@ int non_ipsec = 0;
 int legit_pkts = 0;
 int isakmp_pkts = 0;
 int tampered_pkts = 0;
-
+int malformed_pkts = 0;
 struct check{
     uint32_t seq;
     uint32_t spi;
@@ -114,230 +114,275 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
         struct rte_mbuf *pkt = pkts[i];
         struct rte_ipv4_hdr *hdr;
         struct rte_ether_hdr *ether_hdr;
-        ether_hdr = rte_pktmbuf_mtod(pkt,struct rte_ether_hdr*);
         char log[2048] = {0};
+        char src_ip[45] = {0};
+        char dst_ip[45] = {0};
+        bool malformed = false;
+        if(sizeof(ether_hdr) < x){
+            ether_hdr = rte_pktmbuf_mtod(pkt,struct rte_ether_hdr*);
+            if(rte_be_to_cpu_16(ether_hdr->ether_type) == RTE_ETHER_TYPE_IPV4){
+                if(IPV4_OFFSET + sizeof(struct rte_ipv4_hdr) < x){
+                    hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_ipv4_hdr *, IPV4_OFFSET); //get ipv4 header
+                    /* check protocol (ICMP, UDP, TCP etc)
+                        Due to UDP encapsulation, esp packet shld be within a udp packet with dst/src port 4500
+                    */       
 
-        if(rte_be_to_cpu_16(ether_hdr->ether_type) == RTE_ETHER_TYPE_IPV4){
-            hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_ipv4_hdr *, IPV4_OFFSET); //get ipv4 header
-            
-            /* check protocol (ICMP, UDP, TCP etc)
-                Due to UDP encapsulation, esp packet shld be within a udp packet with dst/src port 4500
-            */       
-            char src_ip[16] = {0};
-            char dst_ip[16] = {0};
-            get_ip_address_string(hdr->src_addr,src_ip);
-            get_ip_address_string(hdr->dst_addr,dst_ip);
+                    get_ip_address_string(hdr->src_addr,src_ip);
+                    get_ip_address_string(hdr->dst_addr,dst_ip);
 
-            if(hdr->next_proto_id == IPPROTO_UDP){
-                // printf("Protocol: UDP\n");
-                struct rte_udp_hdr *udp_hdr;
+                    if(hdr->next_proto_id == IPPROTO_UDP){
+                        if(UDP_OFFSET + sizeof(struct rte_udp_hdr) < x){
+                            // printf("Protocol: UDP\n");
+                            struct rte_udp_hdr *udp_hdr;
+                            udp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_udp_hdr *,UDP_OFFSET); //get udp header
+                            //get src/dst ports and convert to big endian to log them
+                            int dst_port = rte_cpu_to_be_16(udp_hdr->dst_port);
+                            int src_port = rte_cpu_to_be_16(udp_hdr->src_port);
+                            int src_addr_int = hdr->src_addr;
+                            int dst_addr_int = hdr->dst_addr;
+                            // printf("Src port: %u\n",dst_port);
+                            // printf("Dst port: %u\n",src_port);
+                            if(dst_port == IPSEC_NAT_T_PORT || src_port == IPSEC_NAT_T_PORT){
+                                if(ESP_OFFSET + sizeof(struct ISAKMP_TEST) < x){
+                                    struct ISAKMP_TEST *test;
+                                    test = rte_pktmbuf_mtod_offset(pkt,struct ISAKMP_TEST*,ESP_OFFSET);
+                                    if(ISAKMP_OFFSET + sizeof(struct rte_isakmp_hdr) < x || ESP_OFFSET + sizeof(struct rte_esp_hdr) < x){
+                                        if(test->test_octet == 0){
+                                            struct rte_isakmp_hdr *isakmp_hdr;
+                                            isakmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_isakmp_hdr*,ISAKMP_OFFSET);
+                                            int check = analyse_isakmp_payload(pkt,isakmp_hdr,hdr,first_payload_hdr_offset + 4,isakmp_hdr->nxt_payload);
+                                            // print_isakmp_headers_info(isakmp_hdr);
+                                            if(check == 1){
+                                                isakmp_pkts++;
+                                            }
+                                            else{
+                                                snprintf(log,2048,"%s;INVALID_ISAKMP_PACKET;%s;%s;%lx;%lx\n",current_time
+                                                ,src_ip, dst_ip, isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi);
+                                                write_log(ipsec_log,log);
+                                                tampered_pkts++;
+                                            }
+                                            
+                                        }
+                                        else{
+                                            //esp packet
+                                            struct rte_esp_hdr *esp_header;
+                                            esp_header = rte_pktmbuf_mtod_offset(pkt,struct rte_esp_hdr *,ESP_OFFSET); // get esp headers
+                                            // log spi
+                                            struct check tunnel_to_chk = {
+                                                .seq = rte_be_to_cpu_32(esp_header->seq),
+                                                .spi = rte_be_to_cpu_32(esp_header->spi)
+                                            };
+                                            
+                                            // Lets check for new tunnels
+                                            if (tunnels->size == 0){
+                                                    snprintf(log,2048,"%s;UNAUTHORISED_ESP_PACKET;%s;%s;%x;%d\n",current_time
+                                                    ,src_ip, dst_ip,tunnel_to_chk.spi,tunnel_to_chk.seq);
 
-                udp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_udp_hdr *,UDP_OFFSET); //get udp header
-                //get src/dst ports and convert to big endian to log them
-                int dst_port = rte_cpu_to_be_16(udp_hdr->dst_port);
-                int src_port = rte_cpu_to_be_16(udp_hdr->src_port);
-                int src_addr_int = hdr->src_addr;
-                int dst_addr_int = hdr->dst_addr;
-                // printf("Src port: %u\n",dst_port);
-                // printf("Dst port: %u\n",src_port);
-                if(dst_port == IPSEC_NAT_T_PORT || src_port == IPSEC_NAT_T_PORT){
-                    struct ISAKMP_TEST *test;
-                    test = rte_pktmbuf_mtod_offset(pkt,struct ISAKMP_TEST*,ESP_OFFSET);
-                    if(test->test_octet == 0){
-                        struct rte_isakmp_hdr *isakmp_hdr;
-                        isakmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_isakmp_hdr*,ISAKMP_OFFSET);
-                        int check = analyse_isakmp_payload(pkt,isakmp_hdr,hdr,first_payload_hdr_offset + 4,isakmp_hdr->nxt_payload);
-                        // print_isakmp_headers_info(isakmp_hdr);
-                        if(check == 1){
-                            isakmp_pkts++;
+                                                    write_log(ipsec_log,log);
+                                                    tampered_pkts++;
+                                            }else{
+                                                struct tunnel* check;
+                                                bool tunnel_exists = false;
+                                                bool tampered = false;
+                                                for (uint32_t i = 1; i <= tunnels->size; i++){
+                                                    check = ((struct tunnel*) tunnels->array[i]);
+                                                    if (check->client_ip == src_addr_int && check->host_ip == dst_addr_int){
+                                                        if (check->client_esp_spi == 0){
+                                                            check->client_esp_spi = esp_header->spi;
+                                                            check->client_seq = rte_be_to_cpu_32(esp_header->seq);
+                                                            legit_pkts++;
+                                                            tunnel_exists = true;
+                                                        }
+                                                        else if(check->client_esp_spi == esp_header->spi){
+                                                            int seq = rte_be_to_cpu_32(esp_header->seq);
+                                                            if(check->client_seq <= (seq + tolerance) || check->client_seq >= (seq + tolerance)){
+                                                                if(check->client_seq < seq){
+                                                                    check->client_seq = seq;
+                                                                }
+                                                                legit_pkts++;
+                                                                tunnel_exists = true;
+                                                            }else{
+                                                                snprintf(log,2048,"%s;INVALID_SEQ_NO;%s;%s;%d;%d\n",current_time
+                                                                ,src_ip, dst_ip,tunnel_to_chk.seq,check->client_seq);
+                                                                
+                                                                write_log(ipsec_log,log);
+                                                                tampered_pkts++;
+                                                                tampered = true;
+                                                                break;
+                                                            }
+                                                        }else{
+                                                            snprintf(log,2048,"%s;INVALID_SPI;%s;%s;%x;%x\n",current_time
+                                                            , src_ip, dst_ip,tunnel_to_chk.spi,check->client_spi);
+                                                            
+                                                            write_log(ipsec_log,log);
+                                                            tampered_pkts++;
+                                                            tampered = true;
+                                                            break;
+
+                                                        }
+                                                    }else if (check->host_ip == src_addr_int && check->client_ip == dst_addr_int){
+                                                        if (check->host_esp_spi == 0){
+                                                            check->host_esp_spi = esp_header->spi;
+                                                            check->host_seq = rte_be_to_cpu_32(esp_header->seq);
+                                                            legit_pkts++;
+                                                            tunnel_exists = true;
+                                                            
+                                                        }
+                                                        else if(check->host_esp_spi == esp_header->spi){
+                                                            int seq = rte_be_to_cpu_32(esp_header->seq);
+                                                            if(check->host_seq <= (seq + tolerance) || check->host_seq >= (seq - tolerance)){
+                                                                if(check->client_seq < seq){
+                                                                    check->host_seq = seq;
+                                                                }
+                                                                legit_pkts++;
+                                                                tunnel_exists = true;
+                                                            }else{
+                                                                snprintf(log,2048,"%s;INVALID_SEQ_NO;%s;%s;%d;%d\n",current_time
+                                                                , src_ip, dst_ip,tunnel_to_chk.seq,check->host_seq);
+                                                                
+                                                                write_log(ipsec_log,log);
+                                                                tampered_pkts++;
+                                                                tampered = true;
+                                                                break;
+                                                            }
+                                                        }else {
+                                                            snprintf(log,2048,"%s;INVALID_SPI;%s;%s;%x;%x\n",current_time
+                                                            ,src_ip, dst_ip,tunnel_to_chk.spi,check->host_spi);
+                                                            
+                                                            write_log(ipsec_log,log);
+                                                            tampered_pkts++;
+                                                            tampered = true;
+                                                            break;
+                                                        }
+                                                    }
+                                                    if(tunnel_exists){
+                                                        ((struct tunnel*) tunnels->array[i])->timeout = 0;
+                                                        break;
+                                                    }
+                                                }
+                                                if(!(tunnel_exists||tampered)){
+                                                    snprintf(log,2048,"%s;UNAUTHORISED_ESP_PACKET;%s;%s;%x;%d\n",current_time
+                                                    ,src_ip, dst_ip,tunnel_to_chk.spi,tunnel_to_chk.seq);
+                                                    write_log(ipsec_log,log);
+                                                    // tampered_pkts++;    
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else{
+                                        malformed = true;
+                                    }
+                                }
+                                else{
+                                    malformed = true;
+                                }
+                            
+                            }
+                            else if(dst_port == ISAKMP_PORT || src_port == ISAKMP_PORT){
+                                struct rte_isakmp_hdr *isakmp_hdr;
+                                isakmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_isakmp_hdr*,ESP_OFFSET);
+                                // print_isakmp_headers_info(hdr);
+                                if(isakmp_hdr->exchange_type ==  IKE_SA_INIT){
+                                    if(get_initiator_flag(isakmp_hdr) == 1){
+                                        snprintf(log,2048,"%s;%s is trying to initiate IKE exchange with %s\n",current_time
+                                        ,src_ip, dst_ip);
+                                        write_log(ipsec_log,log);
+                                    
+                                    }
+                                    analyse_isakmp_payload(pkt,isakmp_hdr,hdr,first_payload_hdr_offset,isakmp_hdr->nxt_payload);
+                                }
+                                isakmp_pkts++;
+                            }
+                            else{ 
+                                //not esp packet
+                                snprintf(log,2048,"%s;UDP;%s:%d->%s:%d\n",current_time
+                                ,src_ip,src_port,dst_ip,dst_port);
+                                write_log(main_log,log);
+                                non_ipsec++;
+                                
+
+                            }   
                         }
                         else{
-                            snprintf(log,2048,"%s;INVALID_ISAKMP_PACKET;%s;%s;%lx;%lx\n",current_time
-                            ,src_ip, dst_ip, isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi);
-                            write_log(ipsec_log,log);
-                            tampered_pkts++;
+                            malformed = true;
+                        }
+                    }
+                    else if(hdr->next_proto_id == IPPROTO_TCP){
+                        if(UDP_OFFSET + sizeof(struct rte_tcp_hdr) < x){
+                            //TCP packet
+                            //TODO: should log protocol xD
+                            struct rte_tcp_hdr* tcp_hdr;
+                            tcp_hdr =  rte_pktmbuf_mtod_offset(pkt,struct rte_tcp_hdr*,UDP_OFFSET);
+                            int src_port = rte_be_to_cpu_16(tcp_hdr->src_port);
+                            int dst_port = rte_be_to_cpu_16(tcp_hdr->dst_port);
+                            
+                            snprintf(log,2048,"%s;TCP;%s:%d->%s:%d\n",current_time
+                            ,src_ip,src_port,dst_ip,dst_port);
+                            
+                            write_log(main_log,log);
+                            non_ipsec++;
+                        }
+
+                        
+                    }
+                    else if(hdr->next_proto_id == IPPROTO_ICMP){
+                        //ICMP packet
+                        if(UDP_OFFSET + sizeof(struct rte_icmp_hdr) < x){
+                            struct rte_icmp_hdr* icmp_hdr;
+                            icmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_icmp_hdr*,UDP_OFFSET);
+                            if(icmp_hdr->icmp_type == 0){
+                                snprintf(log,2048,"%s;Ping response %s to %s\n",current_time,
+                                src_ip,dst_ip);
+                            }
+                            else if(icmp_hdr->icmp_type == 8){
+                                snprintf(log,2048,"%s;Ping request: %s to %s\n",current_time,src_ip,dst_ip);
+                            }
+                            else{
+                                snprintf(log,2048,"%s;ICMP Packet: %s to %s\n",current_time,src_ip,dst_ip);
+                            }
+                            write_log(main_log,log);
+                            non_ipsec++;
+                        }
+                        else{
+                            malformed = true;
                         }
                         
                     }
                     else{
-                        //esp packet
-                        struct rte_esp_hdr *esp_header;
-                        esp_header = rte_pktmbuf_mtod_offset(pkt,struct rte_esp_hdr *,ESP_OFFSET); // get esp headers
-                        // log spi
-                        struct check tunnel_to_chk = {
-                            .seq = rte_be_to_cpu_32(esp_header->seq),
-                            .spi = rte_be_to_cpu_32(esp_header->spi)
-                        };
-                        
-                        // Lets check for new tunnels
-                        if (tunnels->size == 0){
-                                snprintf(log,2048,"%s;UNAUTHORISED_ESP_PACKET;%s;%s;%x;%d\n",current_time
-                                ,src_ip, dst_ip,tunnel_to_chk.spi,tunnel_to_chk.seq);
-
-                                write_log(ipsec_log,log);
-                                tampered_pkts++;
-                        }else{
-                            struct tunnel* check;
-                            bool tunnel_exists = false;
-                            bool tampered = false;
-                            for (uint32_t i = 1; i <= tunnels->size; i++){
-                                check = ((struct tunnel*) tunnels->array[i]);
-                                if (check->client_ip == src_addr_int && check->host_ip == dst_addr_int){
-                                    if (check->client_esp_spi == 0){
-                                        check->client_esp_spi = esp_header->spi;
-                                        check->client_seq = rte_be_to_cpu_32(esp_header->seq);
-                                        legit_pkts++;
-                                        tunnel_exists = true;
-                                    }
-                                    else if(check->client_esp_spi == esp_header->spi){
-                                        int seq = rte_be_to_cpu_32(esp_header->seq);
-                                        if(check->client_seq <= (seq + tolerance) || check->client_seq >= (seq + tolerance)){
-                                            if(check->client_seq < seq){
-                                                check->client_seq = seq;
-                                            }
-                                            legit_pkts++;
-                                            tunnel_exists = true;
-                                        }else{
-                                            snprintf(log,2048,"%s;INVALID_SEQ_NO;%s;%s;%d;%d\n",current_time
-                                            ,src_ip, dst_ip,tunnel_to_chk.seq,check->client_seq);
-                                            
-                                            write_log(ipsec_log,log);
-                                            tampered_pkts++;
-                                            tampered = true;
-                                            break;
-                                        }
-                                    }else{
-                                        snprintf(log,2048,"%s;INVALID_SPI;%s;%s;%x;%x\n",current_time
-                                        , src_ip, dst_ip,tunnel_to_chk.spi,check->client_spi);
-                                        
-                                        write_log(ipsec_log,log);
-                                        tampered_pkts++;
-                                        tampered = true;
-                                        break;
-
-                                    }
-                                }else if (check->host_ip == src_addr_int && check->client_ip == dst_addr_int){
-                                    if (check->host_esp_spi == 0){
-                                        check->host_esp_spi = esp_header->spi;
-                                        check->host_seq = rte_be_to_cpu_32(esp_header->seq);
-                                        legit_pkts++;
-                                        tunnel_exists = true;
-                                        
-                                    }
-                                    else if(check->host_esp_spi == esp_header->spi){
-                                        int seq = rte_be_to_cpu_32(esp_header->seq);
-                                        if(check->host_seq <= (seq + tolerance) || check->host_seq >= (seq - tolerance)){
-                                            if(check->client_seq < seq){
-                                                check->host_seq = seq;
-                                            }
-                                            legit_pkts++;
-                                            tunnel_exists = true;
-                                        }else{
-                                            snprintf(log,2048,"%s;INVALID_SEQ_NO;%s;%s;%d;%d\n",current_time
-                                            , src_ip, dst_ip,tunnel_to_chk.seq,check->host_seq);
-                                            
-                                            write_log(ipsec_log,log);
-                                            tampered_pkts++;
-                                            tampered = true;
-                                            break;
-                                        }
-                                    }else {
-                                        snprintf(log,2048,"%s;INVALID_SPI;%s;%s;%x;%x\n",current_time
-                                        ,src_ip, dst_ip,tunnel_to_chk.spi,check->host_spi);
-                                        
-                                        write_log(ipsec_log,log);
-                                        tampered_pkts++;
-                                        tampered = true;
-                                        break;
-                                    }
-                                }
-                                if(tunnel_exists){
-                                    ((struct tunnel*) tunnels->array[i])->timeout = 0;
-                                    break;
-                                }
-                            }
-                            if(!(tunnel_exists||tampered)){
-                                snprintf(log,2048,"%s;UNAUTHORISED_ESP_PACKET;%s;%s;%x;%d\n",current_time
-                                ,src_ip, dst_ip,tunnel_to_chk.spi,tunnel_to_chk.seq);
-                                write_log(ipsec_log,log);
-                                // tampered_pkts++;    
-                            }
-                        }
+                        non_ipsec++;
                     }
-                
-                }
-                else if(dst_port == ISAKMP_PORT || src_port == ISAKMP_PORT){
-                    struct rte_isakmp_hdr *isakmp_hdr;
-                    isakmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_isakmp_hdr*,ESP_OFFSET);
-                    // print_isakmp_headers_info(hdr);
-                    if(isakmp_hdr->exchange_type ==  IKE_SA_INIT){
-                        if(get_initiator_flag(isakmp_hdr) == 1){
-                            snprintf(log,2048,"%s;%s is trying to initiate IKE exchange with %s\n",current_time
-                            ,src_ip, dst_ip);
-                            write_log(ipsec_log,log);
-                        
-                        }
-                        analyse_isakmp_payload(pkt,isakmp_hdr,hdr,first_payload_hdr_offset,isakmp_hdr->nxt_payload);
-                    }
-                    isakmp_pkts++;
-                }
-                else{ 
-                    //not esp packet
-                    snprintf(log,2048,"%s;UDP;%s:%d->%s:%d\n",current_time
-                    ,src_ip,src_port,dst_ip,dst_port);
-                    write_log(main_log,log);
-                    non_ipsec++;
-                    
-
-                }   
-            }
-            else if(hdr->next_proto_id == IPPROTO_TCP){
-                
-                // //TCP packet
-                // //TODO: should log protocol xD
-                struct rte_tcp_hdr* tcp_hdr;
-                tcp_hdr =  rte_pktmbuf_mtod_offset(pkt,struct rte_tcp_hdr*,UDP_OFFSET);
-                int src_port = rte_be_to_cpu_16(tcp_hdr->src_port);
-                int dst_port = rte_be_to_cpu_16(tcp_hdr->dst_port);
-                
-                snprintf(log,2048,"%s;TCP;%s:%d->%s:%d\n",current_time
-                ,src_ip,src_port,dst_ip,dst_port);
-                
-                write_log(main_log,log);
-                non_ipsec++;
-                
-            }
-            else if(hdr->next_proto_id == IPPROTO_ICMP){
-                //ICMP packet
-                struct rte_icmp_hdr* icmp_hdr;
-                icmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_icmp_hdr*,UDP_OFFSET);
-                if(icmp_hdr->icmp_type == 0){
-                    snprintf(log,2048,"%s;Ping response %s to %s\n",current_time,
-                    src_ip,dst_ip);
-                }
-                else if(icmp_hdr->icmp_type == 8){
-                    snprintf(log,2048,"%s;Ping request: %s to %s\n",current_time,src_ip,dst_ip);
                 }
                 else{
-                    snprintf(log,2048,"%s;ICMP Packet: %s to %s\n",current_time,src_ip,dst_ip);
+                    malformed = true;
                 }
-                write_log(main_log,log);
-                non_ipsec++;
-                
+            }
+            else if(rte_be_to_cpu_16(ether_hdr->ether_type) == IPPROTO_IPV6){
+                if(IPV4_OFFSET + sizeof(struct rte_ipv6_hdr) < x){
+                    struct rte_ipv6_hdr *ipv6_hdr =rte_pktmbuf_mtod_offset(pkt,struct rte_ipv6_hdr*,IPV4_OFFSET);
+                    get_ipv6_hdr_string(ipv6_hdr,src_ip,dst_ip);
+                    snprintf(log,2048,"%s;IPV6 Packet: %s to %s\n",current_time,src_ip,dst_ip);
+                    write_log(main_log,log);
+                }
+                else{
+                    malformed = true;
+                }
             }
             else{
-                non_ipsec++;
+                non_ipsec ++;
             }
         }
-        else if(rte_be_to_cpu_16(ether_hdr->ether_type) == IPPROTO_IPV6){
-            char *src_addr[45];
-            char *dst_addr[45];
-            struct rte_ipv6_hdr *ipv6_hdr =rte_pktmbuf_mtod_offset(pkt,struct rte_ipv6_hdr*,IPV4_OFFSET);
-            get_ipv6_hdr_string(ipv6_hdr,src_addr,dst_addr);
-            snprintf(log,2048,"%s;IPV6 Packet: %s to %s\n",current_time,src_addr,dst_addr);
-        }
         else{
-            non_ipsec ++;
+            malformed = true;
+        }
+        if(malformed){
+            if(src_ip[0] != "\0" && dst_ip[0] != "\0"){
+                
+                snprintf(log,2048,"%s;MALFORMED_PACKET;%s;%s\n",current_time,src_ip,dst_ip);
+            }
+            else{
+                 snprintf(log,2048,"%s;MALFORMED_PACKET\n",current_time);
+            }
+            malformed ++;
         }
         total_processed++;
         if(total_processed % 10 == 0) {
@@ -361,12 +406,14 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
             printf("\n| Non IPSec packets: %d", non_ipsec);
             printf("\n| Tampered IPSec packets: %d",tampered_pkts);
             printf("\n| Legitimate IPSec packets: %d",legit_pkts + isakmp_pkts);
+            printf("\n| Malformed packets: %d",malformed);
             printf("\n| Total packets processed: %d\n",total_processed);
             printf("================================\n");
-            if(total_processed - non_ipsec - tampered_pkts - legit_pkts - isakmp_pkts == 0){
+            int unaccounted = total_processed - non_ipsec - tampered_pkts - legit_pkts - isakmp_pkts - malformed;
+            if( unaccounted == 0){
                 printf("| All traffic accounted for\n");
             }else{
-                printf("| %d packets unaccounted for. \n| Please check network logs.\n", total_processed - non_ipsec - tampered_pkts - legit_pkts - isakmp_pkts);
+                printf("| %d packets unaccounted for. \n| Please check network logs.\n", unaccounted);
             }
             printf("================================\n");
         }
@@ -512,9 +559,6 @@ int main(int argc, char **argv){
         lcore_main();
         rte_eal_cleanup();
     }
-
-    
-
 
     return 0;
 }   
