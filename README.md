@@ -15,7 +15,7 @@ Using next payload number and exchange type in IKE header, can identify data sto
 
 
 ## TODO:
-* Check whether if rte_pktmbuf_mtod_offset will be legit before calling
+* Fix bug where timeout will not remove tunnels
 
 ## Whats Done:
 * Capturing of IKE headers and ESP headers.
@@ -27,5 +27,9 @@ Using next payload number and exchange type in IKE header, can identify data sto
 * Use SPI and sequence numebers to find out sus packets
 * Flagging tcp packets and udp thats not port 500 and 4500
 * Proper logging to file
+* Saving tunnels such that if program crashes or terminated, can resume with tunnels that exists before termination
+
+## Limitations
+* Tunnels will only be saved when initiator,responder spi from the isakmp header, client and host esp spi and client and host address are collected
 
 ## Whats Not Done:
