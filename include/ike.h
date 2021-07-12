@@ -15,11 +15,12 @@
 #include <rte_udp.h>
 #include <stdbool.h>
 #include "log.h"
-        
+#include "../deps/b64/b64.h"
 
 static const int ESP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr);
 static const int ISAKMP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr) + 4;
 static const int first_payload_hdr_offset = ESP_OFFSET + 28;
+static const int serialize_size = 32;
 struct Array *tunnels;
 
 static const char * transform_types[5] = { "Encryption Algorithm","Pseudorandom Function","Integrity Algorithm","Diffie-Hellman Group","Extended Sequence Numbers"};
@@ -303,15 +304,16 @@ struct tunnel{
     uint64_t host_spi;
     int client_ip;
     int host_ip;
-    uint32_t client_seq;
-    uint32_t host_seq;
     uint32_t client_esp_spi;
     uint32_t host_esp_spi;
-    char *algo;
-    int dpd_count; //if count == 6, peer is deado
+    uint32_t client_seq;
+    uint32_t host_seq;
     bool dpd;
     bool auth;
+    bool client_loaded;
+    bool host_loaded;
     int timeout;
+    int dpd_count; //if count == 6, peer is deado
 };
 
 /*flags in hdr:
@@ -340,5 +342,11 @@ int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hd
 void get_ip_address_string(rte_be32_t ip_address,char *ip);
 
 void delete_tunnel(uint64_t initiator_spi,uint64_t responder_spi,int src_addr,int dst_addr);
+
+void add_tunnel(struct tunnel* add);
+
+void remove_tunnel(struct tunnel* remove);
+
+void load_tunnel();
 #endif
 

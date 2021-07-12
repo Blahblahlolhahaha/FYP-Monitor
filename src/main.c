@@ -186,6 +186,9 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                     if (check->client_esp_spi == 0){
                                         check->client_esp_spi = esp_header->spi;
                                         check->client_seq = rte_be_to_cpu_32(esp_header->seq);
+                                        if(check->host_esp_spi !=0){
+                                            add_tunnel(check);
+                                        }
                                         legit_pkts++;
                                         tunnel_exists = true;
                                     }
@@ -194,7 +197,15 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                             check->client_seq = rte_be_to_cpu_32(esp_header->seq);
                                             legit_pkts++;
                                             tunnel_exists = true;
-                                        }else{
+                                        }
+                                        else if(check->client_loaded){
+                                            printf("sad???\n");
+                                            check->client_seq = rte_be_to_cpu_32(esp_header->seq);
+                                            check->client_loaded = false;
+                                            legit_pkts++;
+                                            tunnel_exists = true;
+                                        }
+                                        else{
                                             char log[91] = {0};
                                             sprintf(log,"%s;INVALID_SEQ_NO;%s;%s;%d;%d\n",current_time
                                             ,src_ip, dst_ip,tunnel_to_chk.seq,check->client_seq);
@@ -219,6 +230,9 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                     if (check->host_esp_spi == 0){
                                         check->host_esp_spi = esp_header->spi;
                                         check->host_seq = rte_be_to_cpu_32(esp_header->seq);
+                                        if(check->client_esp_spi !=0){
+                                            add_tunnel(check);
+                                        }
                                         legit_pkts++;
                                         tunnel_exists = true;
                                         
@@ -228,7 +242,14 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                             check->host_seq = rte_be_to_cpu_32(esp_header->seq);
                                             legit_pkts++;
                                             tunnel_exists = true;
-                                        }else{
+                                        }
+                                        else if(check->host_loaded){
+                                            check->host_seq = rte_be_to_cpu_32(esp_header->seq);
+                                            check->host_loaded = false;
+                                            legit_pkts++;
+                                            tunnel_exists = true;
+                                        }
+                                        else{
                                             char log[91] = {0};
                                             sprintf(log,"%s;INVALID_SEQ_NO;%s;%s;%d;%d\n",current_time
                                             , src_ip, dst_ip,tunnel_to_chk.seq,check->host_seq);
@@ -259,7 +280,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                 sprintf(log,"%s;UNAUTHORISED_ESP_PACKET;%s;%s;%x;%d\n",current_time
                                 ,src_ip, dst_ip,tunnel_to_chk.spi,tunnel_to_chk.seq);
                                 write_log(ipsec_log,log);
-                                // tampered_pkts++;    
+                                tampered_pkts++;
                             }
                         }
                     }
@@ -347,10 +368,10 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                 int bit2 = check->client_ip >> 8 & 0xFF;
                 int bit1 = check->client_ip & 0xFF;
                 printf("| Client: %u.%u.%u.%u\n",bit1,bit2,bit3,bit4);
-                bit4 = check->client_ip >> 24 & 0xFF;
-                bit3 = check->client_ip >> 16 & 0xFF;
-                bit2 = check->client_ip >> 8 & 0xFF;
-                bit1 = check->client_ip & 0xFF;
+                bit4 = check->host_ip >> 24 & 0xFF;
+                bit3 = check->host_ip >> 16 & 0xFF;
+                bit2 = check->host_ip >> 8 & 0xFF;
+                bit1 = check->host_ip & 0xFF;
                 printf("| Host: %u.%u.%u.%u\n",bit1,bit2,bit3,bit4);
             }
             printf("================================");
@@ -506,6 +527,7 @@ int main(int argc, char **argv){
         initArray(tunnels,0,object,false,sizeof(struct tunnel));
         pthread_t thread;
         pthread_create(&thread,NULL,timeout,NULL);
+        load_tunnel();
         lcore_main();
         rte_eal_cleanup();
     }

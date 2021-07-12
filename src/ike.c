@@ -107,9 +107,10 @@ int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hd
 
             new_tunnel.client_seq = 0;
             new_tunnel.host_seq = 0;
-            new_tunnel.algo = "";
             new_tunnel.timeout = 0;
             new_tunnel.auth = false;
+            new_tunnel.client_loaded = false;
+            new_tunnel.host_loaded = false;
             push(tunnels,&new_tunnel);
         };
     }
@@ -190,13 +191,6 @@ void analyse_SA(struct rte_mbuf *pkt,uint16_t offset,struct rte_isakmp_hdr *isak
             }
             else{
                 sprintf(log,"%s;Proposals proposed by %s: %s\n",current_time,src_addr,proposal);
-                for(int i = 1;i <= tunnels->size; i++){
-                    struct tunnel *tunnel = tunnels->array[i];
-                    if(check_ike_spi(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,ipv4_hdr->src_addr,ipv4_hdr->dst_addr,tunnel) == 1){
-                        tunnel->algo = proposal;
-                        break;
-                    }
-                }
             }
             write_log(ipsec_log,log);
             proposal = NULL;
@@ -483,6 +477,7 @@ void delete_tunnel(uint64_t initiator_spi,uint64_t responder_spi,int src_addr,in
     for(int i = 1;i <= tunnels->size; i++){
         struct tunnel *tunnel = tunnels->array[i];
         if(check_ike_spi(initiator_spi,responder_spi,src_addr,dst_addr,tunnel) == 1){
+            remove_tunnel(tunnel);
             removeIndex(tunnels,i);
             break;
         }
@@ -530,3 +525,82 @@ void get_ip_address_string(rte_be32_t ip_address,char *ip){
     int bit1 = ip_address & 0xFF;
     sprintf(ip,"%u.%u.%u.%u",bit1,bit2,bit3,bit4);
 }   
+
+void add_tunnel(struct tunnel* add){
+    char* bytes = malloc(serialize_size);
+    if(bytes){
+        memcpy(bytes,add,serialize_size);
+        char* tunnel = b64_encode(bytes,serialize_size);
+        FILE* fp = fopen(tunnel_log, "a+");
+        fprintf(fp,"%s\n",tunnel);
+        fclose(fp);
+    }
+    free(bytes);
+}
+
+void remove_tunnel(struct tunnel* remove){
+    char* bytes = malloc(serialize_size);
+    char* line;
+    long file_size;
+    size_t len = 0;
+    size_t size = 0;
+    size_t read = 0;
+    int offset = 0;
+    if(bytes){
+        memcpy(bytes,remove,serialize_size);
+        char* tunnel = b64_encode(bytes,serialize_size);
+        FILE* fp = fopen(tunnel_log, "r+");
+        fseek(fp,0, SEEK_END);
+        file_size = ftell(fp);
+        fseek(fp, 0L, SEEK_SET);
+        char* og_file = calloc(file_size,sizeof(char));
+        if(og_file){
+            fread(og_file,sizeof(char),file_size,fp);
+            fseek(fp, 0L, SEEK_SET);
+            while(read = getline(&line,&len,fp) != -1){
+                int line_len = strlen(line);
+                line[line_len-1] = NULL;
+                if(strcmp(line,tunnel) == 0){
+                    
+                    long move_size = file_size - offset - line_len;
+                    memmove(og_file + offset,og_file + offset + line_len,move_size);
+                    int newSize = file_size - line_len;
+                    fclose(fp);
+                    FILE *writefp = fopen(tunnel_log, "w+");
+                    fwrite(og_file,sizeof(char),newSize,writefp);
+                    fclose(writefp);
+                    break;
+                }
+                offset += read;
+            }
+        }
+        free(og_file);
+    }
+    free(bytes);
+}
+
+void load_tunnel(){
+    FILE* fp = fopen(tunnel_log, "r+");
+    char* line;
+    char* decoded;
+    size_t len = 0;
+    size_t read = 0;
+    if(fp != NULL){
+        while(read = getline(&line,&len,fp) != -1){
+            int line_len = strlen(line);
+            line[line_len-1] = NULL;
+            decoded = b64_decode(line,strlen(line));
+            if(decoded){
+                struct tunnel *tunnel = calloc(1,sizeof(struct tunnel));
+                if(tunnel){
+                    memcpy(tunnel,decoded,serialize_size);
+                    tunnel->client_loaded = true;
+                    tunnel->host_loaded = true;
+                    tunnel->auth = true;
+                    tunnel->dpd = false;
+                    push(tunnels,tunnel);
+                }
+            }
+        }
+    }
+}
