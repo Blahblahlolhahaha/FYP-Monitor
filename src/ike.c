@@ -115,7 +115,7 @@ int analyse_SA(struct rte_mbuf *pkt,uint16_t offset,struct rte_isakmp_hdr *isakm
                         }
                     }
                 }
-                write_log(ipsec_log,log);
+                write_log(ipsec_log,log,&non_ipsec_hash);
                 proposal = NULL;
                 free(proposal);
             }
@@ -189,7 +189,7 @@ int analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *isa
 
                             
                             snprintf(log,2048,"%s;Session ended btw %s and %s\n",current_time,src_addr,dst_addr);
-                            write_log(ipsec_log,log);
+                            write_log(ipsec_log,log,&non_ipsec_hash);
                             // printf("Session ended btw SPI: %lx, %lx\n", rte_be_to_cpu_64(isakmp_hdr->initiator_spi), rte_be_to_cpu_64(isakmp_hdr->responder_spi));
                             removeIndex(tunnels,i);
                         }
@@ -204,7 +204,7 @@ int analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *isa
                     //Either side ends connection, so delete tunnel
                     snprintf(log,2048,"%s;Session ended btw %s and %s\n",current_time,
                     src_addr,dst_addr);
-                    write_log(ipsec_log,log);
+                    write_log(ipsec_log,log,&non_ipsec_hash);
                     delete_tunnel(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,ipv4_hdr->src_addr,ipv4_hdr->dst_addr);
                 }
                 else if(payload_hdr->nxt_payload == AUTH && isakmp_hdr->exchange_type == IKE_AUTH){
@@ -212,7 +212,7 @@ int analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *isa
                     if(get_response_flag(isakmp_hdr) == 1){
                         snprintf(log,2048,"%s;IKE Authentication between %s and %s succeeded\n",current_time,
                         src_addr,dst_addr);
-                        write_log(ipsec_log,log);
+                        write_log(ipsec_log,log,&non_ipsec_hash);
                         tunnel->auth = true;
                     }
                 }
@@ -279,12 +279,12 @@ int analyse_N(struct rte_mbuf *pkt, uint16_t offset,struct rte_isakmp_hdr *isakm
                     
                     snprintf(log,2048,"%s;%s",current_time,
                     failed_msg);
-                    write_log(ipsec_log,log);
+                    write_log(ipsec_log,log,&non_ipsec_hash);
                 }
                 else if(special_error){
                     snprintf(log,2048,"%s;%s",current_time,
                     msg);
-                    write_log(ipsec_log,log);
+                    write_log(ipsec_log,log,&non_ipsec_hash);
                 }
             }
 
@@ -679,7 +679,7 @@ int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hd
                 char log[2048] = {0};
                 snprintf(log,2048,"%s;Session ended btw %s and %s\n",current_time,
                 src_addr,dst_addr);
-                write_log(ipsec_log,log);
+                write_log(ipsec_log,log,&non_ipsec_hash);
                 delete_tunnel(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,ipv4_hdr->src_addr,ipv4_hdr->dst_addr);
                 break;
             }
