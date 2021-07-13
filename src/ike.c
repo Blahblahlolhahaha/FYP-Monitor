@@ -6,7 +6,7 @@ char dst_addr[16];
 char current_time[21];
 
 int get_response_flag(struct rte_isakmp_hdr *hdr){
-    //if 1, this packet is used to respond
+    //if 1, this packet is used to respond else if request
     return (hdr->flags >> 5) & 1;
 }
 
@@ -16,22 +16,25 @@ int get_version_flag(struct rte_isakmp_hdr *hdr){
 }
 
 int get_initiator_flag(struct rte_isakmp_hdr *hdr){
-    //if 1, this packet is used to init
+    //if 1, sender is initiator else responder
     return (hdr->flags >> 3) & 1;
 }
 
 /// Gets Exchange type of isakmp packet
 /// Should only be used if logging the exchange type is needed
+/// @param hdr isakmp header of packet
 /// @return String containing Exchange type of packet
 char *get_exchange_type (struct rte_isakmp_hdr *hdr){
     int index  = hdr->exchange_type - 34;
     if(index > 0 && index - 34 < 4){
         return exchange_types[index];
     }
+    else return "";
 }
 
 /// Gets Payload Type from a isakmp header as a string
 /// Should only be used if logging the payload type is needed
+/// @param hdr isakmp header of packet
 /// @returns a string containing the payload type
 char *get_ike_payload_type(struct rte_isakmp_hdr *hdr){
     if(hdr->nxt_payload == NO){
@@ -50,6 +53,7 @@ char *get_ike_payload_type(struct rte_isakmp_hdr *hdr){
 
 /// Gets Payload Type from a isakmp payload header as a string
 /// Should only be used if logging the payload type is needed
+/// @param hdr isakmp header of packet
 /// @returns a string containing the payload type
 char *get_payload_nxt_payload(struct isakmp_payload_hdr *hdr){
     if(hdr->nxt_payload == NO){
@@ -79,9 +83,10 @@ void print_isakmp_headers_info(struct rte_isakmp_hdr *isakmp_hdr){
 /**
  * Analyses a Security Association payload
  * @param pkt : pointer to packet used
- * @param offset: offset to paylaod headers
+ * @param offset: offset to paylaod header
  * @param isakmp_hdr pointer to isakmp headers
  * @param ipv4_hdr pointer to ipv4 headers
+ * @returns 1 if there are no errors analyzing the packet, 0 if otherwise
  */
 int analyse_SA(struct rte_mbuf *pkt,uint16_t offset,struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr){
     int check = 1;
@@ -132,8 +137,10 @@ int analyse_SA(struct rte_mbuf *pkt,uint16_t offset,struct rte_isakmp_hdr *isakm
 /**
  * Analyses a Key Exchange payload
  * @param pkt : pointer to packet used
- * @param offset: offset to paylaod headers
+ * @param offset: offset to paylaod header
  * @param isakmp_hdr pointer to isakmp headers
+ * @param ipv4_hdr pointer to ipv4 headers
+ * @returns 1 if there are no errors analyzing the packet, 0 if otherwise
  */
 int analyse_KE(struct rte_mbuf *pkt,uint16_t offset,struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr){
     int check = 1;
@@ -153,8 +160,10 @@ int analyse_KE(struct rte_mbuf *pkt,uint16_t offset,struct rte_isakmp_hdr *isakm
 /**
  * Analyses a Authenticated and Encrypted payload. Note that whats inside cannot be analysed because it is encrypted
  * @param pkt : pointer to packet used
- * @param offset: offset to paylaod headers
+ * @param offset: offset to paylaod header
  * @param isakmp_hdr pointer to isakmp headers
+ * @param ipv4_hdr pointer to ipv4 headers
+ * @returns 1 if there are no errors analyzing the packet, 0 if otherwise
  */
 int analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr){
     if(offset + sizeof(struct isakmp_payload_hdr) <= rte_pktmbuf_data_len(pkt)){
@@ -228,8 +237,10 @@ int analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *isa
 /**
  * Analyses a Notify payload. If an error code is sent, should kill sesssion i think?
  * @param pkt : pointer to packet used
- * @param offset: offset to paylaod headers
+ * @param offset: offset to paylaod header
  * @param isakmp_hdr pointer to isakmp headers
+ * @param ipv4_hdr pointer to ipv4 headers
+ * @returns 1 if there are no errors analyzing the packet, 0 if otherwise
  */
 
 int analyse_N(struct rte_mbuf *pkt, uint16_t offset,struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr){
@@ -290,6 +301,14 @@ int analyse_N(struct rte_mbuf *pkt, uint16_t offset,struct rte_isakmp_hdr *isakm
     return check;
 }
 
+/**
+ * Analyses a Certificate/Certificate request payload
+ * @param pkt : pointer to packet used
+ * @param offset: offset to paylaod header
+ * @param isakmp_hdr pointer to isakmp headers
+ * @param ipv4_hdr pointer to ipv4 headers
+ * @returns 1 if there are no errors analyzing the packet, 0 if otherwise
+ */
 int analyse_CERT(struct rte_mbuf *pkt, uint16_t offset,struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr){
     int check = 1;
     if(offset + sizeof(struct isakmp_payload_hdr) + sizeof(int8_t) <= rte_pktmbuf_data_len(pkt)){
@@ -303,7 +322,7 @@ int analyse_CERT(struct rte_mbuf *pkt, uint16_t offset,struct rte_isakmp_hdr *is
                 uint8_t *encoding = rte_pktmbuf_read(pkt,offset+sizeof(struct isakmp_payload_hdr)+1,encoding_length,buf);
             }
             if(certificate->hdr->nxt_payload != NO){
-                analyse_isakmp_payload(pkt,isakmp_hdr,ipv4_hdr,offset + rte_be_to_cpu_16(certificate->hdr->length),certificate->hdr->nxt_payload);
+                check = analyse_isakmp_payload(pkt,isakmp_hdr,ipv4_hdr,offset + rte_be_to_cpu_16(certificate->hdr->length),certificate->hdr->nxt_payload);
             }
         }
     }
@@ -316,8 +335,10 @@ int analyse_CERT(struct rte_mbuf *pkt, uint16_t offset,struct rte_isakmp_hdr *is
 /**
  * Get proposals and transformations found in a SA payload
  * @param pkt pointer to packet being analyzed
- * @param proposals string array containing proposals
  * @param offset offset to SA hdr
+ * @param proposals string array containing proposals
+ * @param check int to check whether if packet is malformed
+ * @returns number of proposals found
  */
 int get_proposals(struct rte_mbuf *pkt, uint16_t offset,char***proposals,int *check){
     struct proposal_struc *proposal;
@@ -367,11 +388,13 @@ int get_proposals(struct rte_mbuf *pkt, uint16_t offset,char***proposals,int *ch
 }
 
 /** 
- * Get Transformations found in a proposal and place them in an array:
+ * Get Transformations found in a proposal and converts them into a string to log:
  * @param pkt pointer to packet to be analyzed
  * @param transformations pointer to Array contained in payload_struc object
  * @param offset Offset to transformation
  * @param size Number of transformations
+ * @param buf string used to store transformations found
+ * @param check int to check whether if packet is malformed
  */
 void get_transformations(struct rte_mbuf *pkt, int offset,int size,char *buf,int* check){
     struct transform_struc *transform = malloc(2 * __SIZEOF_POINTER__);
@@ -412,11 +435,13 @@ void get_transformations(struct rte_mbuf *pkt, int offset,int size,char *buf,int
                     case ESN:
                         break;
                     default:
-                        printf("Invalid Transform Type!");
+                        printf("Invalid Transform Type!\n");
+                        *check = 0;
                         break;
                 }
                 if(actual > size){
-                    printf("Too many transformations!");
+                    printf("Too many transformations!\n");
+                    *check = 0;
                 }
                 if(*check == 0){
                     break;
@@ -434,10 +459,6 @@ void get_transformations(struct rte_mbuf *pkt, int offset,int size,char *buf,int
 }
 
 /** deletes tunnel from authenticated tunnels once session ends
- * 
- * @param isakmp_hdr isakmp header containing initiator and responder spis to delete
- * @param ipv4_hdr IPV4 header containing respective ip addresses of client and host to remove
- * 
  */
 void delete_tunnel(uint64_t initiator_spi,uint64_t responder_spi,int src_addr,int dst_addr){
     for(int i = 1;i <= tunnels->size; i++){
@@ -451,10 +472,7 @@ void delete_tunnel(uint64_t initiator_spi,uint64_t responder_spi,int src_addr,in
 }
 
 /** 
- * checks whether if ike information in tunnel matches isakmp header and ip address
- * @param isakmp_hdr isakmp header containing initiator and responder spis to check
- * @param ipv4_hdr IPV4 header containing respective ip addresses of client and host to check
- * @param tunnel tunnel to check
+ * checks whether if ike information in tunnel matches provided spis and ip address
  * @returns 1 if information matches, 0 if otherwise
  */
 int check_ike_spi(uint64_t initiator_spi,uint64_t responder_spi,int src_addr,int dst_addr,struct tunnel* tunnel){
