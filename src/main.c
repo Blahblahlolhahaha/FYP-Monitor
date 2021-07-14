@@ -382,6 +382,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                     get_ipv6_hdr_string(ipv6_hdr,src_ip,dst_ip);
                     snprintf(log,2048,"%s;IPV6 Packet: %s to %s\n",current_time,src_ip,dst_ip);
                     write_log(main_log,log);
+                    non_ipsec ++;
                 }
                 else{
                     malformed = true;
