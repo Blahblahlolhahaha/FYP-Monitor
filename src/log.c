@@ -1,6 +1,7 @@
 #include "../include/log.h"
 
-void write_log(char* file_name,char log[]){
+void write_log(char* file_name,char log[],int priority){
+    sd_journal_print(priority,"%s",log);
     FILE* fp = fopen(file_name, "a+");
     fprintf(fp,"%s",log);
     fclose(fp);

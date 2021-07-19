@@ -2,7 +2,7 @@
 # Copyright(c) 2010-2015 Intel Corporation
 
 # binary name
-APP = rxtx_callbacks
+APP = snart
 
 # all source are stored in SRCS-y
 DIR := src/
@@ -30,8 +30,8 @@ PKGCONF ?= pkg-config
 
 PC_FILE := $(shell $(PKGCONF) --path libdpdk 2>/dev/null)
 CFLAGS += -O3 $(shell $(PKGCONF) --cflags libdpdk --cflags --libs gmodule-2.0)
-LDFLAGS_SHARED = $(shell $(PKGCONF) --libs libdpdk)
-LDFLAGS_STATIC = $(shell $(PKGCONF) --static --libs libdpdk)
+LDFLAGS_SHARED = $(shell $(PKGCONF) --libs libdpdk --libs libsystemd)
+LDFLAGS_STATIC = $(shell $(PKGCONF) --static --libs libdpdk --libs libsystemd)
 
 ifeq ($(MAKECMDGOALS),static)
 # check for broken pkg-config
