@@ -25,6 +25,11 @@ char current_time[21];
 static const int ESP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr);
 static const int ISAKMP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr) + 4;
 static const int first_payload_hdr_offset = ESP_OFFSET + 28;
+
+static const int ESP_OFFSET_6 = sizeof(struct rte_ipv6_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr);
+static const int ISAKMP_OFFSET_6 = sizeof(struct rte_ipv6_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr) + 4;
+static const int first_payload_hdr_offset_6 = ESP_OFFSET_6 + 28;
+
 static const int serialize_size = 32;
 struct Array *tunnels;
 

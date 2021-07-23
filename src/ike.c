@@ -586,7 +586,7 @@ void get_ipv6_hdr_string(struct rte_ipv6_hdr *hdr,char *src_ip, char *dst_ip)
 {
     uint8_t *addr;
     addr = hdr->src_addr;
-    snprintf(src_ip,45,"%4hx:%4hx:%4hx:%4hx:%4hx:%4hx:%4hx:%4hx \t",
+    snprintf(src_ip,45,"%4hx:%4hx:%4hx:%4hx:%4hx:%4hx:%4hx:%4hx",
            (uint16_t)((addr[0] << 8) | addr[1]),
            (uint16_t)((addr[2] << 8) | addr[3]),
            (uint16_t)((addr[4] << 8) | addr[5]),
@@ -670,3 +670,5 @@ int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hd
     return check;
 
 }
+
+

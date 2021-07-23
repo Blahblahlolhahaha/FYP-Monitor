@@ -48,6 +48,8 @@ uint32_t tolerance = 15;
 static const int IPV4_OFFSET = sizeof(struct rte_ether_hdr);
 static const int UDP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr);
 
+static const int UDP_OFFSET_6 = sizeof(struct rte_ipv6_hdr) + sizeof(struct rte_ether_hdr);
+
 static int rte_mbuf_dynfield_offset = -1;
 static uint16_t count = 0;
 int total_processed = 0;
@@ -407,8 +409,59 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                 if(IPV4_OFFSET + sizeof(struct rte_ipv6_hdr) < x){
                     struct rte_ipv6_hdr *ipv6_hdr =rte_pktmbuf_mtod_offset(pkt,struct rte_ipv6_hdr*,IPV4_OFFSET);
                     get_ipv6_hdr_string(ipv6_hdr,src_addr,dst_addr);
-                    snprintf(log,2048,"%s;IPV6 Packet: %s to %s\n",current_time,src_addr,dst_addr);
-                    write_log(main_log,log,LOG_WARNING);
+                    if(ipv6_hdr->proto == IPPROTO_TCP){
+                        if(UDP_OFFSET + sizeof(struct rte_tcp_hdr) < x){
+                            //IPv6 TCP packet
+                            struct rte_tcp_hdr* tcp_hdr;
+                            tcp_hdr =  rte_pktmbuf_mtod_offset(pkt,struct rte_tcp_hdr*,UDP_OFFSET_6);
+                            int src_port = rte_be_to_cpu_16(tcp_hdr->src_port);
+                            int dst_port = rte_be_to_cpu_16(tcp_hdr->dst_port);
+                            
+                            snprintf(log,2048,"%s;TCP;%s:%d->%s:%d\n",current_time
+                            ,src_addr,src_port,dst_addr,dst_port);
+                            
+                            write_log(main_log,log,LOG_WARNING);
+                            non_ipsec++;
+                        }
+                    }
+                     if(ipv6_hdr->proto == IPPROTO_UDP){
+                        if(UDP_OFFSET + sizeof(struct rte_tcp_hdr) < x){
+                            //IPv6 TCP packet
+                            struct rte_udp_hdr* udp_hdr;
+                            udp_hdr =  rte_pktmbuf_mtod_offset(pkt,struct rte_udp_hdr*,UDP_OFFSET_6);
+                            int src_port = rte_be_to_cpu_16(udp_hdr->src_port);
+                            int dst_port = rte_be_to_cpu_16(udp_hdr->dst_port);
+                            
+                            snprintf(log,2048,"%s;UDP;%s:%d->%s:%d\n",current_time
+                            ,src_addr,src_port,dst_addr,dst_port);
+                            
+                            write_log(main_log,log,LOG_WARNING);
+                            non_ipsec++;
+                        }
+                    }
+                    else if(ipv4_hdr->next_proto_id == IPPROTO_ICMP){
+                        //ICMP packet
+                        if(UDP_OFFSET + sizeof(struct rte_icmp_hdr) < x){
+                            struct rte_icmp_hdr* icmp_hdr;
+                            icmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_icmp_hdr*,UDP_OFFSET_6);
+                            if(icmp_hdr->icmp_type == 0){
+                                snprintf(log,2048,"%s;Ping response %s to %s\n",current_time,
+                                src_addr,dst_addr);
+                            }
+                            else if(icmp_hdr->icmp_type == 8){
+                                snprintf(log,2048,"%s;Ping request: %s to %s\n",current_time,src_addr,dst_addr);
+                            }
+                            else{
+                                snprintf(log,2048,"%s;ICMP Packet: %s to %s\n",current_time,src_addr,dst_addr);
+                            }
+                            write_log(main_log,log,LOG_WARNING);
+                            non_ipsec++;
+                        }
+                        else{
+                            malformed = true;
+                        }
+                        
+                    }
                     non_ipsec ++;
                 }
                 else{
