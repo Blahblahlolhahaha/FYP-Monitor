@@ -17,6 +17,11 @@
 #include "log.h"
 #include "../deps/b64/b64.h"
 
+int src_addr_int;
+int dst_addr_int;
+char src_addr[45];
+char dst_addr[45];
+char current_time[21];
 static const int ESP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr);
 static const int ISAKMP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr) + 4;
 static const int first_payload_hdr_offset = ESP_OFFSET + 28;
@@ -337,7 +342,7 @@ char *get_payload_nxt_payload(struct isakmp_payload_hdr *hdr);
 
 void print_isakmp_headers_info(struct rte_isakmp_hdr *isakmp_hdr);
 
-int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hdr,struct rte_ipv4_hdr *ipv4_hdr,uint16_t offset,int nxt_payload);
+int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hdr,uint16_t offset,int nxt_payload);
 
 void get_ip_address_string(rte_be32_t ip_address,char *ip);
 
