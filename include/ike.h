@@ -19,8 +19,8 @@
 
 int src_addr_int;
 int dst_addr_int;
-char src_addr[45];
-char dst_addr[45];
+char src_addr[128];
+char dst_addr[128];
 char current_time[21];
 static const int ESP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr);
 static const int ISAKMP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr) + 4;
