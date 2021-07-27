@@ -438,7 +438,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                             write_log(main_log,log,LOG_WARNING);
                         }
                     }
-                    else if(ipv6_hdr->proto == IPPROTO_ICMP){
+                    else if(ipv6_hdr->proto == IPPROTO_ICMPV6){
                         //ICMP packet
                         if(UDP_OFFSET + sizeof(struct rte_icmp_hdr) < x){
                             struct rte_icmp_hdr* icmp_hdr;
