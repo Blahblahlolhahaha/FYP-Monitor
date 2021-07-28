@@ -582,29 +582,27 @@ void load_tunnel(){
  * @param src_ip char pointer to store the converted source ip string
  * @param dst_ip char pointer to store the converted destination ip string
  */
-void get_ipv6_hdr_string(struct rte_ipv6_hdr *hdr,char *src_ip, char *dst_ip)
+void get_ipv6_hdr_string(uint8_t* addr,char *ip)
 {
-    uint8_t *addr;
-    addr = hdr->src_addr;
-    snprintf(src_ip,45,"%4hx:%4hx:%4hx:%4hx:%4hx:%4hx:%4hx:%4hx",
-           (uint16_t)((addr[0] << 8) | addr[1]),
-           (uint16_t)((addr[2] << 8) | addr[3]),
-           (uint16_t)((addr[4] << 8) | addr[5]),
-           (uint16_t)((addr[6] << 8) | addr[7]),
-           (uint16_t)((addr[8] << 8) | addr[9]),
-           (uint16_t)((addr[10] << 8) | addr[11]),
-           (uint16_t)((addr[12] << 8) | addr[13]),
-           (uint16_t)((addr[14] << 8) | addr[15]));
-    addr = hdr->dst_addr;
-    snprintf(dst_ip,45,"%4hx:%4hx:%4hx:%4hx:%4hx:%4hx:%4hx:%4hx",
-           (uint16_t)((addr[0] << 8) | addr[1]),
-           (uint16_t)((addr[2] << 8) | addr[3]),
-           (uint16_t)((addr[4] << 8) | addr[5]),
-           (uint16_t)((addr[6] << 8) | addr[7]),
-           (uint16_t)((addr[8] << 8) | addr[9]),
-           (uint16_t)((addr[10] << 8) | addr[11]),
-           (uint16_t)((addr[12] << 8) | addr[13]),
-           (uint16_t)((addr[14] << 8) | addr[15]));
+    for(int i = 0;i<16;i+=2){
+        uint16_t x = (addr[i] << 8) | addr[i+1];
+        if(x == 0){
+            if(i != 0){
+                uint16_t y = ((addr[i-2] << 8) | addr[i-1]);
+                if(y != 0){
+                    snprintf(ip + strlen(ip),2,":");
+                }
+                continue;
+            }
+            snprintf(ip + strlen(ip),2,":");
+        }
+        else{
+            snprintf(ip + strlen(ip),6,"%x",x);
+            if(!(i == 14)){
+                sprintf(ip + strlen(ip),":");
+            }
+        }
+    }
 }
 
 /**

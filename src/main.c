@@ -72,7 +72,7 @@ void* count_packets(){
 void timeout(){
 
     while(true){
-        char *current_time[21] = {0};
+        current_time[0] = 0;
         get_current_time(current_time);
         for(int i = 1;i<=tunnels->size;i++){
             struct tunnel *tunnel = (struct tunnel *)tunnels->array[i];
@@ -117,6 +117,8 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
         struct rte_ipv4_hdr *ipv4_hdr;
         struct rte_ether_hdr *ether_hdr;
         char log[2048] = {0};
+        src_addr[0] = 0;
+        dst_addr[0] = 0;
         bool malformed = false;
         if(sizeof(ether_hdr) < x){
             ether_hdr = rte_pktmbuf_mtod(pkt,struct rte_ether_hdr*);
@@ -408,7 +410,8 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
             else if(rte_be_to_cpu_16(ether_hdr->ether_type) == RTE_ETHER_TYPE_IPV6){
                 if(IPV4_OFFSET + sizeof(struct rte_ipv6_hdr) < x){
                     struct rte_ipv6_hdr *ipv6_hdr =rte_pktmbuf_mtod_offset(pkt,struct rte_ipv6_hdr*,IPV4_OFFSET);
-                    get_ipv6_hdr_string(ipv6_hdr,src_addr,dst_addr);
+                    get_ipv6_hdr_string(ipv6_hdr->src_addr,src_addr);
+                    get_ipv6_hdr_string(ipv6_hdr->dst_addr,dst_addr);
                     if(ipv6_hdr->proto == IPPROTO_TCP){
                         if(UDP_OFFSET_6 + sizeof(struct rte_tcp_hdr) < x){
                             //IPv6 TCP packet

@@ -21,7 +21,7 @@ int src_addr_int;
 int dst_addr_int;
 char src_addr[128];
 char dst_addr[128];
-char current_time[21];
+char current_time[24];
 static const int ESP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr);
 static const int ISAKMP_OFFSET = sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_ether_hdr) + sizeof(struct rte_udp_hdr) + 4;
 static const int first_payload_hdr_offset = ESP_OFFSET + 28;
@@ -351,7 +351,7 @@ int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hd
 
 void get_ip_address_string(rte_be32_t ip_address,char *ip);
 
-void get_ipv6_hdr_string(struct rte_ipv6_hdr *hdr,char *src_ip, char *dst_ip);
+void get_ipv6_hdr_string(uint8_t* addr,char *ip);
 
 void delete_tunnel(uint64_t initiator_spi,uint64_t responder_spi,int src_addr,int dst_addr);
 

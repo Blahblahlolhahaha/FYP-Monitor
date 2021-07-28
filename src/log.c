@@ -14,7 +14,9 @@ void get_current_time(char* buf){
 
     time ( &rawtime );
     timeinfo = localtime ( &rawtime );
-    sprintf(buf, "%d/%d/%d %d:%d:%d",timeinfo->tm_mday, timeinfo->tm_mon + 1, timeinfo->tm_year + 1900, timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
+
+    sprintf(buf, "%02d/%02d/%04d %02d:%02d:%02d",timeinfo->tm_mday, timeinfo->tm_mon + 1, timeinfo->tm_year + 1900, timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
+
 }
 
 int find(char* string, char* substr,int offset){
