@@ -1,0 +1,52 @@
+\hypertarget{log_8c}{}\doxysection{src/log.c File Reference}
+\label{log_8c}\index{src/log.c@{src/log.c}}
+{\ttfamily \#include \char`\"{}../include/log.\+h\char`\"{}}\newline
+Include dependency graph for log.\+c\+:
+% FIG 0
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{log_8c_abd14f59eb13717f28241e7b4295dff25}{write\+\_\+log}} (char $\ast$file\+\_\+name, char log\mbox{[}$\,$\mbox{]}, int priority)
+\item 
+void \mbox{\hyperlink{log_8c_a00b8e59b405ebd43ee7180357a4bf7e1}{get\+\_\+current\+\_\+time}} (char $\ast$buf)
+\item 
+int \mbox{\hyperlink{log_8c_a3ee1333ba9b94d45d10ba51b3a54e8be}{find}} (char $\ast$string, char $\ast$substr, int offset)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{log_8c_a3ee1333ba9b94d45d10ba51b3a54e8be}\label{log_8c_a3ee1333ba9b94d45d10ba51b3a54e8be}} 
+\index{log.c@{log.c}!find@{find}}
+\index{find@{find}!log.c@{log.c}}
+\doxysubsubsection{\texorpdfstring{find()}{find()}}
+{\footnotesize\ttfamily int find (\begin{DoxyParamCaption}\item[{char $\ast$}]{string,  }\item[{char $\ast$}]{substr,  }\item[{int}]{offset }\end{DoxyParamCaption})}
+
+Gets position of a substring starting from a specified offset 
+\begin{DoxyParams}{Parameters}
+{\em string} & string to search for the substring \\
+\hline
+{\em substr} & substring to search for \\
+\hline
+{\em offset} & offset to start searching \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+position of the substring. If not substring is not found, the function returns -\/1 
+\end{DoxyReturn}
+\mbox{\Hypertarget{log_8c_a00b8e59b405ebd43ee7180357a4bf7e1}\label{log_8c_a00b8e59b405ebd43ee7180357a4bf7e1}} 
+\index{log.c@{log.c}!get\_current\_time@{get\_current\_time}}
+\index{get\_current\_time@{get\_current\_time}!log.c@{log.c}}
+\doxysubsubsection{\texorpdfstring{get\_current\_time()}{get\_current\_time()}}
+{\footnotesize\ttfamily void get\+\_\+current\+\_\+time (\begin{DoxyParamCaption}\item[{char $\ast$}]{buf }\end{DoxyParamCaption})}
+
+Gets current time in the format dd/mm/yyyy hh\+:\+MM\+:ss format 
+\begin{DoxyParams}{Parameters}
+{\em buf} & string to store the formatted string \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{log_8c_abd14f59eb13717f28241e7b4295dff25}\label{log_8c_abd14f59eb13717f28241e7b4295dff25}} 
+\index{log.c@{log.c}!write\_log@{write\_log}}
+\index{write\_log@{write\_log}!log.c@{log.c}}
+\doxysubsubsection{\texorpdfstring{write\_log()}{write\_log()}}
+{\footnotesize\ttfamily void write\+\_\+log (\begin{DoxyParamCaption}\item[{char $\ast$}]{file\+\_\+name,  }\item[{char}]{log\mbox{[}$\,$\mbox{]},  }\item[{int}]{priority }\end{DoxyParamCaption})}
+

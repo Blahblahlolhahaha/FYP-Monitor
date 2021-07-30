@@ -1,0 +1,137 @@
+\hypertarget{structtunnel}{}\doxysection{tunnel Struct Reference}
+\label{structtunnel}\index{tunnel@{tunnel}}
+
+
+Container to store a tunnel between initiator and responder.  
+
+
+
+
+{\ttfamily \#include $<$ike.\+h$>$}
+
+\doxysubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+uint64\+\_\+t \mbox{\hyperlink{structtunnel_ac0c8425a958a51f592c44c4e15311738}{initiator\+\_\+spi}}
+\item 
+uint64\+\_\+t \mbox{\hyperlink{structtunnel_a978f4884e25e04029b9ff6e4986fa0a1}{responder\+\_\+spi}}
+\item 
+int \mbox{\hyperlink{structtunnel_ae6d93126a46400c59cf5cf6080c9bc93}{client\+\_\+ip}}
+\item 
+int \mbox{\hyperlink{structtunnel_acbb4ac8253cbe5ee5a2151c64acf34f5}{host\+\_\+ip}}
+\item 
+uint32\+\_\+t \mbox{\hyperlink{structtunnel_a31faa15f1d6e542c1611e15a4fd80dfc}{client\+\_\+spi}}
+\item 
+uint32\+\_\+t \mbox{\hyperlink{structtunnel_a4f75575201571e61030a8671f50e1cb7}{host\+\_\+spi}}
+\item 
+uint32\+\_\+t \mbox{\hyperlink{structtunnel_ae86bc6022abf13b13d73b4d8b65be972}{client\+\_\+seq}}
+\item 
+uint32\+\_\+t \mbox{\hyperlink{structtunnel_af1f162f1b140b095757b549a44ce0344}{host\+\_\+seq}}
+\item 
+bool \mbox{\hyperlink{structtunnel_a34345d7f61bfb5f0fd9aefb9569fe19b}{dpd}}
+\item 
+bool \mbox{\hyperlink{structtunnel_a74471bf945185f25b1fcce4fef1718d8}{auth}}
+\item 
+bool \mbox{\hyperlink{structtunnel_a6985fe6e89db53e91fba34bae5170b63}{client\+\_\+loaded}}
+\item 
+bool \mbox{\hyperlink{structtunnel_a1bb1379507c95fb74f9118167b64c936}{host\+\_\+loaded}}
+\item 
+int \mbox{\hyperlink{structtunnel_a20f8b421467f62ccc77cbdce1f4e8663}{timeout}}
+\item 
+int \mbox{\hyperlink{structtunnel_a37f91b56fd94b48bad21474291f6ad2f}{dpd\+\_\+count}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Container to store a tunnel between initiator and responder. 
+
+\doxysubsection{Field Documentation}
+\mbox{\Hypertarget{structtunnel_a74471bf945185f25b1fcce4fef1718d8}\label{structtunnel_a74471bf945185f25b1fcce4fef1718d8}} 
+\index{tunnel@{tunnel}!auth@{auth}}
+\index{auth@{auth}!tunnel@{tunnel}}
+\doxysubsubsection{\texorpdfstring{auth}{auth}}
+{\footnotesize\ttfamily bool tunnel\+::auth}
+
+auth flag \mbox{\Hypertarget{structtunnel_ae6d93126a46400c59cf5cf6080c9bc93}\label{structtunnel_ae6d93126a46400c59cf5cf6080c9bc93}} 
+\index{tunnel@{tunnel}!client\_ip@{client\_ip}}
+\index{client\_ip@{client\_ip}!tunnel@{tunnel}}
+\doxysubsubsection{\texorpdfstring{client\_ip}{client\_ip}}
+{\footnotesize\ttfamily int tunnel\+::client\+\_\+ip}
+
+client ip address \mbox{\Hypertarget{structtunnel_a6985fe6e89db53e91fba34bae5170b63}\label{structtunnel_a6985fe6e89db53e91fba34bae5170b63}} 
+\index{tunnel@{tunnel}!client\_loaded@{client\_loaded}}
+\index{client\_loaded@{client\_loaded}!tunnel@{tunnel}}
+\doxysubsubsection{\texorpdfstring{client\_loaded}{client\_loaded}}
+{\footnotesize\ttfamily bool tunnel\+::client\+\_\+loaded}
+
+client flag to indicate tunnel was loaded from file \mbox{\Hypertarget{structtunnel_ae86bc6022abf13b13d73b4d8b65be972}\label{structtunnel_ae86bc6022abf13b13d73b4d8b65be972}} 
+\index{tunnel@{tunnel}!client\_seq@{client\_seq}}
+\index{client\_seq@{client\_seq}!tunnel@{tunnel}}
+\doxysubsubsection{\texorpdfstring{client\_seq}{client\_seq}}
+{\footnotesize\ttfamily uint32\+\_\+t tunnel\+::client\+\_\+seq}
+
+client esp seq \mbox{\Hypertarget{structtunnel_a31faa15f1d6e542c1611e15a4fd80dfc}\label{structtunnel_a31faa15f1d6e542c1611e15a4fd80dfc}} 
+\index{tunnel@{tunnel}!client\_spi@{client\_spi}}
+\index{client\_spi@{client\_spi}!tunnel@{tunnel}}
+\doxysubsubsection{\texorpdfstring{client\_spi}{client\_spi}}
+{\footnotesize\ttfamily uint32\+\_\+t tunnel\+::client\+\_\+spi}
+
+client esp spi \mbox{\Hypertarget{structtunnel_a34345d7f61bfb5f0fd9aefb9569fe19b}\label{structtunnel_a34345d7f61bfb5f0fd9aefb9569fe19b}} 
+\index{tunnel@{tunnel}!dpd@{dpd}}
+\index{dpd@{dpd}!tunnel@{tunnel}}
+\doxysubsubsection{\texorpdfstring{dpd}{dpd}}
+{\footnotesize\ttfamily bool tunnel\+::dpd}
+
+dead peer detection flag \mbox{\Hypertarget{structtunnel_a37f91b56fd94b48bad21474291f6ad2f}\label{structtunnel_a37f91b56fd94b48bad21474291f6ad2f}} 
+\index{tunnel@{tunnel}!dpd\_count@{dpd\_count}}
+\index{dpd\_count@{dpd\_count}!tunnel@{tunnel}}
+\doxysubsubsection{\texorpdfstring{dpd\_count}{dpd\_count}}
+{\footnotesize\ttfamily int tunnel\+::dpd\+\_\+count}
+
+if count == 6, peer is deado \mbox{\Hypertarget{structtunnel_acbb4ac8253cbe5ee5a2151c64acf34f5}\label{structtunnel_acbb4ac8253cbe5ee5a2151c64acf34f5}} 
+\index{tunnel@{tunnel}!host\_ip@{host\_ip}}
+\index{host\_ip@{host\_ip}!tunnel@{tunnel}}
+\doxysubsubsection{\texorpdfstring{host\_ip}{host\_ip}}
+{\footnotesize\ttfamily int tunnel\+::host\+\_\+ip}
+
+host ip address \mbox{\Hypertarget{structtunnel_a1bb1379507c95fb74f9118167b64c936}\label{structtunnel_a1bb1379507c95fb74f9118167b64c936}} 
+\index{tunnel@{tunnel}!host\_loaded@{host\_loaded}}
+\index{host\_loaded@{host\_loaded}!tunnel@{tunnel}}
+\doxysubsubsection{\texorpdfstring{host\_loaded}{host\_loaded}}
+{\footnotesize\ttfamily bool tunnel\+::host\+\_\+loaded}
+
+host flag to indicate tunnel was loaded from file \mbox{\Hypertarget{structtunnel_af1f162f1b140b095757b549a44ce0344}\label{structtunnel_af1f162f1b140b095757b549a44ce0344}} 
+\index{tunnel@{tunnel}!host\_seq@{host\_seq}}
+\index{host\_seq@{host\_seq}!tunnel@{tunnel}}
+\doxysubsubsection{\texorpdfstring{host\_seq}{host\_seq}}
+{\footnotesize\ttfamily uint32\+\_\+t tunnel\+::host\+\_\+seq}
+
+host esp seq \mbox{\Hypertarget{structtunnel_a4f75575201571e61030a8671f50e1cb7}\label{structtunnel_a4f75575201571e61030a8671f50e1cb7}} 
+\index{tunnel@{tunnel}!host\_spi@{host\_spi}}
+\index{host\_spi@{host\_spi}!tunnel@{tunnel}}
+\doxysubsubsection{\texorpdfstring{host\_spi}{host\_spi}}
+{\footnotesize\ttfamily uint32\+\_\+t tunnel\+::host\+\_\+spi}
+
+host esp spi \mbox{\Hypertarget{structtunnel_ac0c8425a958a51f592c44c4e15311738}\label{structtunnel_ac0c8425a958a51f592c44c4e15311738}} 
+\index{tunnel@{tunnel}!initiator\_spi@{initiator\_spi}}
+\index{initiator\_spi@{initiator\_spi}!tunnel@{tunnel}}
+\doxysubsubsection{\texorpdfstring{initiator\_spi}{initiator\_spi}}
+{\footnotesize\ttfamily uint64\+\_\+t tunnel\+::initiator\+\_\+spi}
+
+initiator spi \mbox{\Hypertarget{structtunnel_a978f4884e25e04029b9ff6e4986fa0a1}\label{structtunnel_a978f4884e25e04029b9ff6e4986fa0a1}} 
+\index{tunnel@{tunnel}!responder\_spi@{responder\_spi}}
+\index{responder\_spi@{responder\_spi}!tunnel@{tunnel}}
+\doxysubsubsection{\texorpdfstring{responder\_spi}{responder\_spi}}
+{\footnotesize\ttfamily uint64\+\_\+t tunnel\+::responder\+\_\+spi}
+
+responder spi \mbox{\Hypertarget{structtunnel_a20f8b421467f62ccc77cbdce1f4e8663}\label{structtunnel_a20f8b421467f62ccc77cbdce1f4e8663}} 
+\index{tunnel@{tunnel}!timeout@{timeout}}
+\index{timeout@{timeout}!tunnel@{tunnel}}
+\doxysubsubsection{\texorpdfstring{timeout}{timeout}}
+{\footnotesize\ttfamily int tunnel\+::timeout}
+
+timeout counter 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+include/\mbox{\hyperlink{ike_8h}{ike.\+h}}\end{DoxyCompactItemize}

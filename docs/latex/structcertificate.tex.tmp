@@ -1,0 +1,23 @@
+\hypertarget{structcertificate}{}\doxysection{certificate Struct Reference}
+\label{structcertificate}\index{certificate@{certificate}}
+
+
+Collaboration diagram for certificate\+:
+% FIG 0
+\doxysubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{structcertificate_ac1226196562032b3884261e29efa15b7}\label{structcertificate_ac1226196562032b3884261e29efa15b7}} 
+struct \mbox{\hyperlink{structisakmp__payload__hdr}{isakmp\+\_\+payload\+\_\+hdr}} $\ast$ {\bfseries hdr}
+\item 
+\mbox{\Hypertarget{structcertificate_a0149b3c2e369fd37f4009df6542f3618}\label{structcertificate_a0149b3c2e369fd37f4009df6542f3618}} 
+int8\+\_\+t $\ast$ {\bfseries type}
+\item 
+\mbox{\Hypertarget{structcertificate_a3764f0c5d1f61236f7695f32ff9c1a16}\label{structcertificate_a3764f0c5d1f61236f7695f32ff9c1a16}} 
+void $\ast$ {\bfseries encoding}
+\end{DoxyCompactItemize}
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+include/ike.\+h\end{DoxyCompactItemize}

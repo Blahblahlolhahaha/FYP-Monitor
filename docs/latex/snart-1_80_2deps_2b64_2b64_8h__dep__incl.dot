@@ -1,0 +1,24 @@
+digraph "snart-1.0/deps/b64/b64.h"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="snart-1.0/deps/b64\l/b64.h",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node2 [label="snart-1.0/deps/b64\l/buffer.c",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$snart-1_80_2deps_2b64_2buffer_8c.html",tooltip=" "];
+  Node1 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node3 [label="snart-1.0/deps/b64\l/decode.c",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$snart-1_80_2deps_2b64_2decode_8c.html",tooltip=" "];
+  Node1 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node4 [label="snart-1.0/deps/b64\l/encode.c",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$snart-1_80_2deps_2b64_2encode_8c.html",tooltip=" "];
+  Node1 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node5 [label="snart-1.0/include/log.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$snart-1_80_2include_2log_8h.html",tooltip=" "];
+  Node5 -> Node6 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node6 [label="snart-1.0/include/ike.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$snart-1_80_2include_2ike_8h.html",tooltip=" "];
+  Node6 -> Node7 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node7 [label="snart-1.0/src/ike.c",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$snart-1_80_2src_2ike_8c.html",tooltip=" "];
+  Node6 -> Node8 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node8 [label="snart-1.0/src/main.c",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$snart-1_80_2src_2main_8c.html",tooltip=" "];
+  Node5 -> Node9 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node9 [label="snart-1.0/src/log.c",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$snart-1_80_2src_2log_8c.html",tooltip=" "];
+  Node1 -> Node6 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+}

@@ -1,0 +1,87 @@
+\hypertarget{src_2array_8c}{}\doxysection{src/array.c File Reference}
+\label{src_2array_8c}\index{src/array.c@{src/array.c}}
+{\ttfamily \#include \char`\"{}../include/array.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}assert.\+h\char`\"{}}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for array.\+c\+:
+% FIG 0
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{src_2array_8c_ae4d4a74e4195ac6c32ca3825ac6ff903}{init\+Array}} (struct \mbox{\hyperlink{structArray}{Array}} $\ast$array, size\+\_\+t init\+Size, void $\ast$$\ast$objects, bool string, \+\_\+\+\_\+uint32\+\_\+t size)
+\item 
+void \mbox{\hyperlink{src_2array_8c_a4c78e9c9f5a12b656dfaa85382b8977a}{push}} (struct \mbox{\hyperlink{structArray}{Array}} $\ast$array, void $\ast$\mbox{\hyperlink{src_2main_8c_aae1d012f3235c240c883ec0b06b8b92a}{object}})
+\item 
+void \mbox{\hyperlink{src_2array_8c_a343d30f25253742392451002c490eda5}{push\+Objects}} (struct \mbox{\hyperlink{structArray}{Array}} $\ast$array, void $\ast$$\ast$objects)
+\item 
+void \mbox{\hyperlink{src_2array_8c_a24c28f63114c29130565eccb3f9f6ff2}{remove\+Index}} (struct \mbox{\hyperlink{structArray}{Array}} $\ast$array, int index)
+\item 
+void \mbox{\hyperlink{src_2array_8c_acd5d38dd841e3c5d7ad4939403012073}{clear\+Array}} (struct \mbox{\hyperlink{structArray}{Array}} $\ast$array)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{src_2array_8c_acd5d38dd841e3c5d7ad4939403012073}\label{src_2array_8c_acd5d38dd841e3c5d7ad4939403012073}} 
+\index{array.c@{array.c}!clearArray@{clearArray}}
+\index{clearArray@{clearArray}!array.c@{array.c}}
+\doxysubsubsection{\texorpdfstring{clearArray()}{clearArray()}}
+{\footnotesize\ttfamily void clear\+Array (\begin{DoxyParamCaption}\item[{struct \mbox{\hyperlink{structArray}{Array}} $\ast$}]{array }\end{DoxyParamCaption})}
+
+Frees up memory after use of the array \mbox{\Hypertarget{src_2array_8c_ae4d4a74e4195ac6c32ca3825ac6ff903}\label{src_2array_8c_ae4d4a74e4195ac6c32ca3825ac6ff903}} 
+\index{array.c@{array.c}!initArray@{initArray}}
+\index{initArray@{initArray}!array.c@{array.c}}
+\doxysubsubsection{\texorpdfstring{initArray()}{initArray()}}
+{\footnotesize\ttfamily void init\+Array (\begin{DoxyParamCaption}\item[{struct \mbox{\hyperlink{structArray}{Array}} $\ast$}]{array,  }\item[{size\+\_\+t}]{init\+Size,  }\item[{void $\ast$$\ast$}]{objects,  }\item[{bool}]{string,  }\item[{\+\_\+\+\_\+uint32\+\_\+t}]{size }\end{DoxyParamCaption})}
+
+Initialises an array with a size and objects 
+\begin{DoxyParams}{Parameters}
+{\em array} & A pointer to a array struct, should ensure that the array has not been initialised before \\
+\hline
+{\em init\+Size} & Initial size of array \\
+\hline
+{\em objects} & an array of object to initalise the array with. Should ensure that index 0 should contain initsize of array For eg\+: if init size is 1\+: objects should look like void $\ast$objects\mbox{[}\mbox{]} = \{1,object 1\} \\
+\hline
+{\em string} & Whether if this array is gonna contain strings or not \\
+\hline
+{\em size} & Size of each element contained in array. Should use sizeof(type) for better results xD \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{src_2array_8c_a4c78e9c9f5a12b656dfaa85382b8977a}\label{src_2array_8c_a4c78e9c9f5a12b656dfaa85382b8977a}} 
+\index{array.c@{array.c}!push@{push}}
+\index{push@{push}!array.c@{array.c}}
+\doxysubsubsection{\texorpdfstring{push()}{push()}}
+{\footnotesize\ttfamily void push (\begin{DoxyParamCaption}\item[{struct \mbox{\hyperlink{structArray}{Array}} $\ast$}]{array,  }\item[{void $\ast$}]{object }\end{DoxyParamCaption})}
+
+Appends a object to the array 
+\begin{DoxyParams}{Parameters}
+{\em array} & pointer to array struct \\
+\hline
+{\em object} & object to add \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{src_2array_8c_a343d30f25253742392451002c490eda5}\label{src_2array_8c_a343d30f25253742392451002c490eda5}} 
+\index{array.c@{array.c}!pushObjects@{pushObjects}}
+\index{pushObjects@{pushObjects}!array.c@{array.c}}
+\doxysubsubsection{\texorpdfstring{pushObjects()}{pushObjects()}}
+{\footnotesize\ttfamily void push\+Objects (\begin{DoxyParamCaption}\item[{struct \mbox{\hyperlink{structArray}{Array}} $\ast$}]{array,  }\item[{void $\ast$$\ast$}]{objects }\end{DoxyParamCaption})}
+
+Appends multiple objects to the array 
+\begin{DoxyParams}{Parameters}
+{\em array} & pointer to array struct \\
+\hline
+{\em objects} & array of objects to add to array. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{src_2array_8c_a24c28f63114c29130565eccb3f9f6ff2}\label{src_2array_8c_a24c28f63114c29130565eccb3f9f6ff2}} 
+\index{array.c@{array.c}!removeIndex@{removeIndex}}
+\index{removeIndex@{removeIndex}!array.c@{array.c}}
+\doxysubsubsection{\texorpdfstring{removeIndex()}{removeIndex()}}
+{\footnotesize\ttfamily void remove\+Index (\begin{DoxyParamCaption}\item[{struct \mbox{\hyperlink{structArray}{Array}} $\ast$}]{array,  }\item[{int}]{index }\end{DoxyParamCaption})}
+
+Removes the object at specified index 
+\begin{DoxyParams}{Parameters}
+{\em array} & pointer to array struct \\
+\hline
+{\em index} & index of object to remove. Note that the index used here will start from 1 \\
+\hline
+\end{DoxyParams}

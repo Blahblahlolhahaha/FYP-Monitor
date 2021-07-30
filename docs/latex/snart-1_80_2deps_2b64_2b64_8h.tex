@@ -1,0 +1,91 @@
+\hypertarget{snart-1_80_2deps_2b64_2b64_8h}{}\doxysection{snart-\/1.0/deps/b64/b64.h File Reference}
+\label{snart-1_80_2deps_2b64_2b64_8h}\index{snart-\/1.0/deps/b64/b64.h@{snart-\/1.0/deps/b64/b64.h}}
+This graph shows which files directly or indirectly include this file\+:
+% FIG 0
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{snart-1_80_2deps_2b64_2b64_8h_a221b9c9698df0aa156ee2a33072ff9b4}{b64\+\_\+malloc}}(ptr)~malloc(ptr)
+\item 
+\#define \mbox{\hyperlink{snart-1_80_2deps_2b64_2b64_8h_a4750e31a6a2f09d3ef3e1962e25d8592}{b64\+\_\+realloc}}(ptr,  size)~realloc(ptr, size)
+\item 
+\#define \mbox{\hyperlink{snart-1_80_2deps_2b64_2b64_8h_aabf2c202b3d31a43f03d9f10afa6a060}{B64\+\_\+\+B\+U\+F\+F\+E\+R\+\_\+\+S\+I\+ZE}}~(1024 $\ast$ 64)
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+char $\ast$ \mbox{\hyperlink{snart-1_80_2deps_2b64_2b64_8h_a1a80edef3c30b60acff603cef63aac1b}{b64\+\_\+buf\+\_\+malloc}} ()
+\item 
+char $\ast$ \mbox{\hyperlink{snart-1_80_2deps_2b64_2b64_8h_a74e4b8845d62d37412c30824aff6e433}{b64\+\_\+buf\+\_\+realloc}} (unsigned char $\ast$ptr, size\+\_\+t size)
+\item 
+char $\ast$ \mbox{\hyperlink{snart-1_80_2deps_2b64_2b64_8h_a9a9b842a784b5202e1ab4eed1c156d00}{b64\+\_\+encode}} (const unsigned char $\ast$, size\+\_\+t)
+\item 
+unsigned char $\ast$ \mbox{\hyperlink{snart-1_80_2deps_2b64_2b64_8h_a9c3b4adc7a6fcdf700700d55b2c924ed}{b64\+\_\+decode}} (const char $\ast$, size\+\_\+t)
+\item 
+unsigned char $\ast$ \mbox{\hyperlink{snart-1_80_2deps_2b64_2b64_8h_aea8b5297189d223a48f1886e692546e4}{b64\+\_\+decode\+\_\+ex}} (const char $\ast$, size\+\_\+t, size\+\_\+t $\ast$)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{snart-1_80_2deps_2b64_2b64_8h_aabf2c202b3d31a43f03d9f10afa6a060}\label{snart-1_80_2deps_2b64_2b64_8h_aabf2c202b3d31a43f03d9f10afa6a060}} 
+\index{b64.h@{b64.h}!B64\_BUFFER\_SIZE@{B64\_BUFFER\_SIZE}}
+\index{B64\_BUFFER\_SIZE@{B64\_BUFFER\_SIZE}!b64.h@{b64.h}}
+\doxysubsubsection{\texorpdfstring{B64\_BUFFER\_SIZE}{B64\_BUFFER\_SIZE}}
+{\footnotesize\ttfamily \#define B64\+\_\+\+B\+U\+F\+F\+E\+R\+\_\+\+S\+I\+ZE~(1024 $\ast$ 64)}
+
+\mbox{\Hypertarget{snart-1_80_2deps_2b64_2b64_8h_a221b9c9698df0aa156ee2a33072ff9b4}\label{snart-1_80_2deps_2b64_2b64_8h_a221b9c9698df0aa156ee2a33072ff9b4}} 
+\index{b64.h@{b64.h}!b64\_malloc@{b64\_malloc}}
+\index{b64\_malloc@{b64\_malloc}!b64.h@{b64.h}}
+\doxysubsubsection{\texorpdfstring{b64\_malloc}{b64\_malloc}}
+{\footnotesize\ttfamily \#define b64\+\_\+malloc(\begin{DoxyParamCaption}\item[{}]{ptr }\end{DoxyParamCaption})~malloc(ptr)}
+
+`b64.\+h' -\/ b64
+
+copyright (c) 2014 joseph werle Memory allocation functions to use. You can define b64\+\_\+malloc and b64\+\_\+realloc to custom functions if you want. \mbox{\Hypertarget{snart-1_80_2deps_2b64_2b64_8h_a4750e31a6a2f09d3ef3e1962e25d8592}\label{snart-1_80_2deps_2b64_2b64_8h_a4750e31a6a2f09d3ef3e1962e25d8592}} 
+\index{b64.h@{b64.h}!b64\_realloc@{b64\_realloc}}
+\index{b64\_realloc@{b64\_realloc}!b64.h@{b64.h}}
+\doxysubsubsection{\texorpdfstring{b64\_realloc}{b64\_realloc}}
+{\footnotesize\ttfamily \#define b64\+\_\+realloc(\begin{DoxyParamCaption}\item[{}]{ptr,  }\item[{}]{size }\end{DoxyParamCaption})~realloc(ptr, size)}
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{snart-1_80_2deps_2b64_2b64_8h_a1a80edef3c30b60acff603cef63aac1b}\label{snart-1_80_2deps_2b64_2b64_8h_a1a80edef3c30b60acff603cef63aac1b}} 
+\index{b64.h@{b64.h}!b64\_buf\_malloc@{b64\_buf\_malloc}}
+\index{b64\_buf\_malloc@{b64\_buf\_malloc}!b64.h@{b64.h}}
+\doxysubsubsection{\texorpdfstring{b64\_buf\_malloc()}{b64\_buf\_malloc()}}
+{\footnotesize\ttfamily char$\ast$ b64\+\_\+buf\+\_\+malloc (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{snart-1_80_2deps_2b64_2b64_8h_a74e4b8845d62d37412c30824aff6e433}\label{snart-1_80_2deps_2b64_2b64_8h_a74e4b8845d62d37412c30824aff6e433}} 
+\index{b64.h@{b64.h}!b64\_buf\_realloc@{b64\_buf\_realloc}}
+\index{b64\_buf\_realloc@{b64\_buf\_realloc}!b64.h@{b64.h}}
+\doxysubsubsection{\texorpdfstring{b64\_buf\_realloc()}{b64\_buf\_realloc()}}
+{\footnotesize\ttfamily char$\ast$ b64\+\_\+buf\+\_\+realloc (\begin{DoxyParamCaption}\item[{unsigned char $\ast$}]{ptr,  }\item[{size\+\_\+t}]{size }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{snart-1_80_2deps_2b64_2b64_8h_a9c3b4adc7a6fcdf700700d55b2c924ed}\label{snart-1_80_2deps_2b64_2b64_8h_a9c3b4adc7a6fcdf700700d55b2c924ed}} 
+\index{b64.h@{b64.h}!b64\_decode@{b64\_decode}}
+\index{b64\_decode@{b64\_decode}!b64.h@{b64.h}}
+\doxysubsubsection{\texorpdfstring{b64\_decode()}{b64\_decode()}}
+{\footnotesize\ttfamily unsigned char$\ast$ b64\+\_\+decode (\begin{DoxyParamCaption}\item[{const char $\ast$}]{src,  }\item[{size\+\_\+t}]{len }\end{DoxyParamCaption})}
+
+Decode `char $\ast$' source with `size\+\_\+t' size. Returns a `unsigned char $\ast$' base64 decoded string.
+
+`decode.\+c' -\/ b64
+
+copyright (c) 2014 joseph werle \mbox{\Hypertarget{snart-1_80_2deps_2b64_2b64_8h_aea8b5297189d223a48f1886e692546e4}\label{snart-1_80_2deps_2b64_2b64_8h_aea8b5297189d223a48f1886e692546e4}} 
+\index{b64.h@{b64.h}!b64\_decode\_ex@{b64\_decode\_ex}}
+\index{b64\_decode\_ex@{b64\_decode\_ex}!b64.h@{b64.h}}
+\doxysubsubsection{\texorpdfstring{b64\_decode\_ex()}{b64\_decode\_ex()}}
+{\footnotesize\ttfamily unsigned char$\ast$ b64\+\_\+decode\+\_\+ex (\begin{DoxyParamCaption}\item[{const char $\ast$}]{,  }\item[{size\+\_\+t}]{,  }\item[{size\+\_\+t $\ast$}]{ }\end{DoxyParamCaption})}
+
+Decode `char $\ast$' source with `size\+\_\+t' size. Returns a `unsigned char $\ast$' base64 decoded string + size of decoded string. \mbox{\Hypertarget{snart-1_80_2deps_2b64_2b64_8h_a9a9b842a784b5202e1ab4eed1c156d00}\label{snart-1_80_2deps_2b64_2b64_8h_a9a9b842a784b5202e1ab4eed1c156d00}} 
+\index{b64.h@{b64.h}!b64\_encode@{b64\_encode}}
+\index{b64\_encode@{b64\_encode}!b64.h@{b64.h}}
+\doxysubsubsection{\texorpdfstring{b64\_encode()}{b64\_encode()}}
+{\footnotesize\ttfamily char$\ast$ b64\+\_\+encode (\begin{DoxyParamCaption}\item[{const unsigned char $\ast$}]{src,  }\item[{size\+\_\+t}]{len }\end{DoxyParamCaption})}
+
+Encode `unsigned char $\ast$' source with `size\+\_\+t' size. Returns a `char $\ast$' base64 encoded string.
+
+`encode.\+c' -\/ b64
+
+copyright (c) 2014 joseph werle 

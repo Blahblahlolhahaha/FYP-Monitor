@@ -7,7 +7,7 @@ APP = snart
 # all source are stored in SRCS-y
 DIR := src/
 DEPS := deps/b64/
-SRCS-y := $(DIR)main.c
+SRCS-y := main.c
 SRCS-y += $(DIR)ike.c
 SRCS-y += $(DIR)array.c
 SRCS-y += $(DIR)log.c

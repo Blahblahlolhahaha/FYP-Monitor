@@ -91,7 +91,7 @@ void timeout(){
                     ,client_ip, host_ip);
                 }
                 write_log(ipsec_log,log,&non_ipsec_hash);
-                delete_tunnel(tunnel->client_spi,tunnel->host_spi,tunnel->client_ip,tunnel->host_ip);
+                delete_tunnel(tunnel->initiator_spi,tunnel->responder_spi,tunnel->client_ip,tunnel->host_ip);
             }
         }
         sleep(1);
@@ -187,16 +187,16 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                                 for (uint32_t i = 1; i <= tunnels->size; i++){
                                                     check = ((struct tunnel*) tunnels->array[i]);
                                                     if (check->client_ip == src_addr_int && check->host_ip == dst_addr_int){
-                                                        if (check->client_esp_spi == 0){
-                                                            check->client_esp_spi = esp_header->spi;
+                                                        if (check->client_spi == 0){
+                                                            check->client_spi = esp_header->spi;
                                                             check->client_seq = rte_be_to_cpu_32(esp_header->seq);
-                                                            if(check->host_esp_spi != 0 ){
+                                                            if(check->host_spi != 0 ){
                                                                 add_tunnel(check);
                                                             }
                                                             legit_pkts++;
                                                             tunnel_exists = true;
                                                         }
-                                                        else if(check->client_esp_spi == esp_header->spi){
+                                                        else if(check->client_spi == esp_header->spi){
                                                             int seq = rte_be_to_cpu_32(esp_header->seq);
                                                             if(check->client_seq <= (seq + tolerance) || check->client_seq >= (seq + tolerance)){
                                                                 if(check->client_seq < seq){
@@ -222,7 +222,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                                             }
                                                         }else{
                                                             snprintf(log,2048,"%s;INVALID_SPI;%s;%s;%x;%x\n",current_time
-                                                            , src_ip, dst_ip,tunnel_to_chk.spi,check->client_spi);
+                                                            , src_ip, dst_ip,tunnel_to_chk.spi,check->initiator_spi);
                                                             
                                                             write_log(ipsec_log,log,&non_ipsec_hash);
                                                             tampered_pkts++;
@@ -231,17 +231,17 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
 
                                                         }
                                                     }else if (check->host_ip == src_addr_int && check->client_ip == dst_addr_int){
-                                                        if (check->host_esp_spi == 0){
-                                                            check->host_esp_spi = esp_header->spi;
+                                                        if (check->host_spi == 0){
+                                                            check->host_spi = esp_header->spi;
                                                             check->host_seq = rte_be_to_cpu_32(esp_header->seq);
-                                                            if(check->client_esp_spi != 0 ){
+                                                            if(check->client_spi != 0 ){
                                                                 add_tunnel(check);
                                                             }
                                                             legit_pkts++;
                                                             tunnel_exists = true;
                                                             
                                                         }
-                                                        else if(check->host_esp_spi == esp_header->spi){
+                                                        else if(check->host_spi == esp_header->spi){
                                                             int seq = rte_be_to_cpu_32(esp_header->seq);
                                                             if(check->host_seq <= (seq + tolerance) || check->host_seq >= (seq - tolerance)){
                                                                 if(check->client_seq < seq){
@@ -267,7 +267,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                                             }
                                                         }else {
                                                             snprintf(log,2048,"%s;INVALID_SPI;%s;%s;%x;%x\n",current_time
-                                                            ,src_ip, dst_ip,tunnel_to_chk.spi,check->host_spi);
+                                                            ,src_ip, dst_ip,tunnel_to_chk.spi,check->responder_spi);
                                                             
                                                             write_log(ipsec_log,log,&non_ipsec_hash);
                                                             tampered_pkts++;
@@ -379,7 +379,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
             else if(rte_be_to_cpu_16(ether_hdr->ether_type) == IPPROTO_IPV6){
                 if(IPV4_OFFSET + sizeof(struct rte_ipv6_hdr) < x){
                     struct rte_ipv6_hdr *ipv6_hdr =rte_pktmbuf_mtod_offset(pkt,struct rte_ipv6_hdr*,IPV4_OFFSET);
-                    get_ipv6_hdr_string(ipv6_hdr,src_ip,dst_ip);
+                    get_ipv6_address_string(ipv6_hdr,src_ip,dst_ip);
                     snprintf(log,2048,"%s;IPV6 Packet: %s to %s\n",current_time,src_ip,dst_ip);
                     write_log(main_log,log,&tampered_hash);
                     non_ipsec ++;

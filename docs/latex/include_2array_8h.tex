@@ -1,0 +1,212 @@
+\hypertarget{include_2array_8h}{}\doxysection{include/array.h File Reference}
+\label{include_2array_8h}\index{include/array.h@{include/array.h}}
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$malloc.\+h$>$}\newline
+{\ttfamily \#include $<$stdbool.\+h$>$}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+Include dependency graph for array.\+h\+:
+% FIG 0
+This graph shows which files directly or indirectly include this file\+:
+% FIG 1
+\doxysubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structArray}{Array}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{include_2array_8h_ac6905e5d185c7e5990c56ececee8d8e5}{A\+R\+R\+A\+Y\+\_\+H}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7}{Type}} \{ \newline
+\mbox{\hyperlink{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7afd5a5f51ce25953f3db2c7e93eb7864a}{I\+NT}}, 
+\mbox{\hyperlink{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7a33465d1d419b1074fb259ef444609e92}{D\+O\+U\+B\+LE}}, 
+\mbox{\hyperlink{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7aaee055c4a5aba7d55774e4f1c01dacea}{L\+O\+NG}}, 
+\mbox{\hyperlink{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7a9cf4a0866224b0bb4a7a895da27c9c4c}{F\+L\+O\+AT}}, 
+\newline
+\mbox{\hyperlink{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7a4618cf21306b3c647741afa7ebefcab8}{C\+H\+AR}}, 
+\mbox{\hyperlink{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7aee847e634a4297b274316de8a8ca9921}{S\+T\+R\+I\+NG}}, 
+\mbox{\hyperlink{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7adb31f5ef7acca5e1131fcc0fbfa6911d}{V\+O\+ID}}, 
+\mbox{\hyperlink{snart-1_80_2include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7afd5a5f51ce25953f3db2c7e93eb7864a}{I\+NT}}, 
+\newline
+\mbox{\hyperlink{snart-1_80_2include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7a33465d1d419b1074fb259ef444609e92}{D\+O\+U\+B\+LE}}, 
+\mbox{\hyperlink{snart-1_80_2include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7aaee055c4a5aba7d55774e4f1c01dacea}{L\+O\+NG}}, 
+\mbox{\hyperlink{snart-1_80_2include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7a9cf4a0866224b0bb4a7a895da27c9c4c}{F\+L\+O\+AT}}, 
+\mbox{\hyperlink{snart-1_80_2include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7a4618cf21306b3c647741afa7ebefcab8}{C\+H\+AR}}, 
+\newline
+\mbox{\hyperlink{snart-1_80_2include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7aee847e634a4297b274316de8a8ca9921}{S\+T\+R\+I\+NG}}, 
+\mbox{\hyperlink{snart-1_80_2include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7adb31f5ef7acca5e1131fcc0fbfa6911d}{V\+O\+ID}}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{include_2array_8h_ae4d4a74e4195ac6c32ca3825ac6ff903}{init\+Array}} (struct \mbox{\hyperlink{structArray}{Array}} $\ast$array, size\+\_\+t init\+Size, void $\ast$$\ast$objects, bool string, \+\_\+\+\_\+uint32\+\_\+t size)
+\item 
+void \mbox{\hyperlink{include_2array_8h_a4c78e9c9f5a12b656dfaa85382b8977a}{push}} (struct \mbox{\hyperlink{structArray}{Array}} $\ast$array, void $\ast$\mbox{\hyperlink{src_2main_8c_aae1d012f3235c240c883ec0b06b8b92a}{object}})
+\item 
+void \mbox{\hyperlink{include_2array_8h_a343d30f25253742392451002c490eda5}{push\+Objects}} (struct \mbox{\hyperlink{structArray}{Array}} $\ast$array, void $\ast$$\ast$objects)
+\item 
+void \mbox{\hyperlink{include_2array_8h_a24c28f63114c29130565eccb3f9f6ff2}{remove\+Index}} (struct \mbox{\hyperlink{structArray}{Array}} $\ast$array, int index)
+\item 
+void \mbox{\hyperlink{include_2array_8h_a76d9df155f083380f72833ab558a4f2a}{remove\+Object}} (struct \mbox{\hyperlink{structArray}{Array}} $\ast$array, void $\ast$\mbox{\hyperlink{src_2main_8c_aae1d012f3235c240c883ec0b06b8b92a}{object}})
+\item 
+void \mbox{\hyperlink{include_2array_8h_acd5d38dd841e3c5d7ad4939403012073}{clear\+Array}} (struct \mbox{\hyperlink{structArray}{Array}} $\ast$array)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{include_2array_8h_ac6905e5d185c7e5990c56ececee8d8e5}\label{include_2array_8h_ac6905e5d185c7e5990c56ececee8d8e5}} 
+\index{array.h@{array.h}!ARRAY\_H@{ARRAY\_H}}
+\index{ARRAY\_H@{ARRAY\_H}!array.h@{array.h}}
+\doxysubsubsection{\texorpdfstring{ARRAY\_H}{ARRAY\_H}}
+{\footnotesize\ttfamily \#define A\+R\+R\+A\+Y\+\_\+H}
+
+
+
+\doxysubsection{Enumeration Type Documentation}
+\mbox{\Hypertarget{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7}\label{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7}} 
+\index{array.h@{array.h}!Type@{Type}}
+\index{Type@{Type}!array.h@{array.h}}
+\doxysubsubsection{\texorpdfstring{Type}{Type}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7}{Type}}}
+
+An \mbox{\hyperlink{structArray}{Array}} that can dynamically increase/decrease in size based on the elements
+
+\mbox{\hyperlink{structArray}{Array}} objects are stored in the following sequence\+: \{int size$\ast$,void$\ast$ object1, void$\ast$ object2\}
+
+When looping through the array using a for loop and removing objects\+: should start at index 1 rather than index 0 \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{INT@{INT}!array.h@{array.h}}\index{array.h@{array.h}!INT@{INT}}}\mbox{\Hypertarget{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7afd5a5f51ce25953f3db2c7e93eb7864a}\label{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7afd5a5f51ce25953f3db2c7e93eb7864a}} 
+I\+NT&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{DOUBLE@{DOUBLE}!array.h@{array.h}}\index{array.h@{array.h}!DOUBLE@{DOUBLE}}}\mbox{\Hypertarget{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7a33465d1d419b1074fb259ef444609e92}\label{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7a33465d1d419b1074fb259ef444609e92}} 
+D\+O\+U\+B\+LE&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{LONG@{LONG}!array.h@{array.h}}\index{array.h@{array.h}!LONG@{LONG}}}\mbox{\Hypertarget{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7aaee055c4a5aba7d55774e4f1c01dacea}\label{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7aaee055c4a5aba7d55774e4f1c01dacea}} 
+L\+O\+NG&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLOAT@{FLOAT}!array.h@{array.h}}\index{array.h@{array.h}!FLOAT@{FLOAT}}}\mbox{\Hypertarget{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7a9cf4a0866224b0bb4a7a895da27c9c4c}\label{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7a9cf4a0866224b0bb4a7a895da27c9c4c}} 
+F\+L\+O\+AT&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{CHAR@{CHAR}!array.h@{array.h}}\index{array.h@{array.h}!CHAR@{CHAR}}}\mbox{\Hypertarget{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7a4618cf21306b3c647741afa7ebefcab8}\label{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7a4618cf21306b3c647741afa7ebefcab8}} 
+C\+H\+AR&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STRING@{STRING}!array.h@{array.h}}\index{array.h@{array.h}!STRING@{STRING}}}\mbox{\Hypertarget{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7aee847e634a4297b274316de8a8ca9921}\label{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7aee847e634a4297b274316de8a8ca9921}} 
+S\+T\+R\+I\+NG&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{VOID@{VOID}!array.h@{array.h}}\index{array.h@{array.h}!VOID@{VOID}}}\mbox{\Hypertarget{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7adb31f5ef7acca5e1131fcc0fbfa6911d}\label{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7adb31f5ef7acca5e1131fcc0fbfa6911d}} 
+V\+O\+ID&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{INT@{INT}!array.h@{array.h}}\index{array.h@{array.h}!INT@{INT}}}\mbox{\Hypertarget{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7afd5a5f51ce25953f3db2c7e93eb7864a}\label{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7afd5a5f51ce25953f3db2c7e93eb7864a}} 
+I\+NT&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{DOUBLE@{DOUBLE}!array.h@{array.h}}\index{array.h@{array.h}!DOUBLE@{DOUBLE}}}\mbox{\Hypertarget{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7a33465d1d419b1074fb259ef444609e92}\label{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7a33465d1d419b1074fb259ef444609e92}} 
+D\+O\+U\+B\+LE&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{LONG@{LONG}!array.h@{array.h}}\index{array.h@{array.h}!LONG@{LONG}}}\mbox{\Hypertarget{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7aaee055c4a5aba7d55774e4f1c01dacea}\label{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7aaee055c4a5aba7d55774e4f1c01dacea}} 
+L\+O\+NG&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLOAT@{FLOAT}!array.h@{array.h}}\index{array.h@{array.h}!FLOAT@{FLOAT}}}\mbox{\Hypertarget{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7a9cf4a0866224b0bb4a7a895da27c9c4c}\label{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7a9cf4a0866224b0bb4a7a895da27c9c4c}} 
+F\+L\+O\+AT&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{CHAR@{CHAR}!array.h@{array.h}}\index{array.h@{array.h}!CHAR@{CHAR}}}\mbox{\Hypertarget{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7a4618cf21306b3c647741afa7ebefcab8}\label{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7a4618cf21306b3c647741afa7ebefcab8}} 
+C\+H\+AR&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STRING@{STRING}!array.h@{array.h}}\index{array.h@{array.h}!STRING@{STRING}}}\mbox{\Hypertarget{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7aee847e634a4297b274316de8a8ca9921}\label{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7aee847e634a4297b274316de8a8ca9921}} 
+S\+T\+R\+I\+NG&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{VOID@{VOID}!array.h@{array.h}}\index{array.h@{array.h}!VOID@{VOID}}}\mbox{\Hypertarget{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7adb31f5ef7acca5e1131fcc0fbfa6911d}\label{include_2array_8h_a1d1cfd8ffb84e947f82999c682b666a7adb31f5ef7acca5e1131fcc0fbfa6911d}} 
+V\+O\+ID&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{include_2array_8h_acd5d38dd841e3c5d7ad4939403012073}\label{include_2array_8h_acd5d38dd841e3c5d7ad4939403012073}} 
+\index{array.h@{array.h}!clearArray@{clearArray}}
+\index{clearArray@{clearArray}!array.h@{array.h}}
+\doxysubsubsection{\texorpdfstring{clearArray()}{clearArray()}}
+{\footnotesize\ttfamily void clear\+Array (\begin{DoxyParamCaption}\item[{struct \mbox{\hyperlink{structArray}{Array}} $\ast$}]{array }\end{DoxyParamCaption})}
+
+Frees up memory after use of the array \mbox{\Hypertarget{include_2array_8h_ae4d4a74e4195ac6c32ca3825ac6ff903}\label{include_2array_8h_ae4d4a74e4195ac6c32ca3825ac6ff903}} 
+\index{array.h@{array.h}!initArray@{initArray}}
+\index{initArray@{initArray}!array.h@{array.h}}
+\doxysubsubsection{\texorpdfstring{initArray()}{initArray()}}
+{\footnotesize\ttfamily void init\+Array (\begin{DoxyParamCaption}\item[{struct \mbox{\hyperlink{structArray}{Array}} $\ast$}]{array,  }\item[{size\+\_\+t}]{init\+Size,  }\item[{void $\ast$$\ast$}]{objects,  }\item[{bool}]{string,  }\item[{\+\_\+\+\_\+uint32\+\_\+t}]{size }\end{DoxyParamCaption})}
+
+Initialises an array with a size and objects 
+\begin{DoxyParams}{Parameters}
+{\em array} & A pointer to a array struct, should ensure that the array has not been initialised before \\
+\hline
+{\em init\+Size} & Initial size of array \\
+\hline
+{\em objects} & an array of object to initalise the array with. Should ensure that index 0 should contain initsize of array For eg\+: if init size is 1\+: objects should look like void $\ast$objects\mbox{[}\mbox{]} = \{1,object 1\} \\
+\hline
+{\em string} & Whether if this array is gonna contain strings or not \\
+\hline
+{\em size} & Size of each element contained in array. Should use sizeof(type) for better results xD \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{include_2array_8h_a4c78e9c9f5a12b656dfaa85382b8977a}\label{include_2array_8h_a4c78e9c9f5a12b656dfaa85382b8977a}} 
+\index{array.h@{array.h}!push@{push}}
+\index{push@{push}!array.h@{array.h}}
+\doxysubsubsection{\texorpdfstring{push()}{push()}}
+{\footnotesize\ttfamily void push (\begin{DoxyParamCaption}\item[{struct \mbox{\hyperlink{structArray}{Array}} $\ast$}]{array,  }\item[{void $\ast$}]{object }\end{DoxyParamCaption})}
+
+Appends a object to the array 
+\begin{DoxyParams}{Parameters}
+{\em array} & pointer to array struct \\
+\hline
+{\em object} & object to add \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{include_2array_8h_a343d30f25253742392451002c490eda5}\label{include_2array_8h_a343d30f25253742392451002c490eda5}} 
+\index{array.h@{array.h}!pushObjects@{pushObjects}}
+\index{pushObjects@{pushObjects}!array.h@{array.h}}
+\doxysubsubsection{\texorpdfstring{pushObjects()}{pushObjects()}}
+{\footnotesize\ttfamily void push\+Objects (\begin{DoxyParamCaption}\item[{struct \mbox{\hyperlink{structArray}{Array}} $\ast$}]{array,  }\item[{void $\ast$$\ast$}]{objects }\end{DoxyParamCaption})}
+
+Appends multiple objects to the array 
+\begin{DoxyParams}{Parameters}
+{\em array} & pointer to array struct \\
+\hline
+{\em objects} & array of objects to add to array. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{include_2array_8h_a24c28f63114c29130565eccb3f9f6ff2}\label{include_2array_8h_a24c28f63114c29130565eccb3f9f6ff2}} 
+\index{array.h@{array.h}!removeIndex@{removeIndex}}
+\index{removeIndex@{removeIndex}!array.h@{array.h}}
+\doxysubsubsection{\texorpdfstring{removeIndex()}{removeIndex()}}
+{\footnotesize\ttfamily void remove\+Index (\begin{DoxyParamCaption}\item[{struct \mbox{\hyperlink{structArray}{Array}} $\ast$}]{array,  }\item[{int}]{index }\end{DoxyParamCaption})}
+
+Removes the object at specified index 
+\begin{DoxyParams}{Parameters}
+{\em array} & pointer to array struct \\
+\hline
+{\em index} & index of object to remove. Note that the index used here will start from 1 \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{include_2array_8h_a76d9df155f083380f72833ab558a4f2a}\label{include_2array_8h_a76d9df155f083380f72833ab558a4f2a}} 
+\index{array.h@{array.h}!removeObject@{removeObject}}
+\index{removeObject@{removeObject}!array.h@{array.h}}
+\doxysubsubsection{\texorpdfstring{removeObject()}{removeObject()}}
+{\footnotesize\ttfamily void remove\+Object (\begin{DoxyParamCaption}\item[{struct \mbox{\hyperlink{structArray}{Array}} $\ast$}]{array,  }\item[{void $\ast$}]{object }\end{DoxyParamCaption})}
+
+Not working DO N\+OT U\+SE 

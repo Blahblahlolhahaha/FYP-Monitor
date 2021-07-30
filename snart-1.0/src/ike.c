@@ -55,7 +55,7 @@ char *get_ike_payload_type(struct rte_isakmp_hdr *hdr){
 /// Should only be used if logging the payload type is needed
 /// @param hdr isakmp header of packet
 /// @returns a string containing the payload type
-char *get_payload_nxt_payload(struct isakmp_payload_hdr *hdr){
+char *get_nxt_payload(struct isakmp_payload_hdr *hdr){
     if(hdr->nxt_payload == NO){
         return "No Next Payload";
     }
@@ -476,8 +476,8 @@ void delete_tunnel(uint64_t initiator_spi,uint64_t responder_spi,int src_addr,in
  * @returns 1 if information matches, 0 if otherwise
  */
 int check_ike_spi(uint64_t initiator_spi,uint64_t responder_spi,int src_addr,int dst_addr,struct tunnel* tunnel){
-    return (tunnel->client_spi == initiator_spi 
-                && tunnel->host_spi == responder_spi) && ((tunnel->client_ip == src_addr && tunnel->host_ip == dst_addr) || 
+    return (tunnel->initiator_spi == initiator_spi 
+                && tunnel->responder_spi == responder_spi) && ((tunnel->client_ip == src_addr && tunnel->host_ip == dst_addr) || 
                 (tunnel->host_ip == src_addr && tunnel->client_ip == dst_addr)) ? 1 : 0;
 }
 
@@ -595,7 +595,7 @@ void load_tunnel(){
  * @param src_ip char pointer to store the converted source ip string
  * @param dst_ip char pointer to store the converted destination ip string
  */
-void get_ipv6_hdr_string(struct rte_ipv6_hdr *hdr,char *src_ip, char *dst_ip)
+void get_ipv6_address_string(struct rte_ipv6_hdr *hdr,char *src_ip, char *dst_ip)
 {
     uint8_t *addr;
     addr = hdr->src_addr;
@@ -641,10 +641,10 @@ int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hd
             new_tunnel.host_ip = ipv4_hdr->src_addr;
             new_tunnel.client_ip = ipv4_hdr->dst_addr;
 
-            new_tunnel.host_spi = isakmp_hdr->responder_spi;
-            new_tunnel.client_spi = isakmp_hdr->initiator_spi;
-            new_tunnel.host_esp_spi = 0;
-            new_tunnel.client_esp_spi = 0;
+            new_tunnel.responder_spi = isakmp_hdr->responder_spi;
+            new_tunnel.initiator_spi = isakmp_hdr->initiator_spi;
+            new_tunnel.host_spi = 0;
+            new_tunnel.client_spi = 0;
 
             new_tunnel.dpd = false;
             new_tunnel.dpd_count = 0;

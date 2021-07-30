@@ -1,0 +1,198 @@
+\hypertarget{snart-1_80_2src_2main_8c}{}\doxysection{snart-\/1.0/src/main.c File Reference}
+\label{snart-1_80_2src_2main_8c}\index{snart-\/1.0/src/main.c@{snart-\/1.0/src/main.c}}
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$inttypes.\+h$>$}\newline
+{\ttfamily \#include $<$getopt.\+h$>$}\newline
+{\ttfamily \#include $<$omp.\+h$>$}\newline
+{\ttfamily \#include $<$rte\+\_\+eal.\+h$>$}\newline
+{\ttfamily \#include $<$rte\+\_\+mbuf.\+h$>$}\newline
+{\ttfamily \#include $<$rte\+\_\+mbuf\+\_\+dyn.\+h$>$}\newline
+{\ttfamily \#include $<$rte\+\_\+ring.\+h$>$}\newline
+{\ttfamily \#include $<$rte\+\_\+debug.\+h$>$}\newline
+{\ttfamily \#include $<$rte\+\_\+lcore.\+h$>$}\newline
+{\ttfamily \#include $<$rte\+\_\+per\+\_\+lcore.\+h$>$}\newline
+{\ttfamily \#include $<$rte\+\_\+icmp.\+h$>$}\newline
+{\ttfamily \#include $<$unistd.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}../include/ike.\+h\char`\"{}}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$pthread.\+h$>$}\newline
+{\ttfamily \#include $<$time.\+h$>$}\newline
+Include dependency graph for main.\+c\+:
+% FIG 0
+\doxysubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structISAKMP__TEST}{I\+S\+A\+K\+M\+P\+\_\+\+T\+E\+ST}}
+\item 
+struct \mbox{\hyperlink{structcheck}{check}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{snart-1_80_2src_2main_8c_afcfb8ac36c733187de151348eb50ef01}{R\+X\+\_\+\+R\+I\+N\+G\+\_\+\+S\+I\+ZE}}~1024
+\item 
+\#define \mbox{\hyperlink{snart-1_80_2src_2main_8c_a530086d082c22e371518c2497c6d9014}{T\+X\+\_\+\+R\+I\+N\+G\+\_\+\+S\+I\+ZE}}~1024
+\item 
+\#define \mbox{\hyperlink{snart-1_80_2src_2main_8c_ae543d743ada71b167a5cbd813b15fa7f}{N\+U\+M\+\_\+\+M\+B\+U\+FS}}~8191
+\item 
+\#define \mbox{\hyperlink{snart-1_80_2src_2main_8c_a50b04606ab2df25335c9c0ca42d14484}{M\+B\+U\+F\+\_\+\+C\+A\+C\+H\+E\+\_\+\+S\+I\+ZE}}~250
+\item 
+\#define \mbox{\hyperlink{snart-1_80_2src_2main_8c_a703e079cb598d615c750d24ec7432617}{B\+U\+R\+S\+T\+\_\+\+S\+I\+ZE}}~1
+\item 
+\#define \mbox{\hyperlink{snart-1_80_2src_2main_8c_aeca13153b86543a44ff0967da3d59108}{I\+S\+A\+K\+M\+P\+\_\+\+P\+O\+RT}}~500
+\item 
+\#define \mbox{\hyperlink{snart-1_80_2src_2main_8c_a40d039b1e73b8fbf2c5753f331fffa6c}{I\+P\+S\+E\+C\+\_\+\+N\+A\+T\+\_\+\+T\+\_\+\+P\+O\+RT}}~4500
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void $\ast$ \mbox{\hyperlink{snart-1_80_2src_2main_8c_aaa2e94f14df16ea8c73d128c27415952}{count\+\_\+packets}} ()
+\item 
+void \mbox{\hyperlink{snart-1_80_2src_2main_8c_ad446b5782bcb2d8ffc0aa1f8c4d16ded}{timeout}} ()
+\item 
+int \mbox{\hyperlink{snart-1_80_2src_2main_8c_a90206c967e0da3d8d219109d354e7c54}{port\+\_\+init}} (uint16\+\_\+t port, struct rte\+\_\+mempool $\ast$mbufpool)
+\item 
+int \mbox{\hyperlink{snart-1_80_2src_2main_8c_a3c04138a5bfe5d72780bb7e82a18e627}{main}} (int argc, char $\ast$$\ast$argv)
+\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+void $\ast$ \mbox{\hyperlink{snart-1_80_2src_2main_8c_aae1d012f3235c240c883ec0b06b8b92a}{object}} \mbox{[}$\,$\mbox{]} = \{0\}
+\item 
+uint32\+\_\+t \mbox{\hyperlink{snart-1_80_2src_2main_8c_a0c2bf3e18f553a6c2d34b58094ba5402}{tolerance}} = 15
+\item 
+int \mbox{\hyperlink{snart-1_80_2src_2main_8c_a0f5a1802eebbfc6bf22c54257a9cf9ea}{total\+\_\+processed}} = 0
+\item 
+int \mbox{\hyperlink{snart-1_80_2src_2main_8c_a699203bc36a6bd1bbbc5182eec978762}{non\+\_\+ipsec}} = 0
+\item 
+int \mbox{\hyperlink{snart-1_80_2src_2main_8c_acbcadc2b305131b58e540fca959ba01d}{legit\+\_\+pkts}} = 0
+\item 
+int \mbox{\hyperlink{snart-1_80_2src_2main_8c_acf32a4c80736b62a6b2fe527c8aaa94e}{isakmp\+\_\+pkts}} = 0
+\item 
+int \mbox{\hyperlink{snart-1_80_2src_2main_8c_a1aef0fce3effd2378edcd4b110609c39}{tampered\+\_\+pkts}} = 0
+\item 
+int \mbox{\hyperlink{snart-1_80_2src_2main_8c_a93ca61d8617417222c811d39d6c260b0}{malformed\+\_\+pkts}} = 0
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{snart-1_80_2src_2main_8c_a703e079cb598d615c750d24ec7432617}\label{snart-1_80_2src_2main_8c_a703e079cb598d615c750d24ec7432617}} 
+\index{main.c@{main.c}!BURST\_SIZE@{BURST\_SIZE}}
+\index{BURST\_SIZE@{BURST\_SIZE}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{BURST\_SIZE}{BURST\_SIZE}}
+{\footnotesize\ttfamily \#define B\+U\+R\+S\+T\+\_\+\+S\+I\+ZE~1}
+
+\mbox{\Hypertarget{snart-1_80_2src_2main_8c_a40d039b1e73b8fbf2c5753f331fffa6c}\label{snart-1_80_2src_2main_8c_a40d039b1e73b8fbf2c5753f331fffa6c}} 
+\index{main.c@{main.c}!IPSEC\_NAT\_T\_PORT@{IPSEC\_NAT\_T\_PORT}}
+\index{IPSEC\_NAT\_T\_PORT@{IPSEC\_NAT\_T\_PORT}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{IPSEC\_NAT\_T\_PORT}{IPSEC\_NAT\_T\_PORT}}
+{\footnotesize\ttfamily \#define I\+P\+S\+E\+C\+\_\+\+N\+A\+T\+\_\+\+T\+\_\+\+P\+O\+RT~4500}
+
+\mbox{\Hypertarget{snart-1_80_2src_2main_8c_aeca13153b86543a44ff0967da3d59108}\label{snart-1_80_2src_2main_8c_aeca13153b86543a44ff0967da3d59108}} 
+\index{main.c@{main.c}!ISAKMP\_PORT@{ISAKMP\_PORT}}
+\index{ISAKMP\_PORT@{ISAKMP\_PORT}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{ISAKMP\_PORT}{ISAKMP\_PORT}}
+{\footnotesize\ttfamily \#define I\+S\+A\+K\+M\+P\+\_\+\+P\+O\+RT~500}
+
+\mbox{\Hypertarget{snart-1_80_2src_2main_8c_a50b04606ab2df25335c9c0ca42d14484}\label{snart-1_80_2src_2main_8c_a50b04606ab2df25335c9c0ca42d14484}} 
+\index{main.c@{main.c}!MBUF\_CACHE\_SIZE@{MBUF\_CACHE\_SIZE}}
+\index{MBUF\_CACHE\_SIZE@{MBUF\_CACHE\_SIZE}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{MBUF\_CACHE\_SIZE}{MBUF\_CACHE\_SIZE}}
+{\footnotesize\ttfamily \#define M\+B\+U\+F\+\_\+\+C\+A\+C\+H\+E\+\_\+\+S\+I\+ZE~250}
+
+\mbox{\Hypertarget{snart-1_80_2src_2main_8c_ae543d743ada71b167a5cbd813b15fa7f}\label{snart-1_80_2src_2main_8c_ae543d743ada71b167a5cbd813b15fa7f}} 
+\index{main.c@{main.c}!NUM\_MBUFS@{NUM\_MBUFS}}
+\index{NUM\_MBUFS@{NUM\_MBUFS}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{NUM\_MBUFS}{NUM\_MBUFS}}
+{\footnotesize\ttfamily \#define N\+U\+M\+\_\+\+M\+B\+U\+FS~8191}
+
+\mbox{\Hypertarget{snart-1_80_2src_2main_8c_afcfb8ac36c733187de151348eb50ef01}\label{snart-1_80_2src_2main_8c_afcfb8ac36c733187de151348eb50ef01}} 
+\index{main.c@{main.c}!RX\_RING\_SIZE@{RX\_RING\_SIZE}}
+\index{RX\_RING\_SIZE@{RX\_RING\_SIZE}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{RX\_RING\_SIZE}{RX\_RING\_SIZE}}
+{\footnotesize\ttfamily \#define R\+X\+\_\+\+R\+I\+N\+G\+\_\+\+S\+I\+ZE~1024}
+
+\mbox{\Hypertarget{snart-1_80_2src_2main_8c_a530086d082c22e371518c2497c6d9014}\label{snart-1_80_2src_2main_8c_a530086d082c22e371518c2497c6d9014}} 
+\index{main.c@{main.c}!TX\_RING\_SIZE@{TX\_RING\_SIZE}}
+\index{TX\_RING\_SIZE@{TX\_RING\_SIZE}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{TX\_RING\_SIZE}{TX\_RING\_SIZE}}
+{\footnotesize\ttfamily \#define T\+X\+\_\+\+R\+I\+N\+G\+\_\+\+S\+I\+ZE~1024}
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{snart-1_80_2src_2main_8c_aaa2e94f14df16ea8c73d128c27415952}\label{snart-1_80_2src_2main_8c_aaa2e94f14df16ea8c73d128c27415952}} 
+\index{main.c@{main.c}!count\_packets@{count\_packets}}
+\index{count\_packets@{count\_packets}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{count\_packets()}{count\_packets()}}
+{\footnotesize\ttfamily void$\ast$ count\+\_\+packets (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{snart-1_80_2src_2main_8c_a3c04138a5bfe5d72780bb7e82a18e627}\label{snart-1_80_2src_2main_8c_a3c04138a5bfe5d72780bb7e82a18e627}} 
+\index{main.c@{main.c}!main@{main}}
+\index{main@{main}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{main()}{main()}}
+{\footnotesize\ttfamily int main (\begin{DoxyParamCaption}\item[{int}]{argc,  }\item[{char $\ast$$\ast$}]{argv }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{snart-1_80_2src_2main_8c_a90206c967e0da3d8d219109d354e7c54}\label{snart-1_80_2src_2main_8c_a90206c967e0da3d8d219109d354e7c54}} 
+\index{main.c@{main.c}!port\_init@{port\_init}}
+\index{port\_init@{port\_init}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{port\_init()}{port\_init()}}
+{\footnotesize\ttfamily int port\+\_\+init (\begin{DoxyParamCaption}\item[{uint16\+\_\+t}]{port,  }\item[{struct rte\+\_\+mempool $\ast$}]{mbufpool }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{snart-1_80_2src_2main_8c_ad446b5782bcb2d8ffc0aa1f8c4d16ded}\label{snart-1_80_2src_2main_8c_ad446b5782bcb2d8ffc0aa1f8c4d16ded}} 
+\index{main.c@{main.c}!timeout@{timeout}}
+\index{timeout@{timeout}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{timeout()}{timeout()}}
+{\footnotesize\ttfamily void timeout (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{snart-1_80_2src_2main_8c_acf32a4c80736b62a6b2fe527c8aaa94e}\label{snart-1_80_2src_2main_8c_acf32a4c80736b62a6b2fe527c8aaa94e}} 
+\index{main.c@{main.c}!isakmp\_pkts@{isakmp\_pkts}}
+\index{isakmp\_pkts@{isakmp\_pkts}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{isakmp\_pkts}{isakmp\_pkts}}
+{\footnotesize\ttfamily int isakmp\+\_\+pkts = 0}
+
+\mbox{\Hypertarget{snart-1_80_2src_2main_8c_acbcadc2b305131b58e540fca959ba01d}\label{snart-1_80_2src_2main_8c_acbcadc2b305131b58e540fca959ba01d}} 
+\index{main.c@{main.c}!legit\_pkts@{legit\_pkts}}
+\index{legit\_pkts@{legit\_pkts}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{legit\_pkts}{legit\_pkts}}
+{\footnotesize\ttfamily int legit\+\_\+pkts = 0}
+
+\mbox{\Hypertarget{snart-1_80_2src_2main_8c_a93ca61d8617417222c811d39d6c260b0}\label{snart-1_80_2src_2main_8c_a93ca61d8617417222c811d39d6c260b0}} 
+\index{main.c@{main.c}!malformed\_pkts@{malformed\_pkts}}
+\index{malformed\_pkts@{malformed\_pkts}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{malformed\_pkts}{malformed\_pkts}}
+{\footnotesize\ttfamily int malformed\+\_\+pkts = 0}
+
+\mbox{\Hypertarget{snart-1_80_2src_2main_8c_a699203bc36a6bd1bbbc5182eec978762}\label{snart-1_80_2src_2main_8c_a699203bc36a6bd1bbbc5182eec978762}} 
+\index{main.c@{main.c}!non\_ipsec@{non\_ipsec}}
+\index{non\_ipsec@{non\_ipsec}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{non\_ipsec}{non\_ipsec}}
+{\footnotesize\ttfamily int non\+\_\+ipsec = 0}
+
+\mbox{\Hypertarget{snart-1_80_2src_2main_8c_aae1d012f3235c240c883ec0b06b8b92a}\label{snart-1_80_2src_2main_8c_aae1d012f3235c240c883ec0b06b8b92a}} 
+\index{main.c@{main.c}!object@{object}}
+\index{object@{object}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{object}{object}}
+{\footnotesize\ttfamily void$\ast$ object\mbox{[}$\,$\mbox{]} = \{0\}}
+
+\mbox{\Hypertarget{snart-1_80_2src_2main_8c_a1aef0fce3effd2378edcd4b110609c39}\label{snart-1_80_2src_2main_8c_a1aef0fce3effd2378edcd4b110609c39}} 
+\index{main.c@{main.c}!tampered\_pkts@{tampered\_pkts}}
+\index{tampered\_pkts@{tampered\_pkts}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{tampered\_pkts}{tampered\_pkts}}
+{\footnotesize\ttfamily int tampered\+\_\+pkts = 0}
+
+\mbox{\Hypertarget{snart-1_80_2src_2main_8c_a0c2bf3e18f553a6c2d34b58094ba5402}\label{snart-1_80_2src_2main_8c_a0c2bf3e18f553a6c2d34b58094ba5402}} 
+\index{main.c@{main.c}!tolerance@{tolerance}}
+\index{tolerance@{tolerance}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{tolerance}{tolerance}}
+{\footnotesize\ttfamily uint32\+\_\+t tolerance = 15}
+
+\mbox{\Hypertarget{snart-1_80_2src_2main_8c_a0f5a1802eebbfc6bf22c54257a9cf9ea}\label{snart-1_80_2src_2main_8c_a0f5a1802eebbfc6bf22c54257a9cf9ea}} 
+\index{main.c@{main.c}!total\_processed@{total\_processed}}
+\index{total\_processed@{total\_processed}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{total\_processed}{total\_processed}}
+{\footnotesize\ttfamily int total\+\_\+processed = 0}
+

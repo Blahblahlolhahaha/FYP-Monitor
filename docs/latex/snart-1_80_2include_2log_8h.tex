@@ -1,0 +1,95 @@
+\hypertarget{snart-1_80_2include_2log_8h}{}\doxysection{snart-\/1.0/include/log.h File Reference}
+\label{snart-1_80_2include_2log_8h}\index{snart-\/1.0/include/log.h@{snart-\/1.0/include/log.h}}
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$time.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}../deps/b64/b64.\+h\char`\"{}}\newline
+Include dependency graph for log.\+h\+:
+% FIG 0
+This graph shows which files directly or indirectly include this file\+:
+% FIG 1
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{snart-1_80_2include_2log_8h_a928954856513bb072171d893d347f39b}{write\+\_\+log}} (char $\ast$file\+\_\+name, char log\mbox{[}$\,$\mbox{]}, char $\ast$$\ast$loghash)
+\item 
+void \mbox{\hyperlink{snart-1_80_2include_2log_8h_a00b8e59b405ebd43ee7180357a4bf7e1}{get\+\_\+current\+\_\+time}} (char $\ast$buf)
+\item 
+int \mbox{\hyperlink{snart-1_80_2include_2log_8h_a3ee1333ba9b94d45d10ba51b3a54e8be}{find}} (char $\ast$string, char $\ast$substr, int offset)
+\item 
+void \mbox{\hyperlink{snart-1_80_2include_2log_8h_a63380dff82cd01e6da48f398241c4324}{hash}} (unsigned char $\ast$buffer, unsigned char $\ast$$\ast$hash)
+\item 
+void \mbox{\hyperlink{snart-1_80_2include_2log_8h_a46c855aa24a726a39272760b08b671e8}{init\+\_\+hash}} ()
+\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+unsigned char $\ast$ \mbox{\hyperlink{snart-1_80_2include_2log_8h_a7fca59ffa00e5ef99d8116f78682e360}{non\+\_\+ipsec\+\_\+hash}}
+\item 
+unsigned char $\ast$ \mbox{\hyperlink{snart-1_80_2include_2log_8h_a4e2fcd560da9c7d20f2c306c2e58f052}{tampered\+\_\+hash}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{snart-1_80_2include_2log_8h_a3ee1333ba9b94d45d10ba51b3a54e8be}\label{snart-1_80_2include_2log_8h_a3ee1333ba9b94d45d10ba51b3a54e8be}} 
+\index{log.h@{log.h}!find@{find}}
+\index{find@{find}!log.h@{log.h}}
+\doxysubsubsection{\texorpdfstring{find()}{find()}}
+{\footnotesize\ttfamily int find (\begin{DoxyParamCaption}\item[{char $\ast$}]{string,  }\item[{char $\ast$}]{substr,  }\item[{int}]{offset }\end{DoxyParamCaption})}
+
+Gets position of a substring starting from a specified offset 
+\begin{DoxyParams}{Parameters}
+{\em string} & string to search for the substring \\
+\hline
+{\em substr} & substring to search for \\
+\hline
+{\em offset} & offset to start searching \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+position of the substring. If not substring is not found, the function returns -\/1 
+\end{DoxyReturn}
+\mbox{\Hypertarget{snart-1_80_2include_2log_8h_a00b8e59b405ebd43ee7180357a4bf7e1}\label{snart-1_80_2include_2log_8h_a00b8e59b405ebd43ee7180357a4bf7e1}} 
+\index{log.h@{log.h}!get\_current\_time@{get\_current\_time}}
+\index{get\_current\_time@{get\_current\_time}!log.h@{log.h}}
+\doxysubsubsection{\texorpdfstring{get\_current\_time()}{get\_current\_time()}}
+{\footnotesize\ttfamily void get\+\_\+current\+\_\+time (\begin{DoxyParamCaption}\item[{char $\ast$}]{buf }\end{DoxyParamCaption})}
+
+Gets current time in the format dd/mm/yyyy hh\+:\+MM\+:ss format 
+\begin{DoxyParams}{Parameters}
+{\em buf} & string to store the formatted string \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{snart-1_80_2include_2log_8h_a63380dff82cd01e6da48f398241c4324}\label{snart-1_80_2include_2log_8h_a63380dff82cd01e6da48f398241c4324}} 
+\index{log.h@{log.h}!hash@{hash}}
+\index{hash@{hash}!log.h@{log.h}}
+\doxysubsubsection{\texorpdfstring{hash()}{hash()}}
+{\footnotesize\ttfamily void hash (\begin{DoxyParamCaption}\item[{unsigned char $\ast$}]{buffer,  }\item[{unsigned char $\ast$$\ast$}]{hash }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{snart-1_80_2include_2log_8h_a46c855aa24a726a39272760b08b671e8}\label{snart-1_80_2include_2log_8h_a46c855aa24a726a39272760b08b671e8}} 
+\index{log.h@{log.h}!init\_hash@{init\_hash}}
+\index{init\_hash@{init\_hash}!log.h@{log.h}}
+\doxysubsubsection{\texorpdfstring{init\_hash()}{init\_hash()}}
+{\footnotesize\ttfamily void init\+\_\+hash (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{snart-1_80_2include_2log_8h_a928954856513bb072171d893d347f39b}\label{snart-1_80_2include_2log_8h_a928954856513bb072171d893d347f39b}} 
+\index{log.h@{log.h}!write\_log@{write\_log}}
+\index{write\_log@{write\_log}!log.h@{log.h}}
+\doxysubsubsection{\texorpdfstring{write\_log()}{write\_log()}}
+{\footnotesize\ttfamily void write\+\_\+log (\begin{DoxyParamCaption}\item[{char $\ast$}]{file\+\_\+name,  }\item[{char}]{log\mbox{[}$\,$\mbox{]},  }\item[{char $\ast$$\ast$}]{loghash }\end{DoxyParamCaption})}
+
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\Hypertarget{snart-1_80_2include_2log_8h_a7fca59ffa00e5ef99d8116f78682e360}\label{snart-1_80_2include_2log_8h_a7fca59ffa00e5ef99d8116f78682e360}} 
+\index{log.h@{log.h}!non\_ipsec\_hash@{non\_ipsec\_hash}}
+\index{non\_ipsec\_hash@{non\_ipsec\_hash}!log.h@{log.h}}
+\doxysubsubsection{\texorpdfstring{non\_ipsec\_hash}{non\_ipsec\_hash}}
+{\footnotesize\ttfamily unsigned char$\ast$ non\+\_\+ipsec\+\_\+hash}
+
+\mbox{\Hypertarget{snart-1_80_2include_2log_8h_a4e2fcd560da9c7d20f2c306c2e58f052}\label{snart-1_80_2include_2log_8h_a4e2fcd560da9c7d20f2c306c2e58f052}} 
+\index{log.h@{log.h}!tampered\_hash@{tampered\_hash}}
+\index{tampered\_hash@{tampered\_hash}!log.h@{log.h}}
+\doxysubsubsection{\texorpdfstring{tampered\_hash}{tampered\_hash}}
+{\footnotesize\ttfamily unsigned char$\ast$ tampered\+\_\+hash}
+

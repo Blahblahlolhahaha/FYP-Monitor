@@ -300,12 +300,12 @@ struct delete{
 };
 
 struct tunnel{
-    uint64_t client_spi;
-    uint64_t host_spi;
+    uint64_t initiator_spi;
+    uint64_t responder_spi;
     int client_ip;
     int host_ip;
-    uint32_t client_esp_spi;
-    uint32_t host_esp_spi;
+    uint32_t client_spi;
+    uint32_t host_spi;
     uint32_t client_seq;
     uint32_t host_seq;
     bool dpd;
@@ -333,7 +333,7 @@ char *get_exchange_type (struct rte_isakmp_hdr *hdr);
 
 char *get_ike_payload_type(struct rte_isakmp_hdr *hdr);
 
-char *get_payload_nxt_payload(struct isakmp_payload_hdr *hdr);
+char *get_nxt_payload(struct isakmp_payload_hdr *hdr);
 
 void print_isakmp_headers_info(struct rte_isakmp_hdr *isakmp_hdr);
 
@@ -341,7 +341,7 @@ int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hd
 
 void get_ip_address_string(rte_be32_t ip_address,char *ip);
 
-void get_ipv6_hdr_string(struct rte_ipv6_hdr *hdr,char *src_ip, char *dst_ip);
+void get_ipv6_address_string(struct rte_ipv6_hdr *hdr,char *src_ip, char *dst_ip);
 
 void delete_tunnel(uint64_t initiator_spi,uint64_t responder_spi,int src_addr,int dst_addr);
 

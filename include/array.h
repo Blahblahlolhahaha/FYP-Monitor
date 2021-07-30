@@ -8,15 +8,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-
-/**
- * An Array that can dynamically increase/decrease in size based on the elements 
- * 
- * Array objects are stored in the following sequence:
- * {int size*,void* object1, void* object2}
- * 
- * When looping through the array using a for loop and removing objects: should start at index 1 rather than index 0
-*/
 typedef enum{
     INT,DOUBLE,LONG,FLOAT,CHAR,STRING,VOID
 }Type;
@@ -41,11 +32,15 @@ void initArray(struct Array* array,size_t initSize, void** objects,bool string,_
 
 /**
  * Appends a object to the array
+ * @param array: pointer to array struct
+ * @param object: object to add
  */
 void push(struct Array* array,void* object);
 
 /**
  * Appends multiple objects to the array
+ * @param array: pointer to array struct
+ * @param objects: array of objects to add to array.
  */
 void pushObjects(struct Array* array,void** objects);
 
