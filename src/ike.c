@@ -331,7 +331,7 @@ void get_transformations(struct rte_mbuf *pkt, int offset,int size,char *buf,int
 
 int analyse_SA(struct rte_mbuf *pkt,uint16_t offset,struct rte_isakmp_hdr *isakmp_hdr){
     int check = 1;
-    if(offset + sizeof(struct isakmp_payload_hdr) < rte_pktmbuf_data_len(pkt) ){
+    if(offset + sizeof(struct isakmp_payload_hdr) <= rte_pktmbuf_data_len(pkt) ){
         struct isakmp_payload_hdr *payload;
         payload = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr *,offset); //get payload header
         char **proposals;
@@ -551,7 +551,7 @@ int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hd
             break;
 
         default:{
-            if(offset + sizeof(struct isakmp_payload_hdr) < rte_pktmbuf_data_len(pkt) ){
+            if(offset + sizeof(struct isakmp_payload_hdr) <= rte_pktmbuf_data_len(pkt) ){
                 struct isakmp_payload_hdr *payload_hdr;
                 payload_hdr = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr *,offset);
                 if(nxt_payload != SKF){

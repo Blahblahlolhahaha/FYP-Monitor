@@ -14,7 +14,7 @@
 #include <unistd.h>
 
 
-#include "../include/ike.h"
+#include "include/ike.h"
 
 #define RX_RING_SIZE 1024
 #define TX_RING_SIZE 1024
@@ -136,17 +136,16 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
         if(sizeof(ether_hdr) < x){
             ether_hdr = rte_pktmbuf_mtod(pkt,struct rte_ether_hdr*);
             if(rte_be_to_cpu_16(ether_hdr->ether_type) == RTE_ETHER_TYPE_IPV4){
-                if(IPV4_OFFSET + sizeof(struct rte_ipv4_hdr) < x){
+                if(IPV4_OFFSET + sizeof(struct rte_ipv4_hdr) <= x){
                     ipv4_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_ipv4_hdr *, IPV4_OFFSET); //get ipv4 header
                     /* check protocol (ICMP, UDP, TCP etc)
                         Due to UDP encapsulation, esp packet shld be within a udp packet with dst/src port 4500
                     */       
-
                     get_ip_address_string(ipv4_hdr->src_addr,src_addr);
                     get_ip_address_string(ipv4_hdr->dst_addr,dst_addr);
 
                     if(ipv4_hdr->next_proto_id == IPPROTO_UDP){
-                        if(UDP_OFFSET + sizeof(struct rte_udp_hdr) < x){
+                        if(UDP_OFFSET + sizeof(struct rte_udp_hdr) <= x){
                             // printf("Protocol: UDP\n");
                             struct rte_udp_hdr *udp_hdr;
                             udp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_udp_hdr *,UDP_OFFSET); //get udp header
@@ -158,10 +157,10 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                             // printf("Src port: %u\n",dst_port);
                             // printf("Dst port: %u\n",src_port);
                             if(dst_port == IPSEC_NAT_T_PORT || src_port == IPSEC_NAT_T_PORT){
-                                if(ESP_OFFSET + sizeof(struct ISAKMP_TEST) < x){
+                                if(ESP_OFFSET + sizeof(struct ISAKMP_TEST) <= x){
                                     struct ISAKMP_TEST *test;
                                     test = rte_pktmbuf_mtod_offset(pkt,struct ISAKMP_TEST*,ESP_OFFSET);
-                                    if(ISAKMP_OFFSET + sizeof(struct rte_isakmp_hdr) < x || ESP_OFFSET + sizeof(struct rte_esp_hdr) < x){
+                                    if(ISAKMP_OFFSET + sizeof(struct rte_isakmp_hdr) <= x || ESP_OFFSET + sizeof(struct rte_esp_hdr) <= x){
                                         if(test->test_octet == 0){
                                             struct rte_isakmp_hdr *isakmp_hdr;
                                             isakmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_isakmp_hdr*,ISAKMP_OFFSET);
@@ -321,41 +320,63 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                             
                             }
                             else if(dst_port == ISAKMP_PORT || src_port == ISAKMP_PORT){
-                                struct rte_isakmp_hdr *isakmp_hdr;
-                                isakmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_isakmp_hdr*,ESP_OFFSET);
-                                // print_isakmp_headers_info(hdr);
-                                if(isakmp_hdr->exchange_type ==  IKE_SA_INIT){
-                                    if(get_initiator_flag(isakmp_hdr) == 1){
-                                        snprintf(log,2048,"%s;%s is trying to initiate IKE exchange with %s\n",current_time
-                                        ,src_addr, dst_addr);
-                                        write_log(ipsec_log,log,LOG_INFO);
+                                if(ESP_OFFSET + sizeof(struct rte_isakmp_hdr) <= x){
+                                    struct rte_isakmp_hdr *isakmp_hdr;
+                                    isakmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_isakmp_hdr*,ESP_OFFSET);
+                                    // print_isakmp_headers_info(hdr);
+                                    if(isakmp_hdr->exchange_type ==  IKE_SA_INIT){
+                                        if(get_initiator_flag(isakmp_hdr) == 1){
+                                            snprintf(log,2048,"%s;%s is trying to initiate IKE exchange with %s\n",current_time
+                                            ,src_addr, dst_addr);
+                                            write_log(ipsec_log,log,LOG_INFO);
+                                        
+                                        }
+                                        else if(check_if_tunnel_exists(isakmp_hdr,ipv4_hdr)==0 && isakmp_hdr->responder_spi != (rte_be64_t)0){                                                                              
+                                            //Only if server responds then tunnel should be considered legit
+                                            struct tunnel new_tunnel;
+                                            new_tunnel.host_ip = ipv4_hdr->src_addr;
+                                            new_tunnel.client_ip = ipv4_hdr->dst_addr;
+
+                                            new_tunnel.responder_spi = isakmp_hdr->responder_spi;
+                                            new_tunnel.initiator_spi = isakmp_hdr->initiator_spi;
+                                            new_tunnel.host_spi = 0;
+                                            new_tunnel.client_spi = 0;
+
+                                            new_tunnel.dpd = false;
+                                            new_tunnel.dpd_count = 0;
+
+                                            new_tunnel.client_seq = 0;
+                                            new_tunnel.host_seq = 0;
+                                            new_tunnel.timeout = 0;
+                                            new_tunnel.auth = false;
+                                            new_tunnel.client_loaded = false;
+                                            new_tunnel.host_loaded = false;
+                                            push(tunnels,&new_tunnel);
+                                        }
+                                        int check = analyse_isakmp_payload(pkt,isakmp_hdr,first_payload_hdr_offset + 4,isakmp_hdr->nxt_payload);
+                                        // print_isakmp_headers_info(isakmp_hdr);
+                                        if(check == 1){
+                                            isakmp_pkts++;
+                                        }
+                                        else{
+                                            snprintf(log,2048,"%s;INVALID_ISAKMP_PACKET;%s;%s;%lx;%lx\n",current_time
+                                            ,src_addr, dst_addr, isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi);
+                                            write_log(ipsec_log,log,LOG_WARNING);
+                                            tampered_pkts++;
+                                        }
+
+                                    }
+                                    else{
+                                        snprintf(log,2048,"%s;INVALID_ISAKMP_PACKET;%s;%s;%lx;%lx\n",current_time
+                                        ,src_addr, dst_addr, isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi);
+                                        write_log(ipsec_log,log,LOG_WARNING);
+                                        tampered_pkts++;
+                                    }
                                     
-                                    }
-                                    else if(check_if_tunnel_exists(isakmp_hdr,ipv4_hdr)==0 && isakmp_hdr->responder_spi != (rte_be64_t)0){                                                                              
-                                        //Only if server responds then tunnel should be considered legit
-                                        struct tunnel new_tunnel;
-                                        new_tunnel.host_ip = ipv4_hdr->src_addr;
-                                        new_tunnel.client_ip = ipv4_hdr->dst_addr;
-
-                                        new_tunnel.responder_spi = isakmp_hdr->responder_spi;
-                                        new_tunnel.initiator_spi = isakmp_hdr->initiator_spi;
-                                        new_tunnel.host_spi = 0;
-                                        new_tunnel.client_spi = 0;
-
-                                        new_tunnel.dpd = false;
-                                        new_tunnel.dpd_count = 0;
-
-                                        new_tunnel.client_seq = 0;
-                                        new_tunnel.host_seq = 0;
-                                        new_tunnel.timeout = 0;
-                                        new_tunnel.auth = false;
-                                        new_tunnel.client_loaded = false;
-                                        new_tunnel.host_loaded = false;
-                                        push(tunnels,&new_tunnel);
-                                    }
-                                    analyse_isakmp_payload(pkt,isakmp_hdr,first_payload_hdr_offset,isakmp_hdr->nxt_payload);
                                 }
-                                isakmp_pkts++;
+                                else{
+                                    malformed = true;
+                                }
                             }
                             else{ 
                                 //not esp packet
@@ -366,13 +387,14 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                 
 
                             }   
+                                
                         }
                         else{
                             malformed = true;
                         }
                     }
                     else if(ipv4_hdr->next_proto_id == IPPROTO_TCP){
-                        if(UDP_OFFSET + sizeof(struct rte_tcp_hdr) < x){
+                        if(UDP_OFFSET + sizeof(struct rte_tcp_hdr) <= x){
                             //TCP packet
                             //TODO: should log protocol xD
                             struct rte_tcp_hdr* tcp_hdr;
@@ -391,7 +413,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                     }
                     else if(ipv4_hdr->next_proto_id == IPPROTO_ICMP){
                         //ICMP packet
-                        if(UDP_OFFSET + sizeof(struct rte_icmp_hdr) < x){
+                        if(UDP_OFFSET + sizeof(struct rte_icmp_hdr) <= x){
                             struct rte_icmp_hdr* icmp_hdr;
                             icmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_icmp_hdr*,UDP_OFFSET);
                             if(icmp_hdr->icmp_type == 0){
@@ -421,12 +443,12 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                 }
             }
             else if(rte_be_to_cpu_16(ether_hdr->ether_type) == RTE_ETHER_TYPE_IPV6){
-                if(IPV4_OFFSET + sizeof(struct rte_ipv6_hdr) < x){
+                if(IPV4_OFFSET + sizeof(struct rte_ipv6_hdr) <= x){
                     struct rte_ipv6_hdr *ipv6_hdr =rte_pktmbuf_mtod_offset(pkt,struct rte_ipv6_hdr*,IPV4_OFFSET);
                     get_ipv6_address_string(ipv6_hdr->src_addr,src_addr);
                     get_ipv6_address_string(ipv6_hdr->dst_addr,dst_addr);
                     if(ipv6_hdr->proto == IPPROTO_TCP){
-                        if(UDP_OFFSET_6 + sizeof(struct rte_tcp_hdr) < x){
+                        if(UDP_OFFSET_6 + sizeof(struct rte_tcp_hdr) <= x){
                             //IPv6 TCP packet
                             struct rte_tcp_hdr* tcp_hdr;
                             
@@ -441,7 +463,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                         }
                     }
                      if(ipv6_hdr->proto == IPPROTO_UDP){
-                        if(UDP_OFFSET_6 + sizeof(struct rte_tcp_hdr) < x){
+                        if(UDP_OFFSET_6 + sizeof(struct rte_tcp_hdr) <= x){
                             //IPv6 TCP packet
                             struct rte_udp_hdr* udp_hdr;
                             udp_hdr =  rte_pktmbuf_mtod_offset(pkt,struct rte_udp_hdr*,UDP_OFFSET_6);
@@ -456,7 +478,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                     }
                     else if(ipv6_hdr->proto == IPPROTO_ICMPV6){
                         //ICMP packet
-                        if(UDP_OFFSET + sizeof(struct rte_icmp_hdr) < x){
+                        if(UDP_OFFSET + sizeof(struct rte_icmp_hdr) <= x){
                             struct rte_icmp_hdr* icmp_hdr;
                             icmp_hdr = rte_pktmbuf_mtod_offset(pkt,struct rte_icmp_hdr*,UDP_OFFSET_6);
                             if(icmp_hdr->icmp_type == 0){
