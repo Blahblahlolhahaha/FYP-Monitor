@@ -408,7 +408,9 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                             write_log(main_log,log,LOG_WARNING);
                             non_ipsec++;
                         }
-
+                        else{
+                            malformed = true;
+                        }
                         
                     }
                     else if(ipv4_hdr->next_proto_id == IPPROTO_ICMP){
@@ -461,6 +463,9 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                             printf("%s",log);
                             write_log(main_log,log,LOG_WARNING);
                         }
+                        else{
+                            malformed = true;
+                        }
                     }
                      if(ipv6_hdr->proto == IPPROTO_UDP){
                         if(UDP_OFFSET_6 + sizeof(struct rte_tcp_hdr) <= x){
@@ -474,6 +479,9 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                             ,src_addr,src_port,dst_addr,dst_port);
                             
                             write_log(main_log,log,LOG_WARNING);
+                        }
+                        else{
+                            malformed = true;
                         }
                     }
                     else if(ipv6_hdr->proto == IPPROTO_ICMPV6){
