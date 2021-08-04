@@ -1,0 +1,422 @@
+\hypertarget{ike_8c}{}\doxysection{src/ike.c File Reference}
+\label{ike_8c}\index{src/ike.c@{src/ike.c}}
+{\ttfamily \#include \char`\"{}../include/ike.\+h\char`\"{}}\newline
+Include dependency graph for ike.\+c\+:
+% FIG 0
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+int \mbox{\hyperlink{ike_8c_aca7d9f651a0d283c550af7be33890225}{get\+\_\+response\+\_\+flag}} (struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$isakmp\+\_\+hdr)
+\item 
+int \mbox{\hyperlink{ike_8c_a154bbaba7a2b6a8a2173f6c9923838f0}{get\+\_\+version\+\_\+flag}} (struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$isakmp\+\_\+hdr)
+\item 
+int \mbox{\hyperlink{ike_8c_aaf70387bba31c570d179b19ed74da03e}{get\+\_\+initiator\+\_\+flag}} (struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$isakmp\+\_\+hdr)
+\item 
+char $\ast$ \mbox{\hyperlink{ike_8c_a2913f0679adb7c78cdf3db5c879550c2}{get\+\_\+exchange\+\_\+type}} (struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$isakmp\+\_\+hdr)
+\item 
+char $\ast$ \mbox{\hyperlink{ike_8c_a51f7fe32cda95ae93204921941161f80}{get\+\_\+ike\+\_\+payload\+\_\+type}} (struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$isakmp\+\_\+hdr)
+\item 
+char $\ast$ \mbox{\hyperlink{ike_8c_a899cfb751a7b632a398085b40467a89e}{get\+\_\+nxt\+\_\+payload}} (struct \mbox{\hyperlink{structisakmp__payload__hdr}{isakmp\+\_\+payload\+\_\+hdr}} $\ast$\mbox{\hyperlink{structisakmp__payload__hdr}{isakmp\+\_\+payload\+\_\+hdr}})
+\item 
+void \mbox{\hyperlink{ike_8c_ac41f892693e060bc5b9eb439ceb338e1}{print\+\_\+isakmp\+\_\+headers\+\_\+info}} (struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$isakmp\+\_\+hdr)
+\item 
+int \mbox{\hyperlink{ike_8c_a44cf385dc1838a9ae7e21a21af4bd328}{analyse\+\_\+\+KE}} (struct rte\+\_\+mbuf $\ast$pkt, uint16\+\_\+t offset, struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$isakmp\+\_\+hdr)
+\item 
+int \mbox{\hyperlink{ike_8c_ac0c57b48467cef798376948270d59c11}{analyse\+\_\+\+SK}} (struct rte\+\_\+mbuf $\ast$pkt, uint16\+\_\+t offset, struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$isakmp\+\_\+hdr)
+\item 
+int \mbox{\hyperlink{ike_8c_a7ee817e598ac86ed690944ebbe45338b}{analyse\+\_\+N}} (struct rte\+\_\+mbuf $\ast$pkt, uint16\+\_\+t offset, struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$isakmp\+\_\+hdr)
+\item 
+int \mbox{\hyperlink{ike_8c_a539135b2c1be96b7b9f91069fde22857}{analyse\+\_\+\+C\+E\+RT}} (struct rte\+\_\+mbuf $\ast$pkt, uint16\+\_\+t offset, struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$isakmp\+\_\+hdr)
+\item 
+int \mbox{\hyperlink{ike_8c_a9a526d19c84f4e99f0b4460845258dfb}{get\+\_\+proposals}} (struct rte\+\_\+mbuf $\ast$pkt, uint16\+\_\+t offset, char $\ast$$\ast$$\ast$proposals, int $\ast$\mbox{\hyperlink{structcheck}{check}})
+\item 
+void \mbox{\hyperlink{ike_8c_ae5ac8407bb0a2effa8426c630f692914}{get\+\_\+transformations}} (struct rte\+\_\+mbuf $\ast$pkt, int offset, int size, char $\ast$buf, int $\ast$\mbox{\hyperlink{structcheck}{check}})
+\item 
+int \mbox{\hyperlink{ike_8c_a8a230093453801419825f7a2e90c463f}{analyse\+\_\+\+SA}} (struct rte\+\_\+mbuf $\ast$pkt, uint16\+\_\+t offset, struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$isakmp\+\_\+hdr)
+\item 
+void \mbox{\hyperlink{ike_8c_a4f2f0ec7403dcc0f2227f94c985daf56}{delete\+\_\+tunnel}} (uint64\+\_\+t initiator\+\_\+spi, uint64\+\_\+t responder\+\_\+spi, int \mbox{\hyperlink{ike_8h_ad72c5c874018526cf4f6deb19ed37b12}{src\+\_\+addr}}, int \mbox{\hyperlink{ike_8h_a19e93c276638319559df0dc4bd25d56a}{dst\+\_\+addr}})
+\item 
+int \mbox{\hyperlink{ike_8c_a8dda2cc4ea685715608d01a5080022bd}{check\+\_\+ike\+\_\+spi}} (uint64\+\_\+t initiator\+\_\+spi, uint64\+\_\+t responder\+\_\+spi, int \mbox{\hyperlink{ike_8h_ad72c5c874018526cf4f6deb19ed37b12}{src\+\_\+addr}}, int \mbox{\hyperlink{ike_8h_a19e93c276638319559df0dc4bd25d56a}{dst\+\_\+addr}}, struct \mbox{\hyperlink{structtunnel}{tunnel}} $\ast$\mbox{\hyperlink{structtunnel}{tunnel}})
+\item 
+int \mbox{\hyperlink{ike_8c_a8a2e4d2381a97d21c0ed7edf51f25bd3}{check\+\_\+if\+\_\+tunnel\+\_\+exists}} (struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$isakmp\+\_\+hdr, struct rte\+\_\+ipv4\+\_\+hdr $\ast$ipv4\+\_\+hdr)
+\item 
+void \mbox{\hyperlink{ike_8c_a6122cd996dd344c1f2fbe24d125411e7}{get\+\_\+ip\+\_\+address\+\_\+string}} (rte\+\_\+be32\+\_\+t addr, char $\ast$ip)
+\item 
+void \mbox{\hyperlink{ike_8c_a590a7051b45b08f85cbf438873f357bd}{add\+\_\+tunnel}} (struct \mbox{\hyperlink{structtunnel}{tunnel}} $\ast$add)
+\item 
+void \mbox{\hyperlink{ike_8c_ab0b298c3f8e167dd65ab193d8a3b5eae}{remove\+\_\+tunnel}} (struct \mbox{\hyperlink{structtunnel}{tunnel}} $\ast$remove)
+\item 
+void \mbox{\hyperlink{ike_8c_a90b40012e2e402c28879829f2f10a4fb}{load\+\_\+tunnel}} ()
+\item 
+void \mbox{\hyperlink{ike_8c_a87f16d58af0d81a154f7577ff8b501c9}{get\+\_\+ipv6\+\_\+address\+\_\+string}} (uint8\+\_\+t $\ast$addr, char $\ast$ip)
+\item 
+int \mbox{\hyperlink{ike_8c_adf5795554b2555cf4e161fb8c7b4f16f}{analyse\+\_\+isakmp\+\_\+payload}} (struct rte\+\_\+mbuf $\ast$pkt, struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$isakmp\+\_\+hdr, uint16\+\_\+t offset, int nxt\+\_\+payload)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{ike_8c_a590a7051b45b08f85cbf438873f357bd}\label{ike_8c_a590a7051b45b08f85cbf438873f357bd}} 
+\index{ike.c@{ike.c}!add\_tunnel@{add\_tunnel}}
+\index{add\_tunnel@{add\_tunnel}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{add\_tunnel()}{add\_tunnel()}}
+{\footnotesize\ttfamily void add\+\_\+tunnel (\begin{DoxyParamCaption}\item[{struct \mbox{\hyperlink{structtunnel}{tunnel}} $\ast$}]{add }\end{DoxyParamCaption})}
+
+Add tunnels to established tunnel array 
+\begin{DoxyParams}{Parameters}
+{\em tunnel} & tunnel to add \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{ike_8c_a539135b2c1be96b7b9f91069fde22857}\label{ike_8c_a539135b2c1be96b7b9f91069fde22857}} 
+\index{ike.c@{ike.c}!analyse\_CERT@{analyse\_CERT}}
+\index{analyse\_CERT@{analyse\_CERT}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{analyse\_CERT()}{analyse\_CERT()}}
+{\footnotesize\ttfamily int analyse\+\_\+\+C\+E\+RT (\begin{DoxyParamCaption}\item[{struct rte\+\_\+mbuf $\ast$}]{pkt,  }\item[{uint16\+\_\+t}]{offset,  }\item[{struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$}]{isakmp\+\_\+hdr }\end{DoxyParamCaption})}
+
+Analyses a Certificate/\+Certificate request payload 
+\begin{DoxyParams}{Parameters}
+{\em pkt} & \+: pointer to packet used \\
+\hline
+{\em offset} & offset to paylaod header \\
+\hline
+{\em isakmp\+\_\+hdr} & pointer to isakmp headers \\
+\hline
+{\em ipv4\+\_\+hdr} & pointer to ipv4 headers \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+1 if there are no errors analyzing the packet, 0 if otherwise 
+\end{DoxyReturn}
+\mbox{\Hypertarget{ike_8c_adf5795554b2555cf4e161fb8c7b4f16f}\label{ike_8c_adf5795554b2555cf4e161fb8c7b4f16f}} 
+\index{ike.c@{ike.c}!analyse\_isakmp\_payload@{analyse\_isakmp\_payload}}
+\index{analyse\_isakmp\_payload@{analyse\_isakmp\_payload}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{analyse\_isakmp\_payload()}{analyse\_isakmp\_payload()}}
+{\footnotesize\ttfamily int analyse\+\_\+isakmp\+\_\+payload (\begin{DoxyParamCaption}\item[{struct rte\+\_\+mbuf $\ast$}]{pkt,  }\item[{struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$}]{isakmp\+\_\+hdr,  }\item[{uint16\+\_\+t}]{offset,  }\item[{int}]{nxt\+\_\+payload }\end{DoxyParamCaption})}
+
+Analyzes payload within an isakmp packet. Note that this function is recursive in nature and will continue until nxt\+\_\+payload is 0 or packet is found to be malformed 
+\begin{DoxyParams}{Parameters}
+{\em pkt} & Pointer to packet buffer to be analyzed \\
+\hline
+{\em isakmp\+\_\+hdr} & pointer to isakmp headers in a packet \\
+\hline
+{\em offset} & to start analyzing \\
+\hline
+{\em nxt\+\_\+payload} & Should take from isakmp\+\_\+hdr or payload\+\_\+hdr \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+1 if packet is not tampered, 0 if otherrwise 
+\end{DoxyReturn}
+\mbox{\Hypertarget{ike_8c_a44cf385dc1838a9ae7e21a21af4bd328}\label{ike_8c_a44cf385dc1838a9ae7e21a21af4bd328}} 
+\index{ike.c@{ike.c}!analyse\_KE@{analyse\_KE}}
+\index{analyse\_KE@{analyse\_KE}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{analyse\_KE()}{analyse\_KE()}}
+{\footnotesize\ttfamily int analyse\+\_\+\+KE (\begin{DoxyParamCaption}\item[{struct rte\+\_\+mbuf $\ast$}]{pkt,  }\item[{uint16\+\_\+t}]{offset,  }\item[{struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$}]{isakmp\+\_\+hdr }\end{DoxyParamCaption})}
+
+Analyses a Key Exchange payload 
+\begin{DoxyParams}{Parameters}
+{\em pkt} & \+: pointer to packet used \\
+\hline
+{\em offset} & offset to paylaod header \\
+\hline
+{\em isakmp\+\_\+hdr} & pointer to isakmp headers \\
+\hline
+{\em ipv4\+\_\+hdr} & pointer to ipv4 headers \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+1 if there are no errors analyzing the packet, 0 if otherwise 
+\end{DoxyReturn}
+\mbox{\Hypertarget{ike_8c_a7ee817e598ac86ed690944ebbe45338b}\label{ike_8c_a7ee817e598ac86ed690944ebbe45338b}} 
+\index{ike.c@{ike.c}!analyse\_N@{analyse\_N}}
+\index{analyse\_N@{analyse\_N}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{analyse\_N()}{analyse\_N()}}
+{\footnotesize\ttfamily int analyse\+\_\+N (\begin{DoxyParamCaption}\item[{struct rte\+\_\+mbuf $\ast$}]{pkt,  }\item[{uint16\+\_\+t}]{offset,  }\item[{struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$}]{isakmp\+\_\+hdr }\end{DoxyParamCaption})}
+
+Analyses a Notify payload. If an error code is sent, should kill sesssion i think? 
+\begin{DoxyParams}{Parameters}
+{\em pkt} & \+: pointer to packet used \\
+\hline
+{\em offset} & offset to paylaod header \\
+\hline
+{\em isakmp\+\_\+hdr} & pointer to isakmp headers \\
+\hline
+{\em ipv4\+\_\+hdr} & pointer to ipv4 headers \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+1 if there are no errors analyzing the packet, 0 if otherwise 
+\end{DoxyReturn}
+\mbox{\Hypertarget{ike_8c_a8a230093453801419825f7a2e90c463f}\label{ike_8c_a8a230093453801419825f7a2e90c463f}} 
+\index{ike.c@{ike.c}!analyse\_SA@{analyse\_SA}}
+\index{analyse\_SA@{analyse\_SA}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{analyse\_SA()}{analyse\_SA()}}
+{\footnotesize\ttfamily int analyse\+\_\+\+SA (\begin{DoxyParamCaption}\item[{struct rte\+\_\+mbuf $\ast$}]{pkt,  }\item[{uint16\+\_\+t}]{offset,  }\item[{struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$}]{isakmp\+\_\+hdr }\end{DoxyParamCaption})}
+
+Analyses a Security Association payload 
+\begin{DoxyParams}{Parameters}
+{\em pkt} & \+: pointer to packet used \\
+\hline
+{\em offset} & offset to paylaod header \\
+\hline
+{\em isakmp\+\_\+hdr} & pointer to isakmp headers \\
+\hline
+{\em ipv4\+\_\+hdr} & pointer to ipv4 headers \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+1 if there are no errors analyzing the packet, 0 if otherwise 
+\end{DoxyReturn}
+\mbox{\Hypertarget{ike_8c_ac0c57b48467cef798376948270d59c11}\label{ike_8c_ac0c57b48467cef798376948270d59c11}} 
+\index{ike.c@{ike.c}!analyse\_SK@{analyse\_SK}}
+\index{analyse\_SK@{analyse\_SK}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{analyse\_SK()}{analyse\_SK()}}
+{\footnotesize\ttfamily int analyse\+\_\+\+SK (\begin{DoxyParamCaption}\item[{struct rte\+\_\+mbuf $\ast$}]{pkt,  }\item[{uint16\+\_\+t}]{offset,  }\item[{struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$}]{isakmp\+\_\+hdr }\end{DoxyParamCaption})}
+
+Analyses a Authenticated and Encrypted payload. Note that whats inside cannot be analysed because it is encrypted 
+\begin{DoxyParams}{Parameters}
+{\em pkt} & \+: pointer to packet used \\
+\hline
+{\em offset} & offset to paylaod header \\
+\hline
+{\em isakmp\+\_\+hdr} & pointer to isakmp headers \\
+\hline
+{\em ipv4\+\_\+hdr} & pointer to ipv4 headers \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+1 if there are no errors analyzing the packet, 0 if otherwise 
+\end{DoxyReturn}
+\mbox{\Hypertarget{ike_8c_a8a2e4d2381a97d21c0ed7edf51f25bd3}\label{ike_8c_a8a2e4d2381a97d21c0ed7edf51f25bd3}} 
+\index{ike.c@{ike.c}!check\_if\_tunnel\_exists@{check\_if\_tunnel\_exists}}
+\index{check\_if\_tunnel\_exists@{check\_if\_tunnel\_exists}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{check\_if\_tunnel\_exists()}{check\_if\_tunnel\_exists()}}
+{\footnotesize\ttfamily int check\+\_\+if\+\_\+tunnel\+\_\+exists (\begin{DoxyParamCaption}\item[{struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$}]{isakmp\+\_\+hdr,  }\item[{struct rte\+\_\+ipv4\+\_\+hdr $\ast$}]{ipv4\+\_\+hdr }\end{DoxyParamCaption})}
+
+checks whether if ike information in tunnel actually exists 
+\begin{DoxyParams}{Parameters}
+{\em isakmp\+\_\+hdr} & isakmp header containing initiator and responder spis to check \\
+\hline
+{\em ipv4\+\_\+hdr} & I\+P\+V4 header containing respective ip addresses of client and host to check \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+1 if information matches, 0 if otherwise 
+\end{DoxyReturn}
+\mbox{\Hypertarget{ike_8c_a8dda2cc4ea685715608d01a5080022bd}\label{ike_8c_a8dda2cc4ea685715608d01a5080022bd}} 
+\index{ike.c@{ike.c}!check\_ike\_spi@{check\_ike\_spi}}
+\index{check\_ike\_spi@{check\_ike\_spi}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{check\_ike\_spi()}{check\_ike\_spi()}}
+{\footnotesize\ttfamily int check\+\_\+ike\+\_\+spi (\begin{DoxyParamCaption}\item[{uint64\+\_\+t}]{initiator\+\_\+spi,  }\item[{uint64\+\_\+t}]{responder\+\_\+spi,  }\item[{int}]{src\+\_\+addr,  }\item[{int}]{dst\+\_\+addr,  }\item[{struct \mbox{\hyperlink{structtunnel}{tunnel}} $\ast$}]{tunnel }\end{DoxyParamCaption})}
+
+checks whether if ike information in tunnel matches provided spis and ip address 
+\begin{DoxyParams}{Parameters}
+{\em initiator\+\_\+spi} & initiator spi from I\+S\+A\+K\+M\+P/\+I\+KE header \\
+\hline
+{\em responder\+\_\+spi} & responder spi from I\+S\+A\+K\+M\+P/\+I\+KE header \\
+\hline
+{\em src\+\_\+addr} & source address of packet \\
+\hline
+{\em dst\+\_\+addr} & destination address of packet\textbackslash{} \\
+\hline
+{\em tunnel} & tunnel to check against \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+1 if information matches, 0 if otherwise 
+\end{DoxyReturn}
+\mbox{\Hypertarget{ike_8c_a4f2f0ec7403dcc0f2227f94c985daf56}\label{ike_8c_a4f2f0ec7403dcc0f2227f94c985daf56}} 
+\index{ike.c@{ike.c}!delete\_tunnel@{delete\_tunnel}}
+\index{delete\_tunnel@{delete\_tunnel}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{delete\_tunnel()}{delete\_tunnel()}}
+{\footnotesize\ttfamily void delete\+\_\+tunnel (\begin{DoxyParamCaption}\item[{uint64\+\_\+t}]{initiator\+\_\+spi,  }\item[{uint64\+\_\+t}]{responder\+\_\+spi,  }\item[{int}]{src\+\_\+addr,  }\item[{int}]{dst\+\_\+addr }\end{DoxyParamCaption})}
+
+deletes tunnel from authenticated tunnels once session ends 
+\begin{DoxyParams}{Parameters}
+{\em initiator\+\_\+spi} & initiator spi from I\+S\+A\+K\+M\+P/\+I\+KE header \\
+\hline
+{\em responder\+\_\+spi} & responder spi from I\+S\+A\+K\+M\+P/\+I\+KE header \\
+\hline
+{\em src\+\_\+addr} & source address of packet \\
+\hline
+{\em dst\+\_\+addr} & destination address of packet \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{ike_8c_a2913f0679adb7c78cdf3db5c879550c2}\label{ike_8c_a2913f0679adb7c78cdf3db5c879550c2}} 
+\index{ike.c@{ike.c}!get\_exchange\_type@{get\_exchange\_type}}
+\index{get\_exchange\_type@{get\_exchange\_type}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{get\_exchange\_type()}{get\_exchange\_type()}}
+{\footnotesize\ttfamily char$\ast$ get\+\_\+exchange\+\_\+type (\begin{DoxyParamCaption}\item[{struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$}]{isakmp\+\_\+hdr }\end{DoxyParamCaption})}
+
+Gets Exchange type of isakmp packet. Should only be used if logging the exchange type is needed 
+\begin{DoxyParams}{Parameters}
+{\em isakmp\+\_\+hdr} & isakmp header of packet \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+String containing Exchange type of packet 
+\end{DoxyReturn}
+\mbox{\Hypertarget{ike_8c_a51f7fe32cda95ae93204921941161f80}\label{ike_8c_a51f7fe32cda95ae93204921941161f80}} 
+\index{ike.c@{ike.c}!get\_ike\_payload\_type@{get\_ike\_payload\_type}}
+\index{get\_ike\_payload\_type@{get\_ike\_payload\_type}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{get\_ike\_payload\_type()}{get\_ike\_payload\_type()}}
+{\footnotesize\ttfamily char$\ast$ get\+\_\+ike\+\_\+payload\+\_\+type (\begin{DoxyParamCaption}\item[{struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$}]{isakmp\+\_\+hdr }\end{DoxyParamCaption})}
+
+Gets Payload Type from a isakmp header as a string. Should only be used if logging the payload type is needed 
+\begin{DoxyParams}{Parameters}
+{\em isakmp\+\_\+hdr} & isakmp header of packet \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+a string containing the payload type 
+\end{DoxyReturn}
+\mbox{\Hypertarget{ike_8c_aaf70387bba31c570d179b19ed74da03e}\label{ike_8c_aaf70387bba31c570d179b19ed74da03e}} 
+\index{ike.c@{ike.c}!get\_initiator\_flag@{get\_initiator\_flag}}
+\index{get\_initiator\_flag@{get\_initiator\_flag}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{get\_initiator\_flag()}{get\_initiator\_flag()}}
+{\footnotesize\ttfamily int get\+\_\+initiator\+\_\+flag (\begin{DoxyParamCaption}\item[{struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$}]{isakmp\+\_\+hdr }\end{DoxyParamCaption})}
+
+Gets initiator flag of a packet. If 1, means the packet is sent by the initiator else, the packet sent by the responder 
+\begin{DoxyParams}{Parameters}
+{\em isakmp\+\_\+hdr} & I\+K\+E/isakmp headers of the packet \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+initiator flag of the packet 
+\end{DoxyReturn}
+\mbox{\Hypertarget{ike_8c_a6122cd996dd344c1f2fbe24d125411e7}\label{ike_8c_a6122cd996dd344c1f2fbe24d125411e7}} 
+\index{ike.c@{ike.c}!get\_ip\_address\_string@{get\_ip\_address\_string}}
+\index{get\_ip\_address\_string@{get\_ip\_address\_string}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{get\_ip\_address\_string()}{get\_ip\_address\_string()}}
+{\footnotesize\ttfamily void get\+\_\+ip\+\_\+address\+\_\+string (\begin{DoxyParamCaption}\item[{rte\+\_\+be32\+\_\+t}]{addr,  }\item[{char $\ast$}]{ip }\end{DoxyParamCaption})}
+
+converts ipv4 address into strings and place them in ip 
+\begin{DoxyParams}{Parameters}
+{\em addr} & ipv4 address to convert \\
+\hline
+{\em ip} & string to store the converted ip \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{ike_8c_a87f16d58af0d81a154f7577ff8b501c9}\label{ike_8c_a87f16d58af0d81a154f7577ff8b501c9}} 
+\index{ike.c@{ike.c}!get\_ipv6\_address\_string@{get\_ipv6\_address\_string}}
+\index{get\_ipv6\_address\_string@{get\_ipv6\_address\_string}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{get\_ipv6\_address\_string()}{get\_ipv6\_address\_string()}}
+{\footnotesize\ttfamily void get\+\_\+ipv6\+\_\+address\+\_\+string (\begin{DoxyParamCaption}\item[{uint8\+\_\+t $\ast$}]{addr,  }\item[{char $\ast$}]{ip }\end{DoxyParamCaption})}
+
+converts ipv6 address into strings and place them in ip 
+\begin{DoxyParams}{Parameters}
+{\em addr} & ipv6 address to convert \\
+\hline
+{\em ip} & string to store the converted ip \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{ike_8c_a899cfb751a7b632a398085b40467a89e}\label{ike_8c_a899cfb751a7b632a398085b40467a89e}} 
+\index{ike.c@{ike.c}!get\_nxt\_payload@{get\_nxt\_payload}}
+\index{get\_nxt\_payload@{get\_nxt\_payload}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{get\_nxt\_payload()}{get\_nxt\_payload()}}
+{\footnotesize\ttfamily char$\ast$ get\+\_\+nxt\+\_\+payload (\begin{DoxyParamCaption}\item[{struct \mbox{\hyperlink{structisakmp__payload__hdr}{isakmp\+\_\+payload\+\_\+hdr}} $\ast$}]{isakmp\+\_\+payload\+\_\+hdr }\end{DoxyParamCaption})}
+
+Gets Payload Type from a isakmp payload header as a string. Should only be used if logging the payload type is needed 
+\begin{DoxyParams}{Parameters}
+{\em hdr} & isakmp header of packet \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+a string containing the payload type 
+\end{DoxyReturn}
+\mbox{\Hypertarget{ike_8c_a9a526d19c84f4e99f0b4460845258dfb}\label{ike_8c_a9a526d19c84f4e99f0b4460845258dfb}} 
+\index{ike.c@{ike.c}!get\_proposals@{get\_proposals}}
+\index{get\_proposals@{get\_proposals}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{get\_proposals()}{get\_proposals()}}
+{\footnotesize\ttfamily int get\+\_\+proposals (\begin{DoxyParamCaption}\item[{struct rte\+\_\+mbuf $\ast$}]{pkt,  }\item[{uint16\+\_\+t}]{offset,  }\item[{char $\ast$$\ast$$\ast$}]{proposals,  }\item[{int $\ast$}]{check }\end{DoxyParamCaption})}
+
+Get proposals and transformations found in a SA payload 
+\begin{DoxyParams}{Parameters}
+{\em pkt} & pointer to packet being analyzed \\
+\hline
+{\em offset} & offset to SA hdr \\
+\hline
+{\em proposals} & string array containing proposals \\
+\hline
+{\em check} & int to check whether if packet is malformed \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+number of proposals found 
+\end{DoxyReturn}
+\mbox{\Hypertarget{ike_8c_aca7d9f651a0d283c550af7be33890225}\label{ike_8c_aca7d9f651a0d283c550af7be33890225}} 
+\index{ike.c@{ike.c}!get\_response\_flag@{get\_response\_flag}}
+\index{get\_response\_flag@{get\_response\_flag}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{get\_response\_flag()}{get\_response\_flag()}}
+{\footnotesize\ttfamily int get\+\_\+response\+\_\+flag (\begin{DoxyParamCaption}\item[{struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$}]{hdr }\end{DoxyParamCaption})}
+
+Gets response flag of a packet. If 1, means the packet is a response else, the packet is a request 
+\begin{DoxyParams}{Parameters}
+{\em hdr} & I\+K\+E/isakmp headers of the packet \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+response flag of the packet 
+\end{DoxyReturn}
+\mbox{\Hypertarget{ike_8c_ae5ac8407bb0a2effa8426c630f692914}\label{ike_8c_ae5ac8407bb0a2effa8426c630f692914}} 
+\index{ike.c@{ike.c}!get\_transformations@{get\_transformations}}
+\index{get\_transformations@{get\_transformations}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{get\_transformations()}{get\_transformations()}}
+{\footnotesize\ttfamily void get\+\_\+transformations (\begin{DoxyParamCaption}\item[{struct rte\+\_\+mbuf $\ast$}]{pkt,  }\item[{int}]{offset,  }\item[{int}]{size,  }\item[{char $\ast$}]{buf,  }\item[{int $\ast$}]{check }\end{DoxyParamCaption})}
+
+Get Transformations found in a proposal and converts them into a string to log\+: 
+\begin{DoxyParams}{Parameters}
+{\em pkt} & pointer to packet to be analyzed \\
+\hline
+{\em transformations} & pointer to \mbox{\hyperlink{structArray}{Array}} contained in payload\+\_\+struc object \\
+\hline
+{\em offset} & Offset to transformation \\
+\hline
+{\em size} & Number of transformations \\
+\hline
+{\em buf} & string used to store transformations found \\
+\hline
+{\em check} & int to check whether if packet is malformed \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{ike_8c_a154bbaba7a2b6a8a2173f6c9923838f0}\label{ike_8c_a154bbaba7a2b6a8a2173f6c9923838f0}} 
+\index{ike.c@{ike.c}!get\_version\_flag@{get\_version\_flag}}
+\index{get\_version\_flag@{get\_version\_flag}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{get\_version\_flag()}{get\_version\_flag()}}
+{\footnotesize\ttfamily int get\+\_\+version\+\_\+flag (\begin{DoxyParamCaption}\item[{struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$}]{hdr }\end{DoxyParamCaption})}
+
+Gets version flag of a packet. If 1, means the sender can use a higher version of I\+KE 
+\begin{DoxyParams}{Parameters}
+{\em hdr} & I\+K\+E/isakmp headers of the packet \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+version flag of the packet 
+\end{DoxyReturn}
+\mbox{\Hypertarget{ike_8c_a90b40012e2e402c28879829f2f10a4fb}\label{ike_8c_a90b40012e2e402c28879829f2f10a4fb}} 
+\index{ike.c@{ike.c}!load\_tunnel@{load\_tunnel}}
+\index{load\_tunnel@{load\_tunnel}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{load\_tunnel()}{load\_tunnel()}}
+{\footnotesize\ttfamily void load\+\_\+tunnel (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+Load save tunnels from file and add them to established tunnels. The tunnels will have their client\+\_\+loaded and host\+\_\+laoded flag set \mbox{\Hypertarget{ike_8c_ac41f892693e060bc5b9eb439ceb338e1}\label{ike_8c_ac41f892693e060bc5b9eb439ceb338e1}} 
+\index{ike.c@{ike.c}!print\_isakmp\_headers\_info@{print\_isakmp\_headers\_info}}
+\index{print\_isakmp\_headers\_info@{print\_isakmp\_headers\_info}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{print\_isakmp\_headers\_info()}{print\_isakmp\_headers\_info()}}
+{\footnotesize\ttfamily void print\+\_\+isakmp\+\_\+headers\+\_\+info (\begin{DoxyParamCaption}\item[{struct \mbox{\hyperlink{structrte__isakmp__hdr}{rte\+\_\+isakmp\+\_\+hdr}} $\ast$}]{isakmp\+\_\+hdr }\end{DoxyParamCaption})}
+
+Used to print important ike header instructions, can be converted to write log into file if needed 
+\begin{DoxyParams}{Parameters}
+{\em isakmp\+\_\+hdr} & isakmp header of packet \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{ike_8c_ab0b298c3f8e167dd65ab193d8a3b5eae}\label{ike_8c_ab0b298c3f8e167dd65ab193d8a3b5eae}} 
+\index{ike.c@{ike.c}!remove\_tunnel@{remove\_tunnel}}
+\index{remove\_tunnel@{remove\_tunnel}!ike.c@{ike.c}}
+\doxysubsubsection{\texorpdfstring{remove\_tunnel()}{remove\_tunnel()}}
+{\footnotesize\ttfamily void remove\+\_\+tunnel (\begin{DoxyParamCaption}\item[{struct \mbox{\hyperlink{structtunnel}{tunnel}} $\ast$}]{remove }\end{DoxyParamCaption})}
+
+Remove tunnel from saved tunnel file 
+\begin{DoxyParams}{Parameters}
+{\em remove} & tunnel to remove \\
+\hline
+\end{DoxyParams}

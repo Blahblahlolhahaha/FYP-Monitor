@@ -1,0 +1,81 @@
+\hypertarget{structrte__isakmp__hdr}{}\doxysection{rte\+\_\+isakmp\+\_\+hdr Struct Reference}
+\label{structrte__isakmp__hdr}\index{rte\_isakmp\_hdr@{rte\_isakmp\_hdr}}
+
+
+{\ttfamily \#include $<$ike.\+h$>$}
+
+\doxysubsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+rte\+\_\+be64\+\_\+t \mbox{\hyperlink{structrte__isakmp__hdr_ac879c7a16510ed631b068c19c569e128}{initiator\+\_\+spi}}
+\item 
+rte\+\_\+be64\+\_\+t \mbox{\hyperlink{structrte__isakmp__hdr_a99a04641063f9f16d08b24eb2ec16ac2}{responder\+\_\+spi}}
+\item 
+int8\+\_\+t \mbox{\hyperlink{structrte__isakmp__hdr_a6adbfa7329a4eb078119b5cdb4ec1d53}{nxt\+\_\+payload}}
+\item 
+int8\+\_\+t \mbox{\hyperlink{structrte__isakmp__hdr_a8edbacbb67cfb7f89405ad89882b8fc8}{version}}
+\item 
+int8\+\_\+t \mbox{\hyperlink{structrte__isakmp__hdr_a471f291308a7e042a5be709337c1cca6}{exchange\+\_\+type}}
+\item 
+int8\+\_\+t \mbox{\hyperlink{structrte__isakmp__hdr_a6bd5e3cf231933f8744178551e11a983}{flags}}
+\item 
+rte\+\_\+be32\+\_\+t \mbox{\hyperlink{structrte__isakmp__hdr_ab9f9eb408dfdcfeb70be65a21f4db081}{message\+\_\+id}}
+\item 
+rte\+\_\+be32\+\_\+t \mbox{\hyperlink{structrte__isakmp__hdr_ac979a8dd47d8e44a1ddec984dfd8e0ce}{total\+\_\+length}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Field Documentation}
+\mbox{\Hypertarget{structrte__isakmp__hdr_a471f291308a7e042a5be709337c1cca6}\label{structrte__isakmp__hdr_a471f291308a7e042a5be709337c1cca6}} 
+\index{rte\_isakmp\_hdr@{rte\_isakmp\_hdr}!exchange\_type@{exchange\_type}}
+\index{exchange\_type@{exchange\_type}!rte\_isakmp\_hdr@{rte\_isakmp\_hdr}}
+\doxysubsubsection{\texorpdfstring{exchange\_type}{exchange\_type}}
+{\footnotesize\ttfamily int8\+\_\+t rte\+\_\+isakmp\+\_\+hdr\+::exchange\+\_\+type}
+
+type of exchange \mbox{\Hypertarget{structrte__isakmp__hdr_a6bd5e3cf231933f8744178551e11a983}\label{structrte__isakmp__hdr_a6bd5e3cf231933f8744178551e11a983}} 
+\index{rte\_isakmp\_hdr@{rte\_isakmp\_hdr}!flags@{flags}}
+\index{flags@{flags}!rte\_isakmp\_hdr@{rte\_isakmp\_hdr}}
+\doxysubsubsection{\texorpdfstring{flags}{flags}}
+{\footnotesize\ttfamily int8\+\_\+t rte\+\_\+isakmp\+\_\+hdr\+::flags}
+
+Options for the header \mbox{\Hypertarget{structrte__isakmp__hdr_ac879c7a16510ed631b068c19c569e128}\label{structrte__isakmp__hdr_ac879c7a16510ed631b068c19c569e128}} 
+\index{rte\_isakmp\_hdr@{rte\_isakmp\_hdr}!initiator\_spi@{initiator\_spi}}
+\index{initiator\_spi@{initiator\_spi}!rte\_isakmp\_hdr@{rte\_isakmp\_hdr}}
+\doxysubsubsection{\texorpdfstring{initiator\_spi}{initiator\_spi}}
+{\footnotesize\ttfamily rte\+\_\+be64\+\_\+t rte\+\_\+isakmp\+\_\+hdr\+::initiator\+\_\+spi}
+
+initiator security parameter index \mbox{\Hypertarget{structrte__isakmp__hdr_ab9f9eb408dfdcfeb70be65a21f4db081}\label{structrte__isakmp__hdr_ab9f9eb408dfdcfeb70be65a21f4db081}} 
+\index{rte\_isakmp\_hdr@{rte\_isakmp\_hdr}!message\_id@{message\_id}}
+\index{message\_id@{message\_id}!rte\_isakmp\_hdr@{rte\_isakmp\_hdr}}
+\doxysubsubsection{\texorpdfstring{message\_id}{message\_id}}
+{\footnotesize\ttfamily rte\+\_\+be32\+\_\+t rte\+\_\+isakmp\+\_\+hdr\+::message\+\_\+id}
+
+Message ID \mbox{\Hypertarget{structrte__isakmp__hdr_a6adbfa7329a4eb078119b5cdb4ec1d53}\label{structrte__isakmp__hdr_a6adbfa7329a4eb078119b5cdb4ec1d53}} 
+\index{rte\_isakmp\_hdr@{rte\_isakmp\_hdr}!nxt\_payload@{nxt\_payload}}
+\index{nxt\_payload@{nxt\_payload}!rte\_isakmp\_hdr@{rte\_isakmp\_hdr}}
+\doxysubsubsection{\texorpdfstring{nxt\_payload}{nxt\_payload}}
+{\footnotesize\ttfamily int8\+\_\+t rte\+\_\+isakmp\+\_\+hdr\+::nxt\+\_\+payload}
+
+\mbox{\hyperlink{structPayload}{Payload}} ID \mbox{\Hypertarget{structrte__isakmp__hdr_a99a04641063f9f16d08b24eb2ec16ac2}\label{structrte__isakmp__hdr_a99a04641063f9f16d08b24eb2ec16ac2}} 
+\index{rte\_isakmp\_hdr@{rte\_isakmp\_hdr}!responder\_spi@{responder\_spi}}
+\index{responder\_spi@{responder\_spi}!rte\_isakmp\_hdr@{rte\_isakmp\_hdr}}
+\doxysubsubsection{\texorpdfstring{responder\_spi}{responder\_spi}}
+{\footnotesize\ttfamily rte\+\_\+be64\+\_\+t rte\+\_\+isakmp\+\_\+hdr\+::responder\+\_\+spi}
+
+responder security parameter index \mbox{\Hypertarget{structrte__isakmp__hdr_ac979a8dd47d8e44a1ddec984dfd8e0ce}\label{structrte__isakmp__hdr_ac979a8dd47d8e44a1ddec984dfd8e0ce}} 
+\index{rte\_isakmp\_hdr@{rte\_isakmp\_hdr}!total\_length@{total\_length}}
+\index{total\_length@{total\_length}!rte\_isakmp\_hdr@{rte\_isakmp\_hdr}}
+\doxysubsubsection{\texorpdfstring{total\_length}{total\_length}}
+{\footnotesize\ttfamily rte\+\_\+be32\+\_\+t rte\+\_\+isakmp\+\_\+hdr\+::total\+\_\+length}
+
+Length of header \mbox{\Hypertarget{structrte__isakmp__hdr_a8edbacbb67cfb7f89405ad89882b8fc8}\label{structrte__isakmp__hdr_a8edbacbb67cfb7f89405ad89882b8fc8}} 
+\index{rte\_isakmp\_hdr@{rte\_isakmp\_hdr}!version@{version}}
+\index{version@{version}!rte\_isakmp\_hdr@{rte\_isakmp\_hdr}}
+\doxysubsubsection{\texorpdfstring{version}{version}}
+{\footnotesize\ttfamily int8\+\_\+t rte\+\_\+isakmp\+\_\+hdr\+::version}
+
+ike version which is split into major/minor, each taking up 4 bits 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+include/\mbox{\hyperlink{ike_8h}{ike.\+h}}\end{DoxyCompactItemize}

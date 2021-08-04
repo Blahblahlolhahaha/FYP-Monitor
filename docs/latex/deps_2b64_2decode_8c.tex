@@ -1,0 +1,33 @@
+\hypertarget{deps_2b64_2decode_8c}{}\doxysection{deps/b64/decode.c File Reference}
+\label{deps_2b64_2decode_8c}\index{deps/b64/decode.c@{deps/b64/decode.c}}
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+{\ttfamily \#include $<$ctype.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}b64.\+h\char`\"{}}\newline
+Include dependency graph for decode.\+c\+:
+% FIG 0
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+unsigned char $\ast$ \mbox{\hyperlink{deps_2b64_2decode_8c_a06be0866ad948af38f43c69610de3e0e}{b64\+\_\+decode}} (const char $\ast$src, size\+\_\+t len)
+\item 
+unsigned char $\ast$ \mbox{\hyperlink{deps_2b64_2decode_8c_a7c65d142386aeb39a2f0c3f5fb33e82b}{b64\+\_\+decode\+\_\+ex}} (const char $\ast$src, size\+\_\+t len, size\+\_\+t $\ast$decsize)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{deps_2b64_2decode_8c_a06be0866ad948af38f43c69610de3e0e}\label{deps_2b64_2decode_8c_a06be0866ad948af38f43c69610de3e0e}} 
+\index{decode.c@{decode.c}!b64\_decode@{b64\_decode}}
+\index{b64\_decode@{b64\_decode}!decode.c@{decode.c}}
+\doxysubsubsection{\texorpdfstring{b64\_decode()}{b64\_decode()}}
+{\footnotesize\ttfamily unsigned char$\ast$ b64\+\_\+decode (\begin{DoxyParamCaption}\item[{const char $\ast$}]{src,  }\item[{size\+\_\+t}]{len }\end{DoxyParamCaption})}
+
+`decode.\+c' -\/ b64
+
+copyright (c) 2014 joseph werle \mbox{\Hypertarget{deps_2b64_2decode_8c_a7c65d142386aeb39a2f0c3f5fb33e82b}\label{deps_2b64_2decode_8c_a7c65d142386aeb39a2f0c3f5fb33e82b}} 
+\index{decode.c@{decode.c}!b64\_decode\_ex@{b64\_decode\_ex}}
+\index{b64\_decode\_ex@{b64\_decode\_ex}!decode.c@{decode.c}}
+\doxysubsubsection{\texorpdfstring{b64\_decode\_ex()}{b64\_decode\_ex()}}
+{\footnotesize\ttfamily unsigned char$\ast$ b64\+\_\+decode\+\_\+ex (\begin{DoxyParamCaption}\item[{const char $\ast$}]{,  }\item[{size\+\_\+t}]{,  }\item[{size\+\_\+t $\ast$}]{ }\end{DoxyParamCaption})}
+
+Decode `char $\ast$' source with `size\+\_\+t' size. Returns a `unsigned char $\ast$' base64 decoded string + size of decoded string. 

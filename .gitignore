@@ -1,0 +1,6 @@
+build/
+.vscode/
+log/*
+index.html
+build/
+certs/
