@@ -1,0 +1,6 @@
+Package: Snart
+Version: 2.0
+Architecture: all
+Maintainer: Codex <ethanseow2002@gmail.com>
+Description: Secure Network Anomaly Realtime detection
+Depends: libsystemd-dev (>= 245.4), dpdk-dev (>=19.11.7)

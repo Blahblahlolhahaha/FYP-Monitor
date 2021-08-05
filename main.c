@@ -633,7 +633,7 @@ int port_init(uint16_t port,struct rte_mempool *mbufpool){
 }
 
 /// Function to run for each port to capture packets and process them
-static __rte_noreturn void 
+static void 
 lcore_main(void){
     uint16_t port;
     for(;;){
