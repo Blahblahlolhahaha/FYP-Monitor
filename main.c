@@ -207,7 +207,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                                 bool tampered = false;
                                                 for (uint32_t i = 1; i <= tunnels->size; i++){
                                                     check = ((struct tunnel*) tunnels->array[i]);
-                                                    if (check->client_ip == src_addr_int && check->host_ip == dst_addr_int){
+                                                    if (check->client_ip == src_addr_int && check->host_ip == dst_addr_int && check->auth){
                                                         if (check->client_spi == 0){
                                                             check->client_spi = esp_header->spi;
                                                             check->client_seq = rte_be_to_cpu_32(esp_header->seq);
@@ -251,7 +251,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                                             break;
 
                                                         }
-                                                    }else if (check->host_ip == src_addr_int && check->client_ip == dst_addr_int){
+                                                    }else if (check->host_ip == src_addr_int && check->client_ip == dst_addr_int && check->auth){
                                                         if (check->host_spi == 0){
                                                             check->host_spi = esp_header->spi;
                                                             check->host_seq = rte_be_to_cpu_32(esp_header->seq);
