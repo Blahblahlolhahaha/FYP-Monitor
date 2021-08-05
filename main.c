@@ -353,26 +353,18 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                             new_tunnel.host_loaded = false;
                                             push(tunnels,&new_tunnel);
                                         }
-                                        int check = analyse_isakmp_payload(pkt,isakmp_hdr,first_payload_hdr_offset + 4,isakmp_hdr->nxt_payload);
-                                        // print_isakmp_headers_info(isakmp_hdr);
-                                        if(check == 1){
-                                            isakmp_pkts++;
-                                        }
-                                        else{
+                                        int check = analyse_isakmp_payload(pkt,isakmp_hdr,first_payload_hdr_offset,isakmp_hdr->nxt_payload);
+                                        if(check = 0){
                                             snprintf(log,2048,"%s;INVALID_ISAKMP_PACKET;%s;%s;%lx;%lx\n",current_time
                                             ,src_addr, dst_addr, isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi);
                                             write_log(ipsec_log,log,LOG_WARNING);
                                             tampered_pkts++;
                                         }
+                                        else{
+                                             isakmp_pkts++;
+                                        }
+                                    }
 
-                                    }
-                                    else{
-                                        snprintf(log,2048,"%s;INVALID_ISAKMP_PACKET;%s;%s;%lx;%lx\n",current_time
-                                        ,src_addr, dst_addr, isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi);
-                                        write_log(ipsec_log,log,LOG_WARNING);
-                                        tampered_pkts++;
-                                    }
-                                    
                                 }
                                 else{
                                     malformed = true;
@@ -386,7 +378,7 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
                                 non_ipsec++;
                                 
 
-                            }   
+                            }  
                                 
                         }
                         else{
