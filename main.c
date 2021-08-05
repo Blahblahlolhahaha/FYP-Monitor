@@ -533,7 +533,16 @@ read_data(uint16_t port __rte_unused, uint16_t qidx __rte_unused,
         total_processed++;
         if(total_processed % 10 == 0) {
             printf("\e[1;1H\e[2J");
-            printf("================================\n          Tunnels\n================================\n");
+            printf("================================\n");
+	    puts(
+		 "             __,---.__\n"
+		 "        __,-'         `-.\n"
+		 "       /_/_,'  SNART🐷   \\&\n"
+		 "       _,👀               \\\n"
+		 "      (\")            .    |\n"
+		 "      🧃``--|__|--..-'`.__|\n"
+		 );
+	    printf("================================\n          Tunnels\n================================\n");
             for (uint32_t i = 1; i <= tunnels->size; i++){
                 struct tunnel* check = ((struct tunnel*) tunnels->array[i]);
                 printf("--------------------------------\n| tunnel %d\n",i);
