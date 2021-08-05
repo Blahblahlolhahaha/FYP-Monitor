@@ -1,6 +1,13 @@
 #include "../include/log.h"
+#include <dirent.h>
+#include <errno.h>
 
 void write_log(char* file_name,char log[],int priority){
+    DIR* dir = opendir(directory);
+    if (ENOENT == errno) {
+        /* Directory does not exist. */
+        mkdir(directory, 0700);
+    } 
     sd_journal_print(priority,"%s",log);
     FILE* fp = fopen(file_name, "a+");
     fprintf(fp,"%s",log);

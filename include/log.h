@@ -7,12 +7,13 @@
 #include <systemd/sd-journal.h>
 #include "../deps/b64/b64.h"
 
+static char *directory = "/var/log/snart";
 /// IPsec log
-static const char *ipsec_log = "log/ipsec.log";
+static const char *ipsec_log = "/var/log/snart/ipsec.log";
 /// Malicious traffic log
-static const char *main_log = "log/monitor.log";
+static const char *main_log = "/var/log/snart/monitor.log";
 /// Saved tunnel log
-static const char *tunnel_log = "log/tunnels.log";
+static const char *tunnel_log = "/var/log/snart/tunnels.log";
 
 /**
  * Write log into systemd log and a stored log file

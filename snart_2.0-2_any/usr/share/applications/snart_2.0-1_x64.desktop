@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Snart
+Exec=echo 1024 > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages; /usr/local/bin/snart --vdev=net_pcap0,iface=ens33 -l 1 -n 4
+Icon=/usr/share/applications/SNARTCircle_64x64.png
+Terminal=true
+Type=Application
+Version=2.0
