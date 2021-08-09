@@ -82,7 +82,10 @@ int analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *isa
     if(offset + sizeof(struct isakmp_payload_hdr) <= rte_pktmbuf_data_len(pkt)){
         struct isakmp_payload_hdr *payload_hdr;
         payload_hdr = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr *,offset);
-        
+        printf("%d\n",payload_hdr->nxt_payload);
+        printf("%d\n",isakmp_hdr->exchange_type);
+        printf("%d\n",get_initiator_flag(isakmp_hdr));
+        printf("%d\n",get_response_flag(isakmp_hdr));
         for(int i = 1;i <= tunnels->size; i++){
             struct tunnel *tunnel = tunnels->array[i];
             char log[2048] = {0};
@@ -102,13 +105,29 @@ int analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *isa
                         //Peer has responded and is not dead , hence refresh dpd is reset
                         tunnel->dpd_count = 0;
                     }
+                    else if(get_initiator_flag(isakmp_hdr) == 0 && get_response_flag(isakmp_hdr) == 1){
+                        for(int i = 1;i<=tunnels->size;i++){
+                            struct tunnel *tunnel = (struct tunnel *)tunnels->array[i];
+                            if(check_ike_spi(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,src_addr_int,dst_addr_int,tunnel) == 1){
+                                if(tunnel->deleting){
+                                    char log[2048] = {0};
+                                    snprintf(log,2048,"%s;Session ended btw %s and %s\n",current_time,
+                                    src_addr,dst_addr);
+                                    write_log(ipsec_log,log,LOG_INFO);
+                                    delete_tunnel(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,src_addr_int,dst_addr_int);
+                                }
+                            }
+                        }
+                    }
                 }
                 else if(payload_hdr->nxt_payload == D && isakmp_hdr->exchange_type == INFORMATIONAL){
                     //Either side ends connection, so delete tunnel
-                    snprintf(log,2048,"%s;Session ended btw %s and %s\n",current_time,
-                    src_addr,dst_addr);
-                    write_log(ipsec_log,log,LOG_INFO);
-                    delete_tunnel(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,src_addr_int,dst_addr_int);
+                   for(int i = 1;i<=tunnels->size;i++){
+                        struct tunnel *tunnel = (struct tunnel *)tunnels->array[i];
+                        if(check_ike_spi(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,src_addr_int,dst_addr_int,tunnel) == 1){
+                            tunnel->deleting = true;
+                        }
+                    }
                 }
                 else if(payload_hdr->nxt_payload == AUTH && isakmp_hdr->exchange_type == IKE_AUTH){
                     //99.9% means authenticated once responder sends this payload unless server kena gon
@@ -119,13 +138,13 @@ int analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *isa
                         tunnel->auth = true;
                     }
                 }
-                    else if(payload_hdr->nxt_payload == N && isakmp_hdr->exchange_type == INFORMATIONAL && get_initiator_flag(isakmp_hdr) == 0 && get_response_flag(isakmp_hdr) == 1){
-                        // for now it prob means smth went wrong
-                        snprintf(log,2048,"%s;IKE Authentication between %s and %s failed\n",current_time,
-                        src_addr, dst_addr);
-                        write_log(ipsec_log,log,LOG_NOTICE);
-                        delete_tunnel(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,src_addr_int,dst_addr_int);
-                    }
+                else if(payload_hdr->nxt_payload == N && isakmp_hdr->exchange_type == INFORMATIONAL && get_initiator_flag(isakmp_hdr) == 0 && get_response_flag(isakmp_hdr) == 1){
+                    // for now it prob means smth went wrong
+                    snprintf(log,2048,"%s;IKE Authentication between %s and %s failed\n",current_time,
+                    src_addr, dst_addr);
+                    write_log(ipsec_log,log,LOG_NOTICE);
+                    delete_tunnel(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,src_addr_int,dst_addr_int);
+                }
                 
             }
                 
