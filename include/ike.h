@@ -389,6 +389,7 @@ struct tunnel{
     bool client_loaded; 
     /** host flag to indicate tunnel was loaded from file */
     bool host_loaded; 
+    bool deleting;
     /** timeout counter */
     int timeout; 
     /** if count == 6, peer is deado */
