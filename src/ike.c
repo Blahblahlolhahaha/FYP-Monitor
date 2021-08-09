@@ -82,10 +82,6 @@ int analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *isa
     if(offset + sizeof(struct isakmp_payload_hdr) <= rte_pktmbuf_data_len(pkt)){
         struct isakmp_payload_hdr *payload_hdr;
         payload_hdr = rte_pktmbuf_mtod_offset(pkt,struct isakmp_payload_hdr *,offset);
-        printf("%d\n",payload_hdr->nxt_payload);
-        printf("%d\n",isakmp_hdr->exchange_type);
-        printf("%d\n",get_initiator_flag(isakmp_hdr));
-        printf("%d\n",get_response_flag(isakmp_hdr));
         for(int i = 1;i <= tunnels->size; i++){
             struct tunnel *tunnel = tunnels->array[i];
             char log[2048] = {0};
