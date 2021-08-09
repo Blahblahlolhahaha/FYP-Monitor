@@ -119,13 +119,13 @@ int analyse_SK(struct rte_mbuf *pkt, uint16_t offset, struct rte_isakmp_hdr *isa
                         tunnel->auth = true;
                     }
                 }
-                else if(payload_hdr->nxt_payload == N && isakmp_hdr->exchange_type == INFORMATIONAL && get_initiator_flag(isakmp_hdr) == 0 && get_response_flag(isakmp_hdr) == 1){
-                    // for now it prob means smth went wrong
-                    snprintf(log,2048,"%s;IKE Authentication between %s and %s failed\n",current_time,
-                    src_addr, dst_addr);
-                    write_log(ipsec_log,log,LOG_NOTICE);
-                    delete_tunnel(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,src_addr_int,dst_addr_int);
-                }
+                    else if(payload_hdr->nxt_payload == N && isakmp_hdr->exchange_type == INFORMATIONAL && get_initiator_flag(isakmp_hdr) == 0 && get_response_flag(isakmp_hdr) == 1){
+                        // for now it prob means smth went wrong
+                        snprintf(log,2048,"%s;IKE Authentication between %s and %s failed\n",current_time,
+                        src_addr, dst_addr);
+                        write_log(ipsec_log,log,LOG_NOTICE);
+                        delete_tunnel(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,src_addr_int,dst_addr_int);
+                    }
                 
             }
                 
