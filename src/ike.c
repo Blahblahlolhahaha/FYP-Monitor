@@ -518,18 +518,20 @@ int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hd
     // If tunnel does not exist, should only be IKE_SA_INIT, else sus
     switch(nxt_payload){
         case NO:
-             for(int i = 1;i<=tunnels->size;i++){
-                struct tunnel *tunnel = (struct tunnel *)tunnels->array[i];
-                if(check_ike_spi(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,src_addr_int,dst_addr_int,tunnel) == 1){
-                    if(tunnel->deleting){
-                        char log[2048] = {0};
-                        snprintf(log,2048,"%s;Session ended btw %s and %s\n",current_time,
-                        src_addr,dst_addr);
-                        write_log(ipsec_log,log,LOG_INFO);
-                        delete_tunnel(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,src_addr_int,dst_addr_int);
+            if(get_initiator_flag(isakmp_hdr) == 0){
+                for(int i = 1;i<=tunnels->size;i++){
+                    struct tunnel *tunnel = (struct tunnel *)tunnels->array[i];
+                    if(check_ike_spi(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,src_addr_int,dst_addr_int,tunnel) == 1){
+                        if(tunnel->deleting){
+                            char log[2048] = {0};
+                            snprintf(log,2048,"%s;Session ended btw %s and %s\n",current_time,
+                            src_addr,dst_addr);
+                            write_log(ipsec_log,log,LOG_INFO);
+                            delete_tunnel(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,src_addr_int,dst_addr_int);
+                        }
                     }
                 }
-             }
+            }
         case SA:
             check = analyse_SA(pkt,offset,isakmp_hdr);
             break;
@@ -543,13 +545,16 @@ int analyse_isakmp_payload(struct rte_mbuf *pkt,struct rte_isakmp_hdr *isakmp_hd
             break;
 
         case D:{
-            //Session is deleted
-             for(int i = 1;i<=tunnels->size;i++){
-                struct tunnel *tunnel = (struct tunnel *)tunnels->array[i];
-                if(check_ike_spi(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,src_addr_int,dst_addr_int,tunnel) == 1){
-                    tunnel->deleting = true;
+            if(get_initiator_flag(isakmp_hdr) == 1){
+                //Session is deleted
+                for(int i = 1;i<=tunnels->size;i++){
+                    struct tunnel *tunnel = (struct tunnel *)tunnels->array[i];
+                    if(check_ike_spi(isakmp_hdr->initiator_spi,isakmp_hdr->responder_spi,src_addr_int,dst_addr_int,tunnel) == 1){
+                        tunnel->deleting = true;
+                    }
                 }
-             }
+            }
+            
             break;
         }
         case SK:
